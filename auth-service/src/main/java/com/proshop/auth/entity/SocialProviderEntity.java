@@ -14,10 +14,13 @@ public class SocialProviderEntity extends BaseEntity {
 
   @Column(name = "provider_name", length = 50)
   private String providerName;
+
   @Column(name = "provider_code", length = 100)
   private String providerCode;
+
   @Column(name = "base", length = 100)
   private String base;
+
   @ManyToOne
   @JoinColumn(name = "user_id")
   private UserEntity userEntity;

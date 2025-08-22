@@ -16,12 +16,15 @@ public class UserRoleEntity extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id")
   private UserEntity userEntity;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "role_id")
   private RoleEntity roleEntity;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "domain_id")
   private DomainEntity domainEntity;
-  @Column(name = "context_data", columnDefinition = "json")
+
+  @Column(name = "context_data", columnDefinition = "jsonb") // jsonb tốt hơn
   private String contextData;
 }
