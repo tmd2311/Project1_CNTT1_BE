@@ -20,7 +20,7 @@ public class AdminDataInitializer implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    if (userRepository.findByAccount("Dung").isEmpty()) {
+    if (userRepository.findByAccount("tmd2311").isEmpty()) {
       logger.info("Initializing default admin user");
 
       UserEntity adminUser = new UserEntity();
