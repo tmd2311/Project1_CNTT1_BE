@@ -18,16 +18,22 @@ public class PermissionEntity extends BaseEntity {
 
   @Column(name = "code", length = 100, unique = true)
   private String code;
-  @Column(name = "name", columnDefinition = "NVARCHAR(255)")
+
+  @Column(name = "name", length = 255)
   private String name;
+
   @Column(name = "action", length = 100)
   private String action;
+
   @Column(name = "resource", length = 100)
   private String resource;
+
   @Column(name = "description", columnDefinition = "TEXT")
   private String description;
+
   @ManyToMany(mappedBy = "permissions")
   private Set<RoleEntity> roleEntities = new HashSet<>();
+
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "permission_api",

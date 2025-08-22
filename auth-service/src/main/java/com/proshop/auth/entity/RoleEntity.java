@@ -15,20 +15,25 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "role")
+@Table(name = "roles")
 public class RoleEntity extends BaseEntity {
 
   @Column(name = "code", length = 100, unique = true)
   private String code;
-  @Column(name = "name", columnDefinition = "NVARCHAR(255)")
+
+  @Column(name = "name", length = 255)
   private String name;
+
   @Column(name = "description", columnDefinition = "TEXT")
   private String description;
+
   @Column(name = "status", length = 20)
   private String status;
+
   @ManyToOne
   @JoinColumn(name = "domain_id")
   private DomainEntity domainEntity;
+
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
       name = "permission_role",
@@ -37,3 +42,5 @@ public class RoleEntity extends BaseEntity {
   )
   private Set<PermissionEntity> permissions = new HashSet<>();
 }
+
+
