@@ -30,9 +30,9 @@ public enum ResErrorCode {
       "Can't send notifications"),
   UNAUTHORIZED(HttpStatus.BAD_REQUEST, "409", "Thông tin xác thực bị thiếu hoặc không chính xác",
       "Credentials are missing or incorrect"),
-  INVALID_USER_PASS(HttpStatus.UNAUTHORIZED, "401",
-      "Tài khoản hoặc mật khẩu không đúng, quý khách vui lòng kiểm tra và đăng nhập lại",
-      "The account or password is incorrect"),
+  INVALID_USER_PASS(HttpStatus.UNAUTHORIZED, "400",
+      "Mật khẩu không đúng",
+      "The password is incorrect"),
 
   USER_INACTIVE(HttpStatus.UNAUTHORIZED, "401",
       "Tài khoản đã tạm khóa, quý khách vui lòng kiểm tra và đăng nhập lại",
@@ -99,7 +99,25 @@ public enum ResErrorCode {
   INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "712", "Định dạng ảnh không hợp lệ",
       "Invalid image type"),
   INVALID_DATA_FORMAT(HttpStatus.BAD_REQUEST, "713", "Định dạng dữ liệu không hợp lệ",
-      "Invalid data format");
+      "Invalid data format"),
+  WEAK_PASSWORD(HttpStatus.BAD_REQUEST, "E1009",
+      "Password does not meet security requirements",
+      "Weak Password"),
+  PASSWORD_SAME_AS_OLD(HttpStatus.BAD_REQUEST, "E1010",
+      "New password must be different from old password",
+      "Password Same As Old"),
+  ACCOUNT_ALREADY_EXISTS(
+      HttpStatus.BAD_REQUEST,
+      "E1011",
+      "Account already exists",
+      "Account"
+  ),
+  EMAIL_ALREADY_EXISTS(
+      HttpStatus.BAD_REQUEST,
+      "E1012",
+      "Email already exists",
+      "Email"
+  );
   private final HttpStatus status;
   private final String code;
   private final String message;

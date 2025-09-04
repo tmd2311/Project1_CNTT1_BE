@@ -3,6 +3,7 @@ package com.proshop.auth.service.auth.impl;
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
 import com.proshop.auth.dto.request.LogoutRequest;
+import com.proshop.auth.dto.request.RegisterRequest;
 import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.DomainEntity;
@@ -10,8 +11,10 @@ import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.exceptions.ResException;
 import com.proshop.auth.mapper.LoginMapper;
+import com.proshop.auth.mapper.UserMapper;
 import com.proshop.auth.repository.DomainRepository;
 import com.proshop.auth.repository.SocialProviderRepository;
+import com.proshop.auth.repository.TokenRedisRepository;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
 import com.proshop.auth.service.auth.AuthService;
@@ -31,6 +34,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,16 +43,15 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
   private final UserRepository userRepository;
-
   private final AuthenticationManager authenticationManager;
-
   private final SocialProviderRepository socialProviderRepository;
-
   private final JwtAuthService jwtAuthService;
-
   private final DomainRepository domainRepository;
-
   private final LoginMapper loginMapper;
+  private final UserMapper userMapper;
+  private final PasswordEncoder passwordEncoder;
+  private final TokenRedisRepository tokenRedisRepository;
+
 
   @Override
   @Transactional
@@ -125,7 +128,56 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public UserInfoResponse changePassword(ChangePasswordRequest req, String userCode) {
-    return null;
+    UserEntity userEntity = userRepository.findByCode(userCode).orElseThrow(() -> new ResException(
+        ResErrorCode.valueOf("")));
+    String oldPassword = req.getOldPassword() != null ? req.getOldPassword().trim() : "";
+    String newPassword = req.getNewPassword() != null ? req.getNewPassword().trim() : "";
+    if (!passwordEncoder.matches(oldPassword, userEntity.getPassword())) {
+      throw new ResException(ResErrorCode.INVALID_PASSWORD);
+    }
+    if (passwordEncoder.matches(newPassword, userEntity.getPassword())) {
+      throw new ResException(ResErrorCode.OLD_PASSWORD_NOT_VALID);
+    }
+
+    validateNewPassword(newPassword);
+
+    userEntity.setPasswordHash(passwordEncoder.encode(newPassword));
+    userEntity.setModifiedDate(LocalDateTime.now());
+    userEntity.setModifiedBy(userCode);
+    userRepository.save(userEntity);
+    boolean deleted = tokenRedisRepository.deleteAllTokens(userEntity.getCode());
+    if (!deleted) {
+      log.error("Unable to revoke Redis token for userCode = {}", userEntity.getCode());
+      throw new ResException(ResErrorCode.TOKEN_DELETE_FAILED);
+    }
+
+    return userMapper.toDTO(userEntity);
+  }
+
+  @Override
+  public UserInfoResponse register(RegisterRequest request) {
+    if (userRepository.existsByAccount(request.getAccount())) {
+      throw new ResException(ResErrorCode.ACCOUNT_ALREADY_EXISTS);
+    }
+    if (userRepository.existsByEmail(request.getEmail())) {
+      throw new ResException(ResErrorCode.EMAIL_ALREADY_EXISTS);
+    }
+
+    validateNewPassword(request.getPassword());
+
+    UserEntity user = new UserEntity();
+    user.setAccount(request.getAccount().trim());
+    user.setEmail(request.getEmail().trim());
+    user.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
+    user.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
+    user.setCreatedDate(LocalDateTime.now());
+    user.setCreatedBy(request.getAccount());
+
+    String userCode = generateUserCode();
+    user.setCode(userCode);
+
+    UserEntity savedUser = userRepository.save(user);
+    return userMapper.toDTO(savedUser);
   }
 
   @Override
@@ -149,5 +201,33 @@ public class AuthServiceImpl implements AuthService {
         .findFirst()
         .map(SocialProviderEntity::getProviderName)
         .orElse(null);
+  }
+
+  private void validateNewPassword(String password) {
+    if (password == null || password.trim().isEmpty()) {
+      throw new ResException(ResErrorCode.INVALID_USER_PASS);
+    }
+    if (password.length() < 6) {
+      throw  new ResException(ResErrorCode.WEAK_PASSWORD);
+    }
+    String trimmedPassword = password.trim();
+    if (!trimmedPassword.matches(".*[A-Z].*")) {
+      throw new ResException(ResErrorCode.WEAK_PASSWORD);
+    }
+    if (!trimmedPassword.matches(".*[a-z].*")) {
+      throw new ResException(ResErrorCode.WEAK_PASSWORD);
+    }
+    if (!trimmedPassword.matches(".*\\d.*")) {
+      throw new ResException(ResErrorCode.WEAK_PASSWORD);
+    }
+    if (!trimmedPassword.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) {
+      throw new ResException(ResErrorCode.WEAK_PASSWORD);
+    }
+  }
+
+  private String generateUserCode() {
+    long count = userRepository.count();
+    long nextId = count + 1;
+    return String.format("USER_%03d", nextId);
   }
 }
