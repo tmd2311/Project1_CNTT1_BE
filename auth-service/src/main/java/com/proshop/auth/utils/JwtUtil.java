@@ -109,4 +109,21 @@ public class JwtUtil {
         .parseClaimsJws(token)
         .getBody();
   }
+
+  public String getUserCodeFromToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+          .setSigningKey(jwtConfig.getPublicKey())
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
+
+      String userCode = claims.get("user_code", String.class);
+      log.debug("Extracted user_code from token: {}", userCode);
+      return userCode;
+    } catch (Exception e) {
+      log.error("Failed to extract user_code from token", e);
+      throw new ResException(ResErrorCode.UNAUTHORIZED);
+    }
+  }
 }
