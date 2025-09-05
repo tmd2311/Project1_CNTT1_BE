@@ -1,5 +1,7 @@
 package com.proshop.product.controller;
 
+import com.proshop.product.dto.response.GeneralResponse;
+import com.proshop.product.dto.response.ResponseFactory;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.service.product.ProductService;
 import java.util.List;
@@ -17,9 +19,9 @@ public class ProductController {
   private final ProductService productService;
 
   @GetMapping("/product")
-  public ResponseEntity<List<ProductEntity>> getAllProducts() {
+  public ResponseEntity<GeneralResponse<List<ProductEntity>>> getAllProducts() {
     List<ProductEntity> products = productService.findAll();
-    return ResponseEntity.ok(products);
+    return ResponseFactory.success(products);
   }
 
 }
