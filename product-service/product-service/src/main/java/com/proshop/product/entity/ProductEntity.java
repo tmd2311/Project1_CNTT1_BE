@@ -17,7 +17,7 @@ import com.vladmihalcea.hibernate.type.json.JsonType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product {
+public class ProductEntity {
 
   @Id
   @GeneratedValue
@@ -27,11 +27,11 @@ public class Product {
 
   @ManyToOne
   @JoinColumn(name = "category_id")
-  private Category category;
+  private CategoryEntity category;
 
   @ManyToOne
   @JoinColumn(name = "brand_id")
-  private Brand brand;
+  private BrandEntity brand;
 
   @Column(columnDefinition = "TEXT")
   private String description;

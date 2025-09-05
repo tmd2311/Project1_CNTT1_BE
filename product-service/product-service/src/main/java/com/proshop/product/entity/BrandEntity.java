@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Brand {
+public class BrandEntity {
 
   @Id
   @GeneratedValue

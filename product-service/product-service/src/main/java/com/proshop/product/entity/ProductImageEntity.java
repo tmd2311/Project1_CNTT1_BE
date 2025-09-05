@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductImage {
+public class ProductImageEntity {
 
   @Id
   @GeneratedValue
@@ -20,7 +20,7 @@ public class ProductImage {
 
   @ManyToOne
   @JoinColumn(name = "product_id")
-  private Product product;
+  private ProductEntity product;
 
   private String url;
   private Boolean isPrimary = false;

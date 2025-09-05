@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Category {
+public class CategoryEntity {
 
   @Id
   @GeneratedValue
@@ -26,8 +26,8 @@ public class Category {
 
   @ManyToOne
   @JoinColumn(name = "parent_id")
-  private Category parent;
+  private CategoryEntity parent;
 
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-  private List<Category> children;
+  private List<CategoryEntity> children;
 }

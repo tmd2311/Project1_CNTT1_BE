@@ -17,7 +17,7 @@ import org.hibernate.annotations.Type;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SKU {
+public class SKUEntity {
 
   @Id
   @GeneratedValue
@@ -25,7 +25,7 @@ public class SKU {
 
   @ManyToOne
   @JoinColumn(name = "product_id")
-  private Product product;
+  private ProductEntity product;
 
   @Column(unique = true)
   private String skuCode;
