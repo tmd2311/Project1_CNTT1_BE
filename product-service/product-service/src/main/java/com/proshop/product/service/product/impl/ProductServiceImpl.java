@@ -6,6 +6,7 @@ import com.proshop.product.mapper.ProductMapper;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,5 +26,12 @@ public class ProductServiceImpl implements ProductService {
     Page<ProductEntity> products = productRepository.findAll(pageable);
 
     return products.map(productMapper::toDTO);
+  }
+
+  @Override
+  public ProductResponse getProductById(UUID id) {
+    ProductEntity entity = productRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Product not found"));
+    return productMapper.toDTO(entity); // <- map entity sang DTO
   }
 }
