@@ -1,12 +1,15 @@
 package com.proshop.product.service.product.impl;
 
+import com.proshop.product.dto.response.GeneralResponse;
+import com.proshop.product.dto.response.ProductDeleteResponse;
+import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.dto.response.ProductResponse;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.mapper.ProductMapper;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
-import java.util.List;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,4 +37,26 @@ public class ProductServiceImpl implements ProductService {
         .orElseThrow(() -> new RuntimeException("Product not found"));
     return productMapper.toDTO(entity); // <- map entity sang DTO
   }
+
+    @Override
+    public GeneralResponse<ProductDeleteResponse> deleteProduct(UUID id) {
+        ProductEntity product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Not Found"),
+                    null,
+                    null
+            );
+        }
+
+        ProductDeleteResponse data = new ProductDeleteResponse(product.getId(), product.getName());
+        productRepository.deleteById(id);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                data,
+                null
+        );
+    }
 }
+
