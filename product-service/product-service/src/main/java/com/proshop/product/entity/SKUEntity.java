@@ -40,6 +40,7 @@ public class SKUEntity {
   private Double discountPrice;
   private Integer stock;
   private String barcode;
+  private Boolean isActive = true;
 
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;

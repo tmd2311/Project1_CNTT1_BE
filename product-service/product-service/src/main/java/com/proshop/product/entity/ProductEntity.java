@@ -1,6 +1,7 @@
 package com.proshop.product.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 import java.util.Map;
 import lombok.*;
 
@@ -39,6 +40,12 @@ public class ProductEntity {
   @Type(JsonType.class)
   @Column(columnDefinition = "jsonb")
   private Map<String, Object> specs;
+
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<SKUEntity> skus;
+
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<ProductImageEntity> images;
 
 
   private LocalDateTime createdAt;

@@ -1,10 +1,16 @@
 package com.proshop.product.service.product.impl;
 
+import com.proshop.product.dto.response.ProductResponse;
 import com.proshop.product.entity.ProductEntity;
+import com.proshop.product.mapper.ProductMapper;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,9 +18,12 @@ import org.springframework.stereotype.Service;
 public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
-
+  private final ProductMapper productMapper;
   @Override
-  public List<ProductEntity> findAll() {
-    return productRepository.findAll();
+  public Page<ProductResponse> getProducts(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    Page<ProductEntity> products = productRepository.findAll(pageable);
+
+    return products.map(productMapper::toDTO);
   }
 }
