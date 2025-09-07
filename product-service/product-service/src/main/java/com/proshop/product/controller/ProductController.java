@@ -4,7 +4,6 @@ import com.proshop.product.dto.request.ProductUpdateRequest;
 import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ProductResponse;
-import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.service.product.ProductService;
 
 import java.util.List;
@@ -42,16 +41,19 @@ public class ProductController {
       }
       return ResponseEntity.ok(response);
   }
-  @PutMapping("/product/{id}")
-  public ResponseEntity<GeneralResponse<ProductEntity>> updateProduct(
-          @PathVariable UUID id,
-          @RequestBody ProductUpdateRequest request) {
-      GeneralResponse<ProductEntity> response = productService.updateProduct(id, request);
-      if (response.getStatus().getCode().equals("404")) {
-          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-      }
-      return ResponseEntity.ok(response);
-  }
+    @PutMapping("/product/{id}")
+    public ResponseEntity<GeneralResponse<ProductResponse>> updateProduct(
+            @PathVariable UUID id,
+            @RequestBody ProductUpdateRequest request) {
+        GeneralResponse<ProductResponse> response = productService.updateProduct(id, request);
+        if (response.getStatus().getCode().equals("404")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        if (response.getStatus().getCode().equals("400")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/product/search")
     public ResponseEntity<GeneralResponse<List<ProductResponse>>> searchProducts(
