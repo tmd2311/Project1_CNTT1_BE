@@ -1,5 +1,6 @@
 package com.proshop.product.service.product;
 
+import com.proshop.product.dto.request.ProductCreateRequest;
 import com.proshop.product.dto.request.ProductUpdateRequest;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ProductDeleteResponse;
@@ -15,5 +16,7 @@ public interface ProductService {
   ProductResponse getProductById(UUID id);
   GeneralResponse<ProductDeleteResponse> deleteProduct(UUID id);
   GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request);
-    GeneralResponse<List<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice);
+  GeneralResponse<List<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice);
+  GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request);
+
 }
