@@ -2,7 +2,6 @@ package com.proshop.auth.service.auth.impl;
 
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
-import com.proshop.auth.dto.request.LogoutRequest;
 import com.proshop.auth.dto.request.RegisterRequest;
 import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
@@ -18,6 +17,7 @@ import com.proshop.auth.repository.TokenRedisRepository;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
 import com.proshop.auth.service.auth.AuthService;
+import com.proshop.auth.utils.JwtUtil;
 import com.proshop.auth.utils.enums.ResErrorCode;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -51,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final TokenRedisRepository tokenRedisRepository;
+  private final JwtUtil jwtUtil;
 
 
   @Override
@@ -181,8 +182,21 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public Boolean logout(LogoutRequest req) {
-    return null;
+  @Transactional
+  public Boolean logout(String authHeader) {
+    String token = authHeader;
+    if (token != null && token.startsWith("Bearer ")) {
+      token = token.substring(7);
+    } else {
+      throw new ResException(ResErrorCode.TOKEN_INVALID); // Không đúng format
+    }
+    try {
+      String userCode = jwtUtil.getUserCodeFromToken(token);
+      return tokenRedisRepository.deleteToken(userCode, token);
+    } catch (Exception e) {
+      log.error("Logout failed - Invalid token", e);
+      throw new ResException(ResErrorCode.TOKEN_INVALID);
+    }
   }
 
   private void validateLoginRequest(LoginRequest request) {

@@ -27,12 +27,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(value = ResException.class)
   public Object handleAppException(HttpServletRequest request, ResException re)
       throws IOException {
-    String id = exitsCode(re.getCode()) ? "" : getId();
     ErrorResponse<Object> errorResponse = new ErrorResponse();
     ResponseStatus responseStatus = new ResponseStatus();
     responseStatus.setCode(re.getCode());
-    responseStatus.setLabel(re.getLabel() + id);
-    responseStatus.setMessage(re.getMessage() + id);
+    responseStatus.setLabel(re.getLabel());
+    responseStatus.setMessage(re.getMessage());
     errorResponse.setStatus(responseStatus);
     errorResponse.setData(re.getData());
     log.error(PREFIX, re);
@@ -56,12 +55,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(value = Exception.class)
   public Object handleException(HttpServletRequest request, Exception re)
       throws IOException {
-    String id = getId();
     ErrorResponse<Object> errorResponse = new ErrorResponse();
     ResponseStatus responseStatus = new ResponseStatus();
     responseStatus.setCode(ResErrorCode.GENERAL_ERROR.code());
-    responseStatus.setLabel(ResErrorCode.GENERAL_ERROR.label() + id);
-    responseStatus.setMessage("Có lỗi xảy ra, xin vui lòng thử lại sau ít phút" + id);
+    responseStatus.setLabel(ResErrorCode.GENERAL_ERROR.label());
+    responseStatus.setMessage("Có lỗi xảy ra, xin vui lòng thử lại sau ít phút");
     errorResponse.setStatus(responseStatus);
     log.error(PREFIX, re);
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -71,19 +69,14 @@ public class GlobalExceptionHandler {
   public Object handleMissingParamException(HttpServletRequest request,
       MissingServletRequestParameterException re)
       throws IOException {
-    String id = getId();
     ErrorResponse<Object> errorResponse = new ErrorResponse();
     ResponseStatus responseStatus = new ResponseStatus();
     responseStatus.setCode(ResErrorCode.MISS_PARAM.code());
-    responseStatus.setLabel(ResErrorCode.MISS_PARAM.label() + id);
-    responseStatus.setMessage("Miss params" + id);
+    responseStatus.setLabel(ResErrorCode.MISS_PARAM.label());
+    responseStatus.setMessage("Miss params");
     errorResponse.setStatus(responseStatus);
     log.error(PREFIX, re);
     return new ResponseEntity<>(errorResponse, ResErrorCode.MISS_PARAM.status());
-  }
-
-  private String getId() {
-    return " (" + RandomStringUtils.randomAlphabetic(6) + ")";
   }
 
   public boolean exitsCode(String code) {
