@@ -52,4 +52,10 @@ public class AuthController {
     UserInfoResponse response = authService.register(request);
     return ResponseFactory.success(response);
   }
+
+  @PostMapping("/logout")
+  public ResponseEntity<GeneralResponse<Boolean>> logout(@RequestHeader("Authorization") String authHeader) {
+    Boolean result = authService.logout(authHeader);
+    return ResponseFactory.success(result);
+  }
 }
