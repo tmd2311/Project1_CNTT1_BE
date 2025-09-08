@@ -7,7 +7,7 @@ import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ProductResponse;
 import com.proshop.product.service.product.ProductService;
 
-import java.util.List;
+
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -61,12 +61,14 @@ public class ProductController {
     }
 
     @GetMapping("/product/search")
-    public ResponseEntity<GeneralResponse<List<ProductResponse>>> searchProducts(
+    public ResponseEntity<GeneralResponse<Page<ProductResponse>>> searchProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice) {
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
 
-        GeneralResponse<List<ProductResponse>> response = productService.searchProducts(name, minPrice, maxPrice);
+        GeneralResponse<Page<ProductResponse>> response = productService.searchProducts(name, minPrice, maxPrice, page, size);
         return ResponseEntity.ok(response);
     }
 

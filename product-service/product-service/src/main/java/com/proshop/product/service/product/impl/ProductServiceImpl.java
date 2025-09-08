@@ -17,7 +17,7 @@ import com.proshop.product.repository.CategoryRepository;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
 
-import java.util.List;
+
 import java.util.Objects;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -177,7 +177,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public GeneralResponse<List<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice) {
+    public GeneralResponse<Page<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size) {
         // Clean parameters
         if (name != null) {
             name = name.trim();
@@ -186,8 +186,11 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Gọi trực tiếp - không cần mapper
-        List<ProductResponse> products = productRepository.searchProducts(name, minPrice, maxPrice);
+        // Tạo Pageable với sort
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        // Gọi repository với pagination
+        Page<ProductResponse> products = productRepository.searchProducts(name, minPrice, maxPrice, pageable);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,

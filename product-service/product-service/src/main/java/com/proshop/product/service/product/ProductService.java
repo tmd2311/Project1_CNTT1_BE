@@ -6,7 +6,7 @@ import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.ProductResponse;
 
-import java.util.List;
+
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -16,7 +16,7 @@ public interface ProductService {
   ProductResponse getProductById(UUID id);
   GeneralResponse<ProductDeleteResponse> deleteProduct(UUID id);
   GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request);
-  GeneralResponse<List<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice);
+  GeneralResponse<Page<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size);
   GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request);
 
 }
