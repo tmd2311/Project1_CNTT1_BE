@@ -51,12 +51,6 @@ public class ProductController {
             @PathVariable UUID id,
             @RequestBody ProductUpdateRequest request) {
         GeneralResponse<ProductResponse> response = productService.updateProduct(id, request);
-        if (response.getStatus().getCode().equals("404")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
-        if (response.getStatus().getCode().equals("400")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
         return ResponseEntity.ok(response);
     }
 

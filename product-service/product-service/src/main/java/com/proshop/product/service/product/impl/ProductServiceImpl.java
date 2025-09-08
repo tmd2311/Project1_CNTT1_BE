@@ -76,75 +76,61 @@ public class ProductServiceImpl implements ProductService {
   }
 
     @Override
+    @Transactional
     public GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request) {
-        // Tìm product
-        ProductEntity product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Not Found"),
-                    null,
-                    null
-            );
+        // Sử dụng PRODUCT_NOT_FOUND thay vì RuntimeException
+        ProductEntity product = productRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_NOT_FOUND));
+
+        // Validation
+        validateProductUpdateRequest(request);
+
+        // Update fields
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            product.setName(request.getName().trim());
         }
 
-        // Validate và update fields
-        try {
-            if (request.getName() != null && !request.getName().trim().isEmpty()) {
-                product.setName(request.getName().trim());
-            }
+        if (request.getDescription() != null) {
+            product.setDescription(request.getDescription().trim());
+        }
 
-            if (request.getDescription() != null) {
-                product.setDescription(request.getDescription().trim());
-            }
+        if (request.getSpecs() != null) {
+            product.setSpecs(request.getSpecs());
+        }
 
-            if (request.getSpecs() != null) {
-                product.setSpecs(request.getSpecs());
-            }
+        // Brand validation
+        if (request.getBrandId() != null) {
+            BrandEntity brand = brandRepository.findById(request.getBrandId())
+                    .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
+            product.setBrand(brand);
+        }
 
-            // Validate và update brand
-            if (request.getBrandId() != null) {
-                BrandEntity brand = brandRepository.findById(request.getBrandId()).orElse(null);
-                if (brand == null) {
-                    return new GeneralResponse<>(
-                            new ResponseStatus("400", "Brand không tồn tại", "Bad Request"),
-                            null,
-                            null
-                    );
-                }
-                product.setBrand(brand);
-            }
+        // Category validation
+        if (request.getCategoryId() != null) {
+            CategoryEntity category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+            product.setCategory(category);
+        }
 
-            // Validate và update category
-            if (request.getCategoryId() != null) {
-                CategoryEntity category = categoryRepository.findById(request.getCategoryId()).orElse(null);
-                if (category == null) {
-                    return new GeneralResponse<>(
-                            new ResponseStatus("400", "Category không tồn tại", "Bad Request"),
-                            null,
-                            null
-                    );
-                }
-                product.setCategory(category);
-            }
+        product.setUpdatedAt(LocalDateTime.now());
+        ProductEntity updated = productRepository.save(product);
 
-            product.setUpdatedAt(LocalDateTime.now());
-            ProductEntity updated = productRepository.save(product);
+        ProductResponse productResponse = convertToDTO(updated);
 
-            // Convert sang DTO để tránh circular reference
-            ProductResponse productResponse = convertToDTO(updated);
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                productResponse,
+                null
+        );
+    }
 
-            return new GeneralResponse<>(
-                    ResponseStatus.SUCCESS_STATUS,
-                    productResponse,
-                    null
-            );
+    private void validateProductUpdateRequest(ProductUpdateRequest request) {
+        if (request.getName() != null && request.getName().isBlank()) {
+            throw new ResException(ResErrorCode.PRODUCT_NAME_REQUIRED);
+        }
 
-        } catch (Exception e) {
-            return new GeneralResponse<>(
-                    new ResponseStatus("500", "Lỗi server: " + e.getMessage(), "Internal Error"),
-                    null,
-                    null
-            );
+        if (request.getSpecs() != null && request.getSpecs().isEmpty()) {
+            throw new ResException(ResErrorCode.PRODUCT_SPECS_REQUIRED);
         }
     }
 
