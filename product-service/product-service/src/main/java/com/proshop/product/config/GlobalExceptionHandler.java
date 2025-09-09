@@ -76,11 +76,5 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, ResErrorCode.MISS_PARAM.status());
   }
 
-  public boolean exitsCode(String code) {
-    List<String> resCode = Arrays.asList(ResErrorCode.ACCOUNT_BLOCKED.code(),
-        ResErrorCode.PASS_NOT_EQUAL.code(), ResErrorCode.SAME_PASSWORD.code(),
-        ResErrorCode.OLD_PASSWORD_NOT_VALID.code(), ResErrorCode.INVALID_USER_PASS.code());
-    return resCode.contains(code);
-  }
 
 }
