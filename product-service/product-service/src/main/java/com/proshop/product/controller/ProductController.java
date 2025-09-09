@@ -2,6 +2,7 @@ package com.proshop.product.controller;
 
 import com.proshop.product.dto.request.ProductCreateRequest;
 import com.proshop.product.dto.request.ProductUpdateRequest;
+import com.proshop.product.dto.response.PageResponse;
 import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ProductResponse;
@@ -12,7 +13,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +26,12 @@ public class ProductController {
 
 
     @GetMapping("/product")
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        return ResponseEntity.ok(productService.getProducts(page, size));
+    public ResponseEntity<GeneralResponse<PageResponse<ProductResponse>>> getAllProducts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "12") int size) {
+
+        GeneralResponse<PageResponse<ProductResponse>> response = productService.getProducts(page, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/product/{id}")
@@ -55,14 +57,14 @@ public class ProductController {
     }
 
     @GetMapping("/product/search")
-    public ResponseEntity<GeneralResponse<Page<ProductResponse>>> searchProducts(
+    public ResponseEntity<GeneralResponse<PageResponse<ProductResponse>>> searchProducts(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
-        GeneralResponse<Page<ProductResponse>> response = productService.searchProducts(name, minPrice, maxPrice, page, size);
+        GeneralResponse<PageResponse<ProductResponse>> response = productService.searchProducts(name, minPrice, maxPrice, page, size);
         return ResponseEntity.ok(response);
     }
 
