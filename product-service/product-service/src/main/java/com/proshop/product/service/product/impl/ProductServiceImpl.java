@@ -3,6 +3,8 @@ package com.proshop.product.service.product.impl;
 import com.proshop.product.dto.request.ProductCreateRequest;
 import com.proshop.product.dto.request.ProductUpdateRequest;
 import com.proshop.product.dto.response.GeneralResponse;
+import com.proshop.product.dto.response.PageResponse;
+import com.proshop.product.dto.response.PageResponseUtil;
 import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.dto.response.ProductResponse;
@@ -37,25 +39,48 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
-  private final ProductMapper productMapper;
   private final BrandRepository brandRepository;
   private final CategoryRepository categoryRepository;
 
   @Override
-  public Page<ProductResponse> getProducts(int page, int size) {
+  public GeneralResponse<PageResponse<ProductResponse>> getProducts(int page, int size) {
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-    return productRepository.findAllProductDTO(pageable);
+    Page<ProductResponse> productPage = productRepository.findAllProductDTO(pageable);
+    PageResponse pageResponse = PageResponseUtil.buildPageResponse(productPage);
+    pageResponse.setContent(productPage.getContent()); // bạn có thể thêm field data vào PageResponse nếu cần
+    return new GeneralResponse<>(
+        ResponseStatus.SUCCESS_STATUS,
+        pageResponse,
+        null
+    );
   }
 
   @Override
-  public ProductResponse getProductById(UUID id) {
-    ProductEntity entity = productRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Product not found"));
+  public ProductResponse getProductById(String idStr) {
+    UUID id = covertIdToUUID(idStr);
+    ProductEntity entity = productRepository.findProductById(id);
+    if (entity == null) {
+      throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND);
+    }
     return convertToDTO(entity);
   }
 
+  private static UUID covertIdToUUID(String idStr) {
+    if (idStr == null || idStr.isBlank()) {
+      throw new ResException(ResErrorCode.FIELD_REQUIRED);
+    }
+    UUID id;
+    try {
+      id = UUID.fromString(idStr);
+    } catch (IllegalArgumentException e) {
+      throw new ResException(ResErrorCode.BAD_REQUEST);
+    }
+    return id;
+  }
+
   @Override
-  public GeneralResponse<ProductDeleteResponse> deleteProduct(UUID id) {
+  public GeneralResponse<ProductDeleteResponse> deleteProduct(String idStr) {
+      UUID id = covertIdToUUID(idStr);
       ProductEntity product = productRepository.findById(id).orElse(null);
       if (product == null) {
           return new GeneralResponse<>(
@@ -163,7 +188,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public GeneralResponse<Page<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size) {
+    public GeneralResponse<PageResponse<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size) {
         // Clean parameters
         if (name != null) {
             name = name.trim();
@@ -177,10 +202,11 @@ public class ProductServiceImpl implements ProductService {
 
         // Gọi repository với pagination
         Page<ProductResponse> products = productRepository.searchProducts(name, minPrice, maxPrice, pageable);
+        PageResponse<ProductResponse> pageResponse = PageResponseUtil.buildPageResponse(products);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
-                products,
+                pageResponse,
                 null
         );
     }

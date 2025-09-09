@@ -1,12 +1,18 @@
 package com.proshop.product.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Setter
-@Getter
-public class PageResponse {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PageResponse<T> {
+
+  @JsonProperty("content")
+  private List<T> content;
 
   @JsonProperty("total_pages")
   private Integer totalPages;
@@ -23,13 +29,6 @@ public class PageResponse {
   @JsonProperty("total_elements")
   private Long totalElements;
 
-  public PageResponse(Integer totalPages, Boolean hasNext, Boolean hasPrevious, Integer currentPage,
-      Long totalElements) {
-    this.totalPages = totalPages;
-    this.hasNext = hasNext;
-    this.hasPrevious = hasPrevious;
-    this.currentPage = currentPage;
-    this.totalElements = totalElements;
-  }
+
 
 }
