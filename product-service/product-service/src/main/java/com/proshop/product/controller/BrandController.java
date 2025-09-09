@@ -10,13 +10,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class BrandController {
+
 
     private final BrandService brandService;
 
@@ -46,4 +47,5 @@ public class BrandController {
         GeneralResponse<Page<BrandResponse>> response = brandService.searchBrands(name, page, size);
         return ResponseEntity.ok(response);
     }
+
 }

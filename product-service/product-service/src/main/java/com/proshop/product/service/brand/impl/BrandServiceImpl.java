@@ -1,5 +1,6 @@
 package com.proshop.product.service.brand.impl;
 
+
 import com.proshop.product.dto.request.BrandUpdateRequest;
 import com.proshop.product.dto.response.BrandDeleteResponse;
 import com.proshop.product.dto.response.BrandResponse;
@@ -123,3 +124,4 @@ public class BrandServiceImpl implements BrandService {
         return dto;
     }
 }
+
