@@ -51,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
   public ProductResponse getProductById(UUID id) {
     ProductEntity entity = productRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Product not found"));
-    return productMapper.toDTO(entity); // <- map entity sang DTO
+    return convertToDTO(entity);
   }
 
   @Override
