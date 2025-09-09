@@ -123,7 +123,9 @@ public enum ResErrorCode {
     PRODUCT_SPECS_REQUIRED(HttpStatus.BAD_REQUEST, "P003", "Thông số kỹ thuật phải có ít nhất 1 mục", "Product specs is required"),
     BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "Không tìm thấy thương hiệu", "Brand not found"),
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "P005", "Không tìm thấy danh mục", "Category not found"),
-    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found");
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found"),
+    BRAND_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "B001", "Tên thương hiệu không được để trống", "Brand name is required"),
+    BRAND_SLUG_REQUIRED(HttpStatus.BAD_REQUEST, "B002", "Slug thương hiệu không được để trống", "Brand slug is required");
 
     private final HttpStatus status;
     private final String code;
