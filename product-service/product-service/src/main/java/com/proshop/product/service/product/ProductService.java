@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public interface ProductService {
   GeneralResponse<PageResponse<ProductResponse>> getProducts(int page, int size);
-  ProductResponse getProductById(UUID id);
-  GeneralResponse<ProductDeleteResponse> deleteProduct(UUID id);
+  ProductResponse getProductById(String idStr);
+  GeneralResponse<ProductDeleteResponse> deleteProduct(String idStr);
   GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request);
   GeneralResponse<PageResponse<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size);
   GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request);

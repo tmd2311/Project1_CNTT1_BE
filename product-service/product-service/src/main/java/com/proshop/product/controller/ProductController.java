@@ -35,13 +35,13 @@ public class ProductController {
     }
 
     @GetMapping("/product/{id}")
-    public ResponseEntity<ProductResponse> getProductById(@PathVariable UUID id) {
-        return ResponseEntity.ok(productService.getProductById(id));
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable("id") String idStr) {
+        return ResponseEntity.ok(productService.getProductById(idStr));
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<GeneralResponse<ProductDeleteResponse>> deleteProduct(@RequestParam("id") UUID id) {
-        GeneralResponse<ProductDeleteResponse> response = productService.deleteProduct(id);
+    public ResponseEntity<GeneralResponse<ProductDeleteResponse>> deleteProduct(@RequestParam("id") String idStr) {
+        GeneralResponse<ProductDeleteResponse> response = productService.deleteProduct(idStr);
         if (response.getStatus().getCode().equals("404")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
