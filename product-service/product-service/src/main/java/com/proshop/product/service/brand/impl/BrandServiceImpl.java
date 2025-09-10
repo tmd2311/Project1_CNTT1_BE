@@ -1,6 +1,7 @@
 package com.proshop.product.service.brand.impl;
 
 
+import com.proshop.product.dto.request.BrandCreateRequest;
 import com.proshop.product.dto.request.BrandUpdateRequest;
 import com.proshop.product.dto.response.BrandDeleteResponse;
 import com.proshop.product.dto.response.BrandResponse;
@@ -101,6 +102,71 @@ public class BrandServiceImpl implements BrandService {
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
                 brands,
+                null
+        );
+    }
+    @Override
+    @Transactional
+    public GeneralResponse<BrandResponse> createBrand(BrandCreateRequest request) {
+        // Validate dữ liệu
+        validateBrandCreateRequest(request);
+
+        // Tạo entity mới
+        BrandEntity brand = BrandEntity.builder()
+                .name(request.getName().trim())
+                .slug(request.getSlug().trim())
+                .logoUrl(request.getLogoUrl() != null ? request.getLogoUrl().trim() : null)
+                .build();
+
+        // Lưu DB
+        BrandEntity saved = brandRepository.save(brand);
+
+        // Convert sang DTO
+        BrandResponse response = convertToDTO(saved);
+
+        // Trả về response chung
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
+    }
+
+    private void validateBrandCreateRequest(BrandCreateRequest request) {
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new ResException(ResErrorCode.BRAND_NAME_REQUIRED);
+        }
+        if (request.getSlug() == null || request.getSlug().trim().isEmpty()) {
+            throw new ResException(ResErrorCode.BRAND_SLUG_REQUIRED);
+        }
+        if (brandRepository.existsBySlug(request.getSlug().trim())) {
+            throw new ResException(ResErrorCode.BRAND_ALREADY_EXISTS);
+        }
+    }
+
+    @Override
+    public GeneralResponse<BrandResponse> getBrandById(UUID id) {
+        BrandEntity brand = brandRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
+
+        BrandResponse response = convertToDTO(brand);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
+    }
+    @Override
+    public GeneralResponse<Page<BrandResponse>> getAllBrands(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<BrandEntity> brandPage = brandRepository.findAll(pageable);
+
+        Page<BrandResponse> responsePage = brandPage.map(this::convertToDTO);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responsePage,
                 null
         );
     }

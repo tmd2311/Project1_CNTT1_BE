@@ -1,5 +1,6 @@
 package com.proshop.product.controller;
 
+import com.proshop.product.dto.request.BrandCreateRequest;
 import com.proshop.product.dto.request.BrandUpdateRequest;
 import com.proshop.product.dto.response.BrandDeleteResponse;
 import com.proshop.product.dto.response.BrandResponse;
@@ -45,6 +46,27 @@ public class BrandController {
             @RequestParam(defaultValue = "12") int size) {
 
         GeneralResponse<Page<BrandResponse>> response = brandService.searchBrands(name, page, size);
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/brand")
+    public ResponseEntity<GeneralResponse<BrandResponse>> createBrand(
+            @RequestBody BrandCreateRequest request) {
+
+        GeneralResponse<BrandResponse> response = brandService.createBrand(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/brand/{id}")
+    public ResponseEntity<GeneralResponse<BrandResponse>> getBrandById(@PathVariable UUID id) {
+        GeneralResponse<BrandResponse> response = brandService.getBrandById(id);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/brands")
+    public ResponseEntity<GeneralResponse<Page<BrandResponse>>> getAllBrands(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        GeneralResponse<Page<BrandResponse>> response = brandService.getAllBrands(page, size);
         return ResponseEntity.ok(response);
     }
 

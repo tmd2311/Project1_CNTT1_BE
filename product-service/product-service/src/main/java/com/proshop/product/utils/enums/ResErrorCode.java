@@ -19,7 +19,8 @@ public enum ResErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "P005", "Không tìm thấy danh mục", "Category not found"),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found"),
     BRAND_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "B001", "Tên thương hiệu không được để trống", "Brand name is required"),
-    BRAND_SLUG_REQUIRED(HttpStatus.BAD_REQUEST, "B002", "Slug thương hiệu không được để trống", "Brand slug is required");
+    BRAND_SLUG_REQUIRED(HttpStatus.BAD_REQUEST, "B002", "Slug thương hiệu không được để trống", "Brand slug is required"),
+    BRAND_ALREADY_EXISTS(HttpStatus.CONFLICT, "B004", "Thương hiệu đã tồn tại", "Brand already exists");
 
     private final HttpStatus status;
     private final String code;

@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.UUID;
 
 public interface BrandRepository extends JpaRepository<BrandEntity, UUID> {
-
+    boolean existsBySlug(String slug);
     @Query("""
         SELECT new com.proshop.product.dto.response.BrandResponse(
             b.id,
