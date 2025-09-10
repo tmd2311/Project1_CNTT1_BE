@@ -1,5 +1,6 @@
 package com.proshop.product.service.brand;
 
+import com.proshop.product.dto.request.BrandCreateRequest;
 import com.proshop.product.dto.request.BrandUpdateRequest;
 import com.proshop.product.dto.response.BrandDeleteResponse;
 import com.proshop.product.dto.response.BrandResponse;
@@ -12,4 +13,7 @@ public interface BrandService {
     GeneralResponse<BrandDeleteResponse> deleteBrand(UUID id);
     GeneralResponse<BrandResponse> updateBrand(UUID id, BrandUpdateRequest request);
     GeneralResponse<Page<BrandResponse>> searchBrands(String name, int page, int size);
+    GeneralResponse<BrandResponse> createBrand(BrandCreateRequest request);
+    GeneralResponse<BrandResponse> getBrandById(UUID id);
+    GeneralResponse<Page<BrandResponse>> getAllBrands(int page, int size);
 }
