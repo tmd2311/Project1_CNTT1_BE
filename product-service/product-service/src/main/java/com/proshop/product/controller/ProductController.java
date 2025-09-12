@@ -58,13 +58,18 @@ public class ProductController {
 
     @GetMapping("/product/search")
     public ResponseEntity<GeneralResponse<PageResponse<ProductResponse>>> searchProducts(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) String brand,
+        @RequestParam(required = false) String category,
+        @RequestParam(required = false) Double minPrice,
+        @RequestParam(required = false) Double maxPrice,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "12") int size) {
 
-        GeneralResponse<PageResponse<ProductResponse>> response = productService.searchProducts(name, minPrice, maxPrice, page, size);
+        GeneralResponse<PageResponse<ProductResponse>> response = productService.searchProducts(
+            name, brand, category,
+            minPrice, maxPrice,
+            page, size);
         return ResponseEntity.ok(response);
     }
 
