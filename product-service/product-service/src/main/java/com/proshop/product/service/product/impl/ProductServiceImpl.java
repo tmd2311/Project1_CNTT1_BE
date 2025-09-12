@@ -13,13 +13,16 @@ import com.proshop.product.entity.CategoryEntity;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.SKUEntity;
 import com.proshop.product.exceptions.ResException;
-import com.proshop.product.mapper.ProductMapper;
 import com.proshop.product.repository.BrandRepository;
 import com.proshop.product.repository.CategoryRepository;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
 
 
+import com.proshop.product.specification.ProductSpecification;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -29,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +47,31 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public GeneralResponse<PageResponse<ProductResponse>> getProducts(int page, int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-    Page<ProductResponse> productPage = productRepository.findAllProductDTO(pageable);
-    PageResponse pageResponse = PageResponseUtil.buildPageResponse(productPage);
-    pageResponse.setContent(productPage.getContent()); // bạn có thể thêm field data vào PageResponse nếu cần
+    List<ProductEntity> productEntityList = productRepository.findAll();
+    List<ProductResponse> productResponses = new ArrayList<>();
+    for (ProductEntity entity : productEntityList) {
+      ProductResponse response = convertToDTO(entity);
+      productResponses.add(response);
+    }
+    long totalElements = productResponses.size();
+
+    // Tính start & end index để phân trang
+    int start = page * size;
+    int end = Math.min(start + size, productResponses.size());
+
+    // Nếu page vượt quá số phần tử thì trả về empty list
+    List<ProductResponse> pageContent = start < totalElements
+        ? productResponses.subList(start, end)
+        : Collections.emptyList();
+
+    // Tạo PageResponse
+    PageResponse<ProductResponse> pageResponse = PageResponseUtil.buildPageResponse(
+        pageContent,
+        totalElements,
+        page,
+        size
+    );
+
     return new GeneralResponse<>(
         ResponseStatus.SUCCESS_STATUS,
         pageResponse,
@@ -56,13 +80,18 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ProductResponse getProductById(String idStr) {
+  public GeneralResponse<ProductResponse> getProductById(String idStr) {
     UUID id = covertIdToUUID(idStr);
     ProductEntity entity = productRepository.findProductById(id);
     if (entity == null) {
       throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND);
     }
-    return convertToDTO(entity);
+    ProductResponse productResponse = convertToDTO(entity);
+    return new GeneralResponse<>(
+        ResponseStatus.SUCCESS_STATUS,
+        productResponse,
+        null
+    );
   }
 
   private static UUID covertIdToUUID(String idStr) {
@@ -83,11 +112,7 @@ public class ProductServiceImpl implements ProductService {
       UUID id = covertIdToUUID(idStr);
       ProductEntity product = productRepository.findById(id).orElse(null);
       if (product == null) {
-          return new GeneralResponse<>(
-                  new ResponseStatus("404", "Không tìm thấy sản phẩm", "Not Found"),
-                  null,
-                  null
-          );
+          throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND);
       }
 
       ProductDeleteResponse data = new ProductDeleteResponse(product.getId(), product.getName());
@@ -165,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
+        dto.setSpecs(entity.getSpecs());
 
         if (entity.getBrand() != null) {
             dto.setBrandName(entity.getBrand().getName());
@@ -187,30 +213,40 @@ public class ProductServiceImpl implements ProductService {
         return dto;
     }
 
-    @Override
-    public GeneralResponse<PageResponse<ProductResponse>> searchProducts(String name, Double minPrice, Double maxPrice, int page, int size) {
-        // Clean parameters
-        if (name != null) {
-            name = name.trim();
-            if (name.isEmpty()) {
-                name = null;
-            }
-        }
+  @Override
+  public GeneralResponse<PageResponse<ProductResponse>> searchProducts(
+      String name, String brand, String category,
+      Double minPrice, Double maxPrice,
+      int page, int size) {
 
-        // Tạo Pageable với sort
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    Specification<ProductEntity> spec = ProductSpecification.hasName(name)
+        .and(ProductSpecification.hasBrand(brand))
+        .and(ProductSpecification.hasCategory(category))
+        .and(ProductSpecification.priceBetween(minPrice, maxPrice));
 
-        // Gọi repository với pagination
-        Page<ProductResponse> products = productRepository.searchProducts(name, minPrice, maxPrice, pageable);
-        PageResponse<ProductResponse> pageResponse = PageResponseUtil.buildPageResponse(products);
+    Pageable pageable = PageRequest.of(page, size);
 
-        return new GeneralResponse<>(
-                ResponseStatus.SUCCESS_STATUS,
-                pageResponse,
-                null
-        );
-    }
-    @Override
+    Page<ProductEntity> productPage = productRepository.findAll(spec, pageable);
+
+    List<ProductResponse> productResponses = productPage
+        .map(this::convertToDTO)
+        .getContent();
+
+    PageResponse<ProductResponse> pageResponse = PageResponseUtil.buildPageResponse(
+        productResponses,
+        productPage.getTotalElements(),
+        page,
+        size
+    );
+
+    return new GeneralResponse<>(
+        ResponseStatus.SUCCESS_STATUS,
+        pageResponse,
+        null
+    );
+  }
+
+  @Override
     @Transactional
     public GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request) {
         validateProductCreationRequest(request);
@@ -233,16 +269,7 @@ public class ProductServiceImpl implements ProductService {
 
         // map sang ProductResponse
         // TODO: Sau này bổ sung logic để lấy SKU và giá (price) cho ProductResponse
-        ProductResponse response = new ProductResponse(
-                saved.getId(),
-                saved.getName(),
-                saved.getDescription(),
-                saved.getBrand() != null ? saved.getBrand().getName() : null,
-                saved.getCategory() != null ? saved.getCategory().getName() : null,
-                null, // price: chưa có SKU nên để null
-                saved.getImages() != null && !saved.getImages().isEmpty()
-                        ? saved.getImages().get(0).getUrl() : null // lấy thumbnail đầu tiên nếu có
-        );
+        ProductResponse response = convertToDTO(saved);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
