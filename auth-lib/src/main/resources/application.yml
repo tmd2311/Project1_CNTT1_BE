@@ -1,0 +1,4 @@
+
+jwt:
+  public-key-path: classpath:key/public.pem
+  expiration: 3600000
