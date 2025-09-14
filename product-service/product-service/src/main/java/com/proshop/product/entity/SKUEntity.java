@@ -1,13 +1,13 @@
 package com.proshop.product.entity;
 
-import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.*;
 
 import java.util.UUID;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 
 @Entity
@@ -31,7 +31,7 @@ public class SKUEntity {
   private String skuCode;
 
   // variant JSONB: màu, RAM, SSD…
-  @Type(JsonType.class)
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "jsonb")
   private Map<String, Object> specs;
 

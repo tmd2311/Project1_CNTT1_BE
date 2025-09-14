@@ -3,6 +3,14 @@
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <artifactId>product-service</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>Product Service</name>
+  <parent>
+    <groupId>com.proshop</groupId>
+    <artifactId>proshop-backend</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
 
   <build>
     <plugins>
@@ -102,11 +110,6 @@
     </dependency>
 
     <dependency>
-      <artifactId>hibernate-types-60</artifactId>
-      <groupId>com.vladmihalcea</groupId>
-      <version>2.21.1</version> <!-- phiên bản mới nhất -->
-    </dependency>
-    <dependency>
       <artifactId>commons-lang3</artifactId>
       <groupId>org.apache.commons</groupId>
       <version>3.13.0</version> <!-- hoặc phiên bản mới nhất -->
@@ -124,6 +127,12 @@
       <version>1.5.5.Final</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.proshop</groupId>
+      <artifactId>auth-lib</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+
   </dependencies>
   <dependencyManagement>
     <dependencies>
@@ -139,22 +148,4 @@
   <description>Handles product management (CRUD, categories, inventory)</description>
   <groupId>com.proshop</groupId>
   <modelVersion>4.0.0</modelVersion>
-
-  <name>Product Service</name>
-
-  <parent>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <groupId>org.springframework.boot</groupId>
-    <relativePath/>
-    <version>3.5.4</version> <!-- lookup parent from repository -->
-  </parent>
-
-  <properties>
-    <java.version>17</java.version>
-    <spring-cloud.version>2025.0.0</spring-cloud.version>
-  </properties>
-
-  <version>0.0.1-SNAPSHOT</version>
-
-
 </project>

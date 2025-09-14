@@ -6,10 +6,9 @@ import java.util.Map;
 import lombok.*;
 
 import java.util.UUID;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
-import com.vladmihalcea.hibernate.type.json.JsonType;
-
 
 @Entity
 @Table(name = "product")
@@ -37,7 +36,7 @@ public class ProductEntity {
   @Column(columnDefinition = "TEXT")
   private String description;
 
-  @Type(JsonType.class)
+  @JdbcTypeCode(SqlTypes.JSON)  // Thay đổi ở đây
   @Column(columnDefinition = "jsonb")
   private Map<String, Object> specs;
 
@@ -46,7 +45,6 @@ public class ProductEntity {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<ProductImageEntity> images;
-
 
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;

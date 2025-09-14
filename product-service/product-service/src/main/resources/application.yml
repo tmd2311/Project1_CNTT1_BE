@@ -29,3 +29,15 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+logging:
+  level:
+    root: INFO                        # mức log mặc định
+    org.springframework: INFO         # log cho Spring
+    org.hibernate.SQL: DEBUG          # hiển thị câu SQL
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # hiển thị giá trị bind parameter
+#  file:
+#    name: logs/product-service.log     # log ra file (tùy chọn)
+
+jwt:
+  public-key-path: classpath:key/public.pem
+  expiration: 3600000
