@@ -161,4 +161,13 @@ public class CategoryController {
         GeneralResponse<List<CategoryResponse>> response = categoryService.getPeripheralCategories();
         return ResponseEntity.ok(response);
     }
+    /**
+    * Get categories suitable for desktop-pcs
+     */
+    @GetMapping("/category/desktop-pcs")
+    public ResponseEntity<GeneralResponse<List<CategoryResponse>>> getDesktopPCCategories() {
+        GeneralResponse<List<CategoryResponse>> response = categoryService.getDesktopPCCategories();
+        return ResponseEntity.ok(response);
+    }
+
 }
