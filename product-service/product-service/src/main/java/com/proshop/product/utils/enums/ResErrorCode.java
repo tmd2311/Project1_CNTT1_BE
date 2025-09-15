@@ -31,7 +31,8 @@ public enum ResErrorCode {
     CATEGORY_SLUG_INVALID_FORMAT(HttpStatus.BAD_REQUEST, "C011", "Định dạng slug danh mục không hợp lệ", "Category slug format invalid"),
     CATEGORY_MAX_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "C012", "Vượt quá độ sâu phân cấp tối đa", "Maximum hierarchy depth exceeded"),
     CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "C013", "Không thể xóa danh mục đang chứa sản phẩm", "Cannot delete category that contains products"),
-    CATEGORY_HAS_CHILDREN(HttpStatus.BAD_REQUEST, "C014", "Không thể xóa danh mục đang có danh mục con", "Cannot delete category that has subcategories");
+    CATEGORY_HAS_CHILDREN(HttpStatus.BAD_REQUEST, "C014", "Không thể xóa danh mục đang có danh mục con", "Cannot delete category that has subcategories"),
+    CATEGORY_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "C015", "Tên danh mục không được để trống", "Category name is required");
 
 
     private final HttpStatus status;

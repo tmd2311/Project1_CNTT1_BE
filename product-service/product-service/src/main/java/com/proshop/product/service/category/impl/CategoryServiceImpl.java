@@ -19,8 +19,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,8 +52,14 @@ public class CategoryServiceImpl implements CategoryService {
             );
         }
 
-        // TODO: Check if category has products (should be validated in business logic)
-        // This would require a ProductRepository to check if any products are assigned to this category
+        // Check if category has products
+        if (categoryRepository.hasProducts(id)) {
+            return new GeneralResponse<>(
+                    new ResponseStatus("400", "Không thể xóa danh mục đang có sản phẩm", "Cannot delete category with products"),
+                    null,
+                    null
+            );
+        }
 
         CategoryDeleteResponse data = new CategoryDeleteResponse(category.getId(), category.getName());
         categoryRepository.deleteById(id);
@@ -64,8 +72,55 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request) {
-        return null;
+        // Validation
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new ResException(ResErrorCode.CATEGORY_NAME_REQUIRED);
+        }
+
+        if (request.getName().trim().length() < 2) {
+            throw new ResException(ResErrorCode.CATEGORY_NAME_TOO_SHORT);
+        }
+
+        // Check slug uniqueness if provided
+        if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
+            if (categoryRepository.existsBySlug(request.getSlug().trim())) {
+                throw new ResException(ResErrorCode.CATEGORY_SLUG_ALREADY_EXISTS);
+            }
+
+            // Validate slug format
+            if (!request.getSlug().matches("^[a-z0-9-]+$")) {
+                throw new ResException(ResErrorCode.CATEGORY_SLUG_INVALID_FORMAT);
+            }
+        }
+
+        // Create new category
+        CategoryEntity category = new CategoryEntity();
+        category.setName(request.getName().trim());
+        category.setSlug(request.getSlug() != null ? request.getSlug().trim() : generateSlugFromName(request.getName()));
+
+        // Handle parent category
+        if (request.getParentId() != null) {
+            CategoryEntity parent = categoryRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_PARENT_NOT_FOUND));
+
+            // Validate hierarchy depth
+            if (getHierarchyDepth(parent) >= 3) {
+                throw new ResException(ResErrorCode.CATEGORY_MAX_DEPTH_EXCEEDED);
+            }
+
+            category.setParent(parent);
+        }
+
+        CategoryEntity saved = categoryRepository.save(category);
+        CategoryResponse response = convertToDTO(saved);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
     }
 
     @Override
@@ -148,94 +203,286 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getRootCategories() {
-        return null;
+        List<CategoryEntity> rootCategories = categoryRepository.findByParentIsNull(
+                Sort.by(Sort.Direction.ASC, "name"));
+
+        List<CategoryResponse> responses = rootCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<CategoryResponse> getCategoryWithChildren(UUID id) {
-        return null;
+        CategoryEntity category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        CategoryResponse response = convertToDTOWithChildren(category);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getCategoryChildren(UUID id) {
-        return null;
+        CategoryEntity category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        List<CategoryResponse> children = category.getChildren().stream()
+                .map(this::convertToDTO)
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                children,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getCategoryBreadcrumb(UUID id) {
-        return null;
+        CategoryEntity category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        List<CategoryResponse> breadcrumb = new ArrayList<>();
+        CategoryEntity current = category;
+
+        // Build breadcrumb from current to root
+        while (current != null) {
+            breadcrumb.add(0, convertToDTO(current)); // Add to beginning
+            current = current.getParent();
+        }
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                breadcrumb,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<CategoryResponse> getCategoryBySlug(String slug) {
-        return null;
+        CategoryEntity category = categoryRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        CategoryResponse response = convertToDTO(category);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getCategoriesByType(String type, int page, int size) {
-        return null;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+
+        List<CategoryEntity> categories;
+        switch (type.toUpperCase()) {
+            case "ROOT":
+                categories = categoryRepository.findByParentIsNull(Sort.by(Sort.Direction.ASC, "name"));
+                break;
+            case "LAPTOP":
+                categories = categoryRepository.findCategoriesByRootName("laptop", pageable).getContent();
+                break;
+            case "COMPONENT":
+                categories = categoryRepository.findCategoriesByRootName("component", pageable).getContent();
+                break;
+            default:
+                categories = categoryRepository.findAll(pageable).getContent();
+        }
+
+        List<CategoryResponse> responses = categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getLaptopCategories() {
-        return null;
+        List<CategoryEntity> laptopCategories = categoryRepository.findCategoriesByRootName("laptop");
+
+        List<CategoryResponse> responses = laptopCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getComponentCategories() {
-        return null;
+        List<CategoryEntity> componentCategories = categoryRepository.findCategoriesByRootName("component");
+
+        List<CategoryResponse> responses = componentCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getPeripheralCategories() {
-        return null;
+        List<CategoryEntity> peripheralCategories = categoryRepository.findCategoriesByRootName("peripheral");
+
+        List<CategoryResponse> responses = peripheralCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getDesktopPCCategories() {
-        return null;
+        List<CategoryEntity> desktopCategories = categoryRepository.findCategoriesByRootName("desktop");
+
+        List<CategoryResponse> responses = desktopCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getStorageCategories() {
-        return null;
+        List<CategoryEntity> storageCategories = categoryRepository.findCategoriesByRootName("storage");
+
+        List<CategoryResponse> responses = storageCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getCoolingCategories() {
-        return null;
+        List<CategoryEntity> coolingCategories = categoryRepository.findCategoriesByRootName("cooling");
+
+        List<CategoryResponse> responses = coolingCategories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public boolean existsById(UUID id) {
-        return false;
+        return categoryRepository.existsById(id);
     }
 
     @Override
     public boolean existsBySlug(String slug) {
-        return false;
+        return categoryRepository.existsBySlug(slug);
     }
 
     @Override
     public GeneralResponse<CategoryResponse> getCategoryById(UUID id) {
-        return null;
+        CategoryEntity category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        CategoryResponse response = convertToDTO(category);
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                response,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getAllCategories() {
-        return null;
+        List<CategoryEntity> categories = categoryRepository.findAll(
+                Sort.by(Sort.Order.asc("parent.name").nullsFirst(), Sort.Order.asc("name")));
+
+        List<CategoryResponse> responses = categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<List<CategoryResponse>> getCategoriesByParentId(UUID parentId) {
-        return null;
+        List<CategoryEntity> categories = categoryRepository.findByParentId(parentId,
+                Sort.by(Sort.Direction.ASC, "name"));
+
+        List<CategoryResponse> responses = categories.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                responses,
+                null
+        );
     }
 
     @Override
     public GeneralResponse<Long> getProductCountInCategory(UUID categoryId, boolean includeSubcategories) {
-        return null;
+        // Validate category exists
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ResException(ResErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        Long count;
+        if (includeSubcategories) {
+            // Count products in category and all its subcategories
+            count = categoryRepository.countProductsInCategoryTree(categoryId);
+        } else {
+            // Count products only in this specific category
+            count = categoryRepository.countProductsInCategory(categoryId);
+        }
+
+        return new GeneralResponse<>(
+                ResponseStatus.SUCCESS_STATUS,
+                count,
+                null
+        );
     }
 
+    // Helper methods
     private void validateCategoryUpdateRequest(CategoryUpdateRequest request) {
         if (request.getName() != null && request.getName().trim().length() < 2) {
             throw new ResException(ResErrorCode.CATEGORY_NAME_TOO_SHORT);
@@ -251,9 +498,6 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
-    /**
-     * Check if potential parent is a descendant of current category (prevent circular reference)
-     */
     private boolean isDescendant(CategoryEntity potentialParent, UUID categoryId) {
         if (potentialParent.getParent() == null) {
             return false;
@@ -266,9 +510,6 @@ public class CategoryServiceImpl implements CategoryService {
         return isDescendant(potentialParent.getParent(), categoryId);
     }
 
-    /**
-     * Get the depth of category hierarchy
-     */
     private int getHierarchyDepth(CategoryEntity category) {
         int depth = 1;
         CategoryEntity current = category;
@@ -279,6 +520,14 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         return depth;
+    }
+
+    private String generateSlugFromName(String name) {
+        return name.toLowerCase()
+                .replaceAll("[^a-zA-Z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-")
+                .replaceAll("^-|-$", "");
     }
 
     private CategoryResponse convertToDTO(CategoryEntity category) {
@@ -313,9 +562,22 @@ public class CategoryServiceImpl implements CategoryService {
         return builder.build();
     }
 
-    /**
-     * Determine category type based on hierarchy for PC store
-     */
+    private CategoryResponse convertToDTOWithChildren(CategoryEntity category) {
+        CategoryResponse response = convertToDTO(category);
+
+        if (category.getChildren() != null && !category.getChildren().isEmpty()) {
+            List<CategoryResponse> children = category.getChildren().stream()
+                    .map(this::convertToDTO)
+                    .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                    .collect(Collectors.toList());
+
+            // Assuming CategoryResponse has a children field
+            // response.setChildren(children);
+        }
+
+        return response;
+    }
+
     private String determineCategoryType(CategoryEntity category) {
         if (category.getParent() == null) {
             return "ROOT"; // Laptops, Desktop PCs, PC Components, Peripherals
