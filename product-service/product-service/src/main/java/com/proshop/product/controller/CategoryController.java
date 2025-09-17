@@ -2,6 +2,7 @@ package com.proshop.product.controller;
 
 import com.proshop.product.dto.request.CategoryCreateRequest;
 import com.proshop.product.dto.request.CategoryUpdateRequest;
+import com.proshop.product.dto.response.BrandResponse;
 import com.proshop.product.dto.response.CategoryDeleteResponse;
 import com.proshop.product.dto.response.CategoryResponse;
 import com.proshop.product.dto.response.GeneralResponse;
@@ -52,6 +53,20 @@ public class CategoryController {
         GeneralResponse<Page<CategoryResponse>> response = categoryService.searchCategories(name, page, size);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/category/{id}")
+    public ResponseEntity<GeneralResponse<CategoryResponse>> getCategoryById(@PathVariable UUID id) {
+        GeneralResponse<CategoryResponse> response = categoryService.getCategoryById(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<GeneralResponse<List<CategoryResponse>>> getAllCategories() {
+        GeneralResponse<List<CategoryResponse>> response = categoryService.getAllCategories();
+        return ResponseEntity.ok(response);
+    }
+
+
 
     // ========== ADDITIONAL ENDPOINTS FOR PC STORE ==========
 

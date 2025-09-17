@@ -418,6 +418,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryEntity category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
 
+
         CategoryResponse response = convertToDTO(category);
 
         return new GeneralResponse<>(

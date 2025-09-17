@@ -233,7 +233,7 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Count products in a specific category (placeholder - requires Product entity)
      */
     @Query("""
-        SELECT COUNT(p) 
+        SELECT COUNT(p)
         FROM ProductEntity p 
         WHERE p.category.id = :categoryId
         """)
@@ -243,8 +243,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Count products in category tree (category and all subcategories)
      */
     @Query("""
-        SELECT COUNT(p) 
-        FROM ProductEntity p 
+        SELECT COUNT(p)
+        FROM ProductEntity p
         WHERE p.category.id = :categoryId OR
               p.category.parent.id = :categoryId OR
               p.category.parent.parent.id = :categoryId
@@ -266,12 +266,12 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      */
     @Query("""
         SELECT MAX(
-            CASE 
+            CASE
                 WHEN c.parent IS NULL THEN 1
                 WHEN c.parent.parent IS NULL THEN 2
                 ELSE 3
             END
-        ) 
+        )
         FROM CategoryEntity c
         """)
     Integer getMaxHierarchyDepth();
@@ -282,8 +282,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Check if category has children
      */
     @Query("""
-        SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END 
-        FROM CategoryEntity c 
+        SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
+        FROM CategoryEntity c
         WHERE c.parent.id = :categoryId
         """)
     boolean hasChildren(@Param("categoryId") UUID categoryId);
@@ -292,8 +292,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Check if category has products (requires Product entity)
      */
     @Query("""
-        SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END 
-        FROM ProductEntity p 
+        SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+        FROM ProductEntity p
         WHERE p.category.id = :categoryId
         """)
     boolean hasProducts(@Param("categoryId") UUID categoryId);
@@ -302,10 +302,10 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Find categories without children (leaf categories)
      */
     @Query("""
-        SELECT c 
-        FROM CategoryEntity c 
+        SELECT c
+        FROM CategoryEntity c
         WHERE NOT EXISTS (
-            SELECT 1 FROM CategoryEntity child 
+            SELECT 1 FROM CategoryEntity child
             WHERE child.parent = c
         )
         """)
@@ -315,8 +315,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Find categories without products
      */
     @Query("""
-        SELECT c 
-        FROM CategoryEntity c 
+        SELECT c
+        FROM CategoryEntity c
         WHERE NOT EXISTS (
             SELECT 1 FROM ProductEntity p 
             WHERE p.category = c
@@ -330,8 +330,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
      * Find all categories with their children count
      */
     @Query("""
-        SELECT c, SIZE(c.children) as childrenCount 
-        FROM CategoryEntity c 
+        SELECT c, SIZE(c.children) as childrenCount
+        FROM CategoryEntity c
         ORDER BY c.name
         """)
     List<Object[]> findAllWithChildrenCount();
