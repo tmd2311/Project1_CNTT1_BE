@@ -51,7 +51,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
   private LocalDateTime lastLogin;
 
   @Column(name = "status", length = 20)
-  private String status;
+  private String status = UserStatus.ACTIVE.toString();
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -68,7 +68,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
   @Override
   public boolean isAccountNonExpired() {
-    return status.equals(UserStatus.ACTIVE.name());
+    return UserStatus.ACTIVE.name().equals(status);
   }
 
   @Override
