@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional(readOnly = true)
   public GeneralResponse<PageResponse<UserInfoResponse>> getAllUsers(Pageable pageable) {
-    Page<UserEntity> usersPage = userRepository.findAll(pageable);
+    Page<UserEntity> usersPage = userRepository.findAllByDeletedFalse(pageable);
     List<UserInfoResponse> listUserInfoResponses = new ArrayList<>();
     UserInfoResponse userInfoResponse;
     for (UserEntity user : usersPage) {

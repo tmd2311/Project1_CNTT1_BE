@@ -28,5 +28,9 @@ public interface UserService {
    */
   void softDeleteUser(Long id);
 
+  /**
+   * Tìm kiếm user
+   */
+
 
 }

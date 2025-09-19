@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,4 +34,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   boolean existsByEmail(
       @NotBlank(message = "Email is required") @Email(message = "Invalid email format") String email);
+
+  Page<UserEntity> findAllByDeletedFalse(Pageable pageable);
+
 }
