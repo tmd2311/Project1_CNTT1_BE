@@ -40,7 +40,8 @@ public class SecurityConfig {
       "/*/*.html",
       "/*/*.css",
       "/*/*.js",
-      "/api/auth/**"
+      "/api/auth/**",
+      "/actuator/health"
   };
 
   private static final String ALL_ORIGINS = "*";
