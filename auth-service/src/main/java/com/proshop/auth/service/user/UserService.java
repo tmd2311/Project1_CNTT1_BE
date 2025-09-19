@@ -22,4 +22,11 @@ public interface UserService {
    * Xóa cứng user
    */
   void deleteUser(Long id);
+
+  /**
+   * Xóa mềm user
+   */
+  void softDeleteUser(Long id);
+
+
 }

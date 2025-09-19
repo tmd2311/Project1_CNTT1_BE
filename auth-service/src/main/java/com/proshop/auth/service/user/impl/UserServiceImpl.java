@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
     log.info("Deactivating user with ID: {}", id);
     UserEntity userEntity = userRepository.findById(id)
         .orElseThrow(() -> new ResException(ResErrorCode.USER_NOT_FOUND));
-    userEntity.setDeleted(true);
+    userEntity.setStatus(UserStatus.INACTIVE.name());
     userRepository.save(userEntity);
     log.info("Deactivated user successfully with ID: {}", id);
   }
@@ -82,6 +82,17 @@ public class UserServiceImpl implements UserService {
     }
     userRepository.deleteById(id);
     log.info("Deleted user successfully with ID: {}", id);
+  }
+
+  @Override
+  public void softDeleteUser(Long id) {
+    log.info("Soft deleting user with ID: {}", id);
+    UserEntity userEntity = userRepository.findById(id)
+        .orElseThrow(() -> new ResException(ResErrorCode.USER_NOT_FOUND));
+    userEntity.setDeleted(true);
+    userEntity.setStatus(UserStatus.INACTIVE.name());
+    userRepository.save(userEntity);
+    log.info("Soft deleted user successfully with ID: {}", id);
   }
 
 
