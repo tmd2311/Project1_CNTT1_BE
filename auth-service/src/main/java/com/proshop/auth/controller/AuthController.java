@@ -3,8 +3,12 @@ package com.proshop.auth.controller;
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
 import com.proshop.auth.dto.request.RegisterRequest;
+import com.proshop.auth.dto.request.ResetPasswordRequest;
+import com.proshop.auth.dto.request.SendOtpRequest;
+import com.proshop.auth.dto.request.VerifyOtpRequest;
 import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.LoginResponse;
+import com.proshop.auth.dto.response.OtpResponse;
 import com.proshop.auth.dto.response.ResponseFactory;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.service.auth.AuthService;
@@ -46,6 +50,7 @@ public class AuthController {
     return ResponseFactory.success(response);
   }
 
+
   @PostMapping("/auth/register")
   public ResponseEntity<GeneralResponse<UserInfoResponse>> register(
       @Valid @RequestBody RegisterRequest request) {
@@ -58,4 +63,21 @@ public class AuthController {
     Boolean result = authService.logout(authHeader);
     return ResponseFactory.success(result);
   }
+
+  @PostMapping("/auth/forgot-password")
+  public ResponseEntity<GeneralResponse<OtpResponse>> sendOtp(@RequestBody SendOtpRequest request) {
+    return ResponseFactory.success(authService.sendOtp(request));
+  }
+
+  @PostMapping("/auth/verify-otp")
+  public ResponseEntity<GeneralResponse<OtpResponse>> verifyOtp(@RequestBody VerifyOtpRequest request) {
+    return ResponseFactory.success(authService.verifyOtp(request));
+  }
+
+  @PostMapping("/auth/reset-password")
+  public ResponseEntity<GeneralResponse<OtpResponse>> resetPassword(@RequestBody ResetPasswordRequest request) {
+    return ResponseFactory.success(authService.resetPassword(request));
+  }
+
+
 }

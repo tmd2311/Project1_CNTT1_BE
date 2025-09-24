@@ -41,7 +41,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
   @Column(name = "phone", length = 20)
   private String phone;
 
-  @Column(name = "avatar_url", length = 255)
+  @Column(name = "avatar_url", length = 5000)
   private String avatarUrl;
 
   @Column(name = "current_address", columnDefinition = "TEXT")

@@ -3,7 +3,11 @@ package com.proshop.auth.service.auth;
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
 import com.proshop.auth.dto.request.RegisterRequest;
+import com.proshop.auth.dto.request.ResetPasswordRequest;
+import com.proshop.auth.dto.request.SendOtpRequest;
+import com.proshop.auth.dto.request.VerifyOtpRequest;
 import com.proshop.auth.dto.response.LoginResponse;
+import com.proshop.auth.dto.response.OtpResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.UserEntity;
 
@@ -19,4 +23,11 @@ public interface AuthService {
   UserInfoResponse register(RegisterRequest request);
 
   Boolean logout(String token);
+
+  OtpResponse sendOtp(SendOtpRequest request);
+
+  OtpResponse verifyOtp(VerifyOtpRequest request);
+
+  OtpResponse resetPassword(ResetPasswordRequest request);
+
 }

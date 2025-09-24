@@ -28,7 +28,7 @@ public class RegisterRequest {
 
   @NotBlank(message = "Full name is required")
   @Size(max = 100, message = "Full name must not exceed 100 characters")
-  private String fullName;
+  private String fullname;
 
   @Pattern(regexp = "^(\\+84|0)[0-9]{9,10}$", message = "Invalid phone number format")
   private String phone;
