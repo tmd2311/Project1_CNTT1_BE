@@ -117,7 +117,6 @@ public class ProductServiceImpl implements ProductService {
 
       ProductDeleteResponse data = new ProductDeleteResponse(product.getId(), product.getName());
       productRepository.deleteById(id);
-
       return new GeneralResponse<>(
               ResponseStatus.SUCCESS_STATUS,
               data,

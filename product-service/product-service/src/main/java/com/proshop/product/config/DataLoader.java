@@ -29,7 +29,7 @@ public class DataLoader {
         BrandRepository brandRepository,
         SKURepository skuRepository,
         CategoryImageRepository categoryImageRepository,
-        ProductImageRepository productImageRepository // 👈 thêm repository cho product image
+        ProductImageRepository productImageRepository
     ) {
 
         return args -> {

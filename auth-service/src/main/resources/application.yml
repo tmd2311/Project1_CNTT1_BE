@@ -16,7 +16,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/authen_user
     username: postgres
-    password: 123456
+    password: Ch@/12345678
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -32,7 +32,40 @@ spring:
       port: 6379
       password:
       expired-time: 60  # minutes
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tuquocchung@gmail.com
+    password: ddksvamtucophvxe
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:1058553511851-5nrg1p9brkjk85vb3o8hl50gt4vcaqp3.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET: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}
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8081/login/oauth2/code/google}
+            scope:
+               - profile
+               - email
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth?prompt=consent
+            token-uri: https://www.googleapis.com/oauth2/v4/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+    default-encoding: UTF-8
 jwt:
   private-key-path: classpath:key/private.pem
   public-key-path: classpath:key/public.pem
   expiration: 3600000
+
+
+
