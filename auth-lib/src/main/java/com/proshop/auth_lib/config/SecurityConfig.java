@@ -14,10 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -58,7 +54,6 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http,
-      CorsConfigurationSource corsConfigurationSource,
       JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
 
     logger.debug("Configuring security filter chain");
@@ -74,22 +69,5 @@ public class SecurityConfig {
 
     logger.debug("Security filter chain configuration completed");
     return http.build();
-  }
-
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    logger.debug("Configuring cors configuration source");
-
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of("*")); // hỗ trợ wildcard
-    configuration.setAllowedMethods(ALLOWED_METHODS);
-    configuration.setAllowedHeaders(ALLOWED_HEADERS);
-    configuration.setExposedHeaders(EXPOSE_HEADERS);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    logger.debug("Configuring cors configuration source completed");
-    return source;
   }
 }
