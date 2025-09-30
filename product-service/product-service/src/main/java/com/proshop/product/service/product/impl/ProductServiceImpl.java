@@ -209,8 +209,14 @@ public class ProductServiceImpl implements ProductService {
                     .min(Double::compareTo)
                     .orElse(null));
         }
+      if (entity.getImages() != null && !entity.getImages().isEmpty()) {
+        entity.getImages().stream()
+            .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+            .findFirst()
+            .ifPresent(primaryImage -> dto.setThumbnailUrl(primaryImage.getUrl()));
+      }
 
-        return dto;
+      return dto;
     }
 
   @Override

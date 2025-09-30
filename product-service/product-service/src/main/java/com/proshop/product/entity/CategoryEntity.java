@@ -30,4 +30,7 @@ public class CategoryEntity {
 
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
   private List<CategoryEntity> children;
+
+  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<CategoryImageEntity> images;
 }
