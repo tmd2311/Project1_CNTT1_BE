@@ -1,5 +1,6 @@
 package com.proshop.auth.repository;
 
+import com.proshop.auth.entity.RoleEntity;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.entity.UserRoleEntity;
 import jakarta.validation.constraints.Email;
@@ -26,8 +27,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   Optional<UserEntity> findByEmail(String email);
 
-  @Query("select ur.roleEntity.name from UserRoleEntity ur where ur.userEntity.id = :userId ")
-  List<String> getRoleNamesByUserId(@Param("userId") Long userId);
+  @Query("select ur.roleEntity from UserRoleEntity ur where ur.userEntity.id = :userId ")
+  List<RoleEntity> getRoleByUserId(@Param("userId") Long userId);
 
   boolean existsByAccount(
       @NotBlank(message = "Account is required") @Size(min = 4, max = 50, message = "Account must be between 4 and 50 characters") String account);
@@ -36,5 +37,14 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
       @NotBlank(message = "Email is required") @Email(message = "Invalid email format") String email);
 
   Page<UserEntity> findAllByDeletedFalse(Pageable pageable);
+
+  @Query("""
+        SELECT u FROM UserEntity u
+        LEFT JOIN FETCH u.userRoles ur
+        LEFT JOIN FETCH ur.roleEntity r
+        LEFT JOIN FETCH r.permissions
+        WHERE u.account = :account
+    """)
+  Optional<UserEntity> findByAccountWithRoles(@Param("account") String account);
 
 }

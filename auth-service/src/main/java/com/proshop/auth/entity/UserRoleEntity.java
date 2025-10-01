@@ -1,5 +1,5 @@
 package com.proshop.auth.entity;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -7,6 +7,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Entity
@@ -25,6 +27,7 @@ public class UserRoleEntity extends BaseEntity {
   @JoinColumn(name = "domain_id")
   private DomainEntity domainEntity;
 
-  @Column(name = "context_data", columnDefinition = "jsonb") // jsonb tốt hơn
-  private String contextData;
+  @Column(name = "context_data", columnDefinition = "jsonb")
+  @JdbcTypeCode(SqlTypes.JSON)
+  private JsonNode contextData;
 }
