@@ -35,9 +35,12 @@ public class DataLoader {
             System.out.println("🚀 Starting database initialization...");
 
             // ✅ User sample
-            UUID user1 = UUID.randomUUID();
-            UUID user2 = UUID.randomUUID();
-            UUID user3 = UUID.randomUUID();
+            //UUID user1 = UUID.randomUUID();
+            //UUID user2 = UUID.randomUUID();
+            //UUID user3 = UUID.randomUUID();
+
+            long user1 = 1;
+            long user2 = 2;
 
             // ✅ Product UUIDs giả lập (lấy từ ProductService)
             UUID laptop1 = UUID.fromString("11111111-1111-1111-1111-111111111111");

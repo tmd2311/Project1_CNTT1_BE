@@ -13,7 +13,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class OrderRequest {
-    private UUID userId;
+    private long userId;
     private BigDecimal totalAmount;
     private OrderStatus status;
     private List<OrderItemRequest> items;

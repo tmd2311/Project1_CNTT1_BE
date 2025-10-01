@@ -23,7 +23,7 @@ public class CartEntity {
     private UUID cartId;
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private long userId;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

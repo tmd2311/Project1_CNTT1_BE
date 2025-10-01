@@ -20,7 +20,7 @@ public class OrderEntity {
     private UUID orderId;
 
     @Column(nullable = false)
-    private UUID userId;// Tham chiếu sang Auth Service
+    private long userId;// Tham chiếu sang Auth Service
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)

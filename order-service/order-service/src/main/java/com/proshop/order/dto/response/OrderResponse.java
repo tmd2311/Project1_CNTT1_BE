@@ -15,7 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class OrderResponse {
     private UUID orderId;
-    private UUID userId;
+    private long userId;
     private BigDecimal totalAmount;
     private String status;
     private LocalDateTime createdAt;

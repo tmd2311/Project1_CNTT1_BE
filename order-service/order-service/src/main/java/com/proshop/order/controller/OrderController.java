@@ -1,5 +1,6 @@
 package com.proshop.order.controller;
 
+import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
@@ -29,7 +30,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public GeneralResponse<OrderResponse> createOrder(@RequestBody OrderRequest request) {
+    public GeneralResponse<OrderResponse> createOrder(@RequestBody OrderCreateRequest request) {
         return orderService.createOrder(request);
     }
 

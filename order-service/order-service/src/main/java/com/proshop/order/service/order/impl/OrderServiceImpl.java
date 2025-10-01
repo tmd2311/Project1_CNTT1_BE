@@ -1,11 +1,10 @@
 package com.proshop.order.service.order.impl;
 
 import com.proshop.order.client.ProductClient;
+import com.proshop.order.client.UserClient;
+import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
-import com.proshop.order.dto.response.GeneralResponse;
-import com.proshop.order.dto.response.OrderDeleteResponse;
-import com.proshop.order.dto.response.OrderResponse;
-import com.proshop.order.dto.response.ResponseStatus;
+import com.proshop.order.dto.response.*;
 import com.proshop.order.entity.OrderEntity;
 import com.proshop.order.entity.OrderStatus;
 import com.proshop.order.repository.OrderRepository;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +24,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient; // để sau này gọi sang Product Service
+    private final UserClient userClient;
 
     @Override
     public GeneralResponse<List<OrderResponse>> getAllOrders() {
@@ -63,14 +64,30 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public GeneralResponse<OrderResponse> createOrder(OrderRequest request) {
+    public GeneralResponse<OrderResponse> createOrder(OrderCreateRequest request) {
+        // Lấy user từ User Service
+        UserResponse user = userClient.getUserById(request.getUserId());
+
+        List<ProductResponse> products = request.getItems().stream()
+                .map(item -> productClient.getProductById(item.getProductId())) // gọi FeignClient
+                .toList();
+
+
+        // Tính tổng tiền
+        BigDecimal totalAmount = request.getItems().stream()
+                .map(item -> BigDecimal.valueOf(
+                        productClient.getProductById(item.getProductId()).getPrice() // Double → BigDecimal
+                ).multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+
+        // Tạo OrderEntity
         OrderEntity order = OrderEntity.builder()
-                .userId(request.getUserId())
-                .totalAmount(request.getTotalAmount())
-                .status(OrderStatus.PENDING) // ✅ dùng enum thay vì String
+                .userId(user.getId())
+                .totalAmount(totalAmount)
+                .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
-
         orderRepository.save(order);
 
         OrderResponse data = new OrderResponse(

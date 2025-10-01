@@ -1,5 +1,6 @@
 package com.proshop.order.service.order;
 
+import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
@@ -14,7 +15,7 @@ public interface OrderService {
 
     GeneralResponse<OrderResponse> getOrderById(UUID id);
 
-    GeneralResponse<OrderResponse> createOrder(OrderRequest request);
+    GeneralResponse<OrderResponse> createOrder(OrderCreateRequest request);
 
     GeneralResponse<OrderResponse> updateOrder(UUID id, OrderRequest request);
 

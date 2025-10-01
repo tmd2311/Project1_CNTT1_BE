@@ -13,10 +13,10 @@ public interface CartRepository extends JpaRepository<CartEntity, UUID> {
     /**
      * Tìm giỏ hàng theo userId
      */
-    Optional<CartEntity> findByUserId(UUID userId);
+    Optional<CartEntity> findByUserId(long userId);
 
     /**
      * Kiểm tra user đã có giỏ hàng chưa
      */
-    boolean existsByUserId(UUID userId);
+    boolean existsByUserId(long userId);
 }

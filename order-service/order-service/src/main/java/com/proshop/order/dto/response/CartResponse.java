@@ -14,7 +14,7 @@ import lombok.*;
 @Builder
 public class CartResponse {
     private UUID cartId;
-    private UUID userId;
+    private long userId;
     @Builder.Default
     private List<CartItemResponse> items = new ArrayList<>();
     private LocalDateTime createdAt;

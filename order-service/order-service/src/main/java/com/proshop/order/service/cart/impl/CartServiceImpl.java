@@ -26,7 +26,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
 
     @Override
-    public GeneralResponse<?> addToCart(UUID userId, UUID productId, int quantity) {
+    public GeneralResponse<?> addToCart(long userId, UUID productId, int quantity) {
         // Lấy giỏ hàng hoặc tạo mới
         CartEntity cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -65,7 +65,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public GeneralResponse<?> removeFromCart(UUID userId, UUID productId) {
+    public GeneralResponse<?> removeFromCart(long userId, UUID productId) {
         Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
         if (!cartItemOpt.isPresent()) {
             return new GeneralResponse<>(
@@ -84,7 +84,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public GeneralResponse<?> getCart(UUID userId) {
+    public GeneralResponse<?> getCart(long userId) {
         List<CartItemEntity> items = cartItemRepository.findByUserId(userId);
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -94,7 +94,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public GeneralResponse<?> updateQuantity(UUID userId, UUID productId, int quantity) {
+    public GeneralResponse<?> updateQuantity(long userId, UUID productId, int quantity) {
         Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
         if (!cartItemOpt.isPresent()) {
             return new GeneralResponse<>(

@@ -13,5 +13,5 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OrderDeleteResponse {
     private UUID orderId;
-    private UUID userId;
+    private long userId;
 }

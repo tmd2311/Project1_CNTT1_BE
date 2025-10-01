@@ -1,5 +1,7 @@
 package com.proshop.order.controller;
 
+import com.proshop.order.client.ProductClient;
+import com.proshop.order.client.UserClient;
 import com.proshop.order.dto.response.CartResponse;
 import com.proshop.order.dto.response.ResponseStatus;
 import com.proshop.order.entity.CartEntity;
@@ -23,6 +25,8 @@ public class CartController {
     private final CartService cartService;
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
+    private final ProductClient productClient;
+    private final UserClient userClient;
 
     /**
      * Lấy tất cả giỏ hàng
@@ -42,7 +46,7 @@ public class CartController {
      * Lấy giỏ hàng theo userId
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(@PathVariable UUID userId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(@PathVariable long userId) {
         CartEntity cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
 
@@ -72,7 +76,7 @@ public class CartController {
 
     @PostMapping("/{userId}/add/{productId}")
     public GeneralResponse<?> addToCart(
-            @PathVariable UUID userId,
+            @PathVariable long userId,
             @PathVariable UUID productId,
             @RequestParam int quantity) {
         return cartService.addToCart(userId, productId, quantity);
@@ -80,14 +84,14 @@ public class CartController {
 
     @DeleteMapping("/{userId}/remove/{productId}")
     public GeneralResponse<?> removeFromCart(
-            @PathVariable UUID userId,
+            @PathVariable long userId,
             @PathVariable UUID productId) {
         return cartService.removeFromCart(userId, productId);
     }
 
     @PutMapping("/{userId}/update/{productId}")
     public GeneralResponse<?> updateQuantity(
-            @PathVariable UUID userId,
+            @PathVariable long userId,
             @PathVariable UUID productId,
             @RequestParam int quantity) {
         return cartService.updateQuantity(userId, productId, quantity);
