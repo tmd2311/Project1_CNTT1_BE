@@ -2,7 +2,7 @@ package com.proshop.auth_lib.utils;
 
 
 import com.proshop.auth_lib.config.JwtConfig;
-import com.proshop.auth_lib.exceptions.PrivateKeyInitializationException;
+import com.proshop.exceptionlib.exceptions.PrivateKeyInitializationException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
