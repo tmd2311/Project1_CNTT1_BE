@@ -126,13 +126,11 @@
       <groupId>org.mapstruct</groupId>
       <version>1.5.5.Final</version>
     </dependency>
-
     <dependency>
       <groupId>com.proshop</groupId>
       <artifactId>auth-lib</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
-
   </dependencies>
   <dependencyManagement>
     <dependencies>

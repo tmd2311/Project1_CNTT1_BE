@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class AdminDataInitializer implements CommandLineRunner {
 
   private static final Logger logger = LoggerFactory.getLogger(AdminDataInitializer.class);
+  @Lazy
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
 

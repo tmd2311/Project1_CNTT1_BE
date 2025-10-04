@@ -58,8 +58,8 @@ public enum ResErrorCode {
   INVALID_OTP_TYPE(HttpStatus.BAD_REQUEST, "OTP10", "Kiểu OTP không hợp lệ", "Invalid OTP type"),
   INVALID_MOBILE_NUMBER_FORMAT(HttpStatus.BAD_REQUEST, "OTP11", "Định dạng số điện thoại không hợp lệ",
       "Invalid phone number format"),
-  OTP_VERIFICATION_FAIL(HttpStatus.BAD_REQUEST, "OTP12", "Xác minh OTP thất bại",
-      "OTP verification failed"),
+  OTP_VERIFICATION_FAIL(HttpStatus.BAD_REQUEST, "OTP12", "Xác minh OTP thất bại", "OTP verification failed"),
+  OTP_NOT_VERIFICATION (HttpStatus.BAD_REQUEST, "OTP18", "OTP chưa được xác minh","OTP not verification"),
   MOBILE_REGISTERED(HttpStatus.BAD_REQUEST, "OTP13", "Số điện thoại đã được đăng ký",
       "Phone number already registered"),
   EMAIL_REGISTERED(HttpStatus.BAD_REQUEST, "OTP14", "Email đã được đăng ký",
@@ -107,7 +107,8 @@ public enum ResErrorCode {
   ACCOUNT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SEC03",
       "Tài khoản đã tồn tại", "Account"),
   EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SEC04",
-      "Email đã tồn tại", "Email");
+      "Email đã tồn tại", "Email"),
+  AUTHENTICATION_FAIL (HttpStatus.BAD_REQUEST, "SEC05", "Authentication faild", "Authentication");
 
   // ===== FIELDS =====
   private final HttpStatus status;
