@@ -1,4 +1,4 @@
-package com.proshop.product.utils.enums;
+package com.proshop.exceptionlib.enums;
 
 import org.springframework.http.HttpStatus;
 

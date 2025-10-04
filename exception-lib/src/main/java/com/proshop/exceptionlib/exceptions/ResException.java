@@ -1,7 +1,7 @@
-package com.proshop.product.exceptions;
+package com.proshop.exceptionlib.exceptions;
 
 
-import com.proshop.product.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
