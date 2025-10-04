@@ -41,6 +41,10 @@ public class JwtUtil {
     return getClaims(token).get("user_code", String.class);
   }
 
+  public Long getUserIdFromToken(String token) {
+      return getClaims(token).get("userId",Long.class);
+  }
+
   public boolean validateToken(String token) {
     try {
       getClaims(token);
