@@ -1,4 +1,4 @@
-package com.proshop.product.dto.response;
+package com.proshop.exceptionlib.dto.response;
 
 
 import java.io.Serializable;

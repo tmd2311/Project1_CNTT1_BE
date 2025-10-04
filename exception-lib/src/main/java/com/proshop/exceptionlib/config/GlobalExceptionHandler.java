@@ -1,14 +1,13 @@
-package com.proshop.product.config;
+package com.proshop.exceptionlib.config;
 
-import com.proshop.product.dto.response.ErrorResponse;
-import com.proshop.product.dto.response.ResponseStatus;
-import com.proshop.product.exceptions.ResException;
-import com.proshop.product.utils.enums.ResErrorCode;
+
+import com.proshop.exceptionlib.dto.response.ErrorResponse;
+import com.proshop.exceptionlib.dto.response.ResponseStatus;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

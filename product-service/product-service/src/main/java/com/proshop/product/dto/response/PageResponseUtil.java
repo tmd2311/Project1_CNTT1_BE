@@ -1,8 +1,8 @@
 package com.proshop.product.dto.response;
 
 
-import com.proshop.product.exceptions.ResException;
-import com.proshop.product.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
