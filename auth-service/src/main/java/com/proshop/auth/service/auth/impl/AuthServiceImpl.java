@@ -111,6 +111,7 @@ public class AuthServiceImpl implements AuthService {
     }
     List<String> roleNames = userRepository.getRoleNamesByUserId(entity.getId());
     info.put("domain", domainNames);
+    info.put("userId", entity.getId());
     String token = jwtAuthService.generateAndStoreToken(entity, info);
     LoginResponse loginResponse = loginMapper.toDTO(entity);
     loginResponse.setToken(token);
