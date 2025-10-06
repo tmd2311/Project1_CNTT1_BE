@@ -130,6 +130,12 @@
 			<version>3.13.0</version> <!-- hoặc phiên bản mới nhất -->
 		</dependency>
 
+		<dependency>
+			<groupId>com.proshop</groupId>
+			<artifactId>exception-lib</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
