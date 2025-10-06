@@ -12,7 +12,6 @@ import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.DomainEntity;
 import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
-import com.proshop.auth.exceptions.ResException;
 import com.proshop.auth.mapper.LoginMapper;
 import com.proshop.auth.mapper.UserMapper;
 import com.proshop.auth.repository.DomainRepository;
@@ -22,10 +21,8 @@ import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
 import com.proshop.auth.service.auth.AuthService;
 import com.proshop.auth.utils.JwtUtil;
-import com.proshop.auth.utils.enums.ResErrorCode;
-import jakarta.annotation.PostConstruct;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -262,7 +259,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  public String generateUserCode() {
+  private String generateUserCode() {
     long count = userRepository.count();
     long nextId = count + 1;
     return String.format("USER_%03d", nextId);

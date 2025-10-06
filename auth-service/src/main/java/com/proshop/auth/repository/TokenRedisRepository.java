@@ -2,10 +2,10 @@ package com.proshop.auth.repository;
 
 import static com.proshop.auth.utils.constant.ServiceConstants.REDIS_TOKEN_PREFIX;
 
-import com.proshop.auth.exceptions.ResException;
 import com.proshop.auth.redis.TokenEntity;
 import com.proshop.auth.utils.JsonUtils;
-import com.proshop.auth.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
