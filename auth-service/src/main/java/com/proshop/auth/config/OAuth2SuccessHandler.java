@@ -37,7 +37,6 @@ import org.springframework.stereotype.Component;
 @Transactional
 @Slf4j
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
-
   private final UserRepository userRepository;
   private final SocialProviderRepository providerRepository;
   private final JwtAuthService jwtAuthService;

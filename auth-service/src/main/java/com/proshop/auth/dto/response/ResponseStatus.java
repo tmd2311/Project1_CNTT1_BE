@@ -20,7 +20,6 @@ public class ResponseStatus {
   public static String GENERAL_ERROR_CODE = "40000";
   private String code;
   private String message;
-
   private String label;
 
   public ResponseStatus() {
