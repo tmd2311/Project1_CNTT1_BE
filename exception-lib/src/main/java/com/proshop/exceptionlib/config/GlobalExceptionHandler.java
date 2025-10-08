@@ -1,17 +1,14 @@
-package com.proshop.auth.config;
+package com.proshop.exceptionlib.config;
 
 
-import com.proshop.auth.dto.response.ErrorResponse;
-import com.proshop.auth.dto.response.ResponseStatus;
-import com.proshop.auth.exceptions.ResException;
-import com.proshop.auth.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.dto.response.ErrorResponse;
+import com.proshop.exceptionlib.dto.response.ResponseStatus;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -51,7 +48,6 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
 
-
   @ExceptionHandler(value = Exception.class)
   public Object handleException(HttpServletRequest request, Exception re)
       throws IOException {
@@ -79,11 +75,5 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, ResErrorCode.MISS_PARAM.status());
   }
 
-  public boolean exitsCode(String code) {
-    List<String> resCode = Arrays.asList(ResErrorCode.ACCOUNT_BLOCKED.code(),
-        ResErrorCode.PASS_NOT_EQUAL.code(), ResErrorCode.SAME_PASSWORD.code(),
-        ResErrorCode.OLD_PASSWORD_NOT_VALID.code(), ResErrorCode.INVALID_USER_PASS.code());
-    return resCode.contains(code);
-  }
 
 }

@@ -1,8 +1,9 @@
-package com.proshop.auth_lib.exceptions;
+package com.proshop.exceptionlib.exceptions;
 
 /**
  * Exception thrown when the system fails to initialize the private key, typically due to invalid
  * configuration or file read error.
+ *
  */
 public class PrivateKeyInitializationException extends RuntimeException {
 
