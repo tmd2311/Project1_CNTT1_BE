@@ -336,6 +336,27 @@ public class DataLoader {
                 brandRepository.save(samsungBrand);
 
                 // ========== SAMPLE PRODUCTS ==========
+                // ========== NEW COMPONENTS: MONITORS, MOTHERBOARDS, RAM, GPUS ==========
+
+// 🖥️ MONITORS
+                createMonitorProduct("Samsung Odyssey G5 27\"", samsungBrand, monitorsCategory, productRepository, skuRepository);
+                createMonitorProduct("ASUS TUF Gaming VG249Q1A", asusLaptopBrand, monitorsCategory, productRepository, skuRepository);
+                createMonitorProduct("MSI G27C4 E2", msiBrand, monitorsCategory, productRepository, skuRepository);
+
+// 🧩 MOTHERBOARDS
+                createMotherboardProduct("ASUS PRIME B660M-A WIFI D4", asusLaptopBrand, motherboardCategory, productRepository, skuRepository);
+                createMotherboardProduct("MSI B550M PRO-VDH WIFI", msiBrand, motherboardCategory, productRepository, skuRepository);
+                createMotherboardProduct("Gigabyte Z790 AORUS ELITE AX", asusLaptopBrand, motherboardCategory, productRepository, skuRepository);
+
+// 💾 RAM (Additional Models)
+                createRAMProduct("Corsair Vengeance RGB Pro 16GB", corsairBrand, ramCategory, productRepository, skuRepository);
+                createRAMProduct("Kingston Fury Beast RGB 32GB", kingstonBrand, ramCategory, productRepository, skuRepository);
+
+// 🎮 GRAPHICS CARDS (Additional GPUs)
+                createGPUProduct("MSI RTX 4060 Ti Gaming X", msiBrand, gpuCategory, productRepository, skuRepository);
+                createGPUProduct("ASUS Dual RTX 4080 Super", asusLaptopBrand, gpuCategory, productRepository, skuRepository);
+                createGPUProduct("Gigabyte RTX 3060 Windforce OC", asusLaptopBrand, gpuCategory, productRepository, skuRepository);
+
 
                 // Gaming Laptops
                 createGamingLaptop("ASUS ROG Strix G15", asusLaptopBrand, gamingLaptopsCategory, productRepository, skuRepository);
@@ -567,4 +588,52 @@ public class DataLoader {
 
         skuRepository.save(sku);
     }
+    private void createMonitorProduct(String name, BrandEntity brand, CategoryEntity category,
+                                      ProductRepository productRepository, SKURepository skuRepository) {
+        Map<String, Object> specs = Map.of(
+                "Size", name.contains("27") ? "27 inch" : "24 inch",
+                "Panel", "VA 1500R Curved",
+                "Resolution", "2560x1440 QHD",
+                "Refresh Rate", "165Hz",
+                "Response Time", "1ms"
+        );
+
+        ProductEntity monitor = ProductEntity.builder()
+                .name(name)
+                .category(category)
+                .brand(brand)
+                .description("Màn hình chơi game cong tần số quét cao, hiển thị sống động")
+                .specs(specs)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        productRepository.save(monitor);
+
+        createComponentSKU(monitor, brand, "Monitor", skuRepository, 6500000.0);
+    }
+
+    private void createMotherboardProduct(String name, BrandEntity brand, CategoryEntity category,
+                                          ProductRepository productRepository, SKURepository skuRepository) {
+        Map<String, Object> specs = Map.of(
+                "Chipset", name.contains("B550") ? "AMD B550" : (name.contains("Z790") ? "Intel Z790" : "Intel B660"),
+                "Socket", name.contains("AMD") ? "AM4" : "LGA1700",
+                "Form Factor", "ATX",
+                "RAM Support", "DDR4 / DDR5",
+                "M.2 Slots", "2"
+        );
+
+        ProductEntity mb = ProductEntity.builder()
+                .name(name)
+                .category(category)
+                .brand(brand)
+                .description("Mainboard chất lượng cao, hỗ trợ overclock và PCIe 4.0")
+                .specs(specs)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        productRepository.save(mb);
+
+        createComponentSKU(mb, brand, "Motherboard", skuRepository, 4200000.0);
+    }
+
 }
