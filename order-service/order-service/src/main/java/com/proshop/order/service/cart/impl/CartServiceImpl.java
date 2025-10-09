@@ -1,7 +1,9 @@
 package com.proshop.order.service.cart.impl;
 
 import com.proshop.order.client.ProductClient;
+import com.proshop.order.client.UserClient;
 import com.proshop.order.dto.response.ProductResponse;
+import com.proshop.order.dto.response.UserResponse;
 import com.proshop.order.entity.CartEntity;
 import com.proshop.order.entity.CartItemEntity;
 import com.proshop.order.repository.CartItemRepository;
@@ -9,9 +11,11 @@ import com.proshop.order.repository.CartRepository;
 import com.proshop.order.service.cart.CartService;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.ResponseStatus;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,13 +24,79 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final ProductClient productClient;
+    private final UserClient userClient;
 
     @Override
+    @Transactional
     public GeneralResponse<?> addToCart(long userId, UUID productId, int quantity) {
+        // Validate user exists
+        try {
+            UserResponse user = userClient.getUserById(userId);
+            if (user == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("User not found: {}", userId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling user service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra người dùng", "Error validating user"),
+                    null,
+                    null
+            );
+        }
+
+        // Validate product exists and get product info
+        ProductResponse product;
+        try {
+            product = productClient.getProductById(productId);
+            if (product == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("Product not found: {}", productId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling product service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra sản phẩm", "Error validating product"),
+                    null,
+                    null
+            );
+        }
+
+        // Validate quantity
+        if (quantity <= 0) {
+            return new GeneralResponse<>(
+                    new ResponseStatus("400", "Số lượng phải lớn hơn 0", "Invalid quantity"),
+                    null,
+                    null
+            );
+        }
+
         // Lấy giỏ hàng hoặc tạo mới
         CartEntity cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
@@ -57,6 +127,9 @@ public class CartServiceImpl implements CartService {
         }
 
         cartItemRepository.save(cartItem);
+
+        log.info("Added product {} to cart for user {} with quantity {}", productId, userId, quantity);
+
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
                 cartItem,
@@ -65,7 +138,34 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse<?> removeFromCart(long userId, UUID productId) {
+        // Validate user exists
+        try {
+            UserResponse user = userClient.getUserById(userId);
+            if (user == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("User not found: {}", userId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling user service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra người dùng", "Error validating user"),
+                    null,
+                    null
+            );
+        }
+
         Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
         if (!cartItemOpt.isPresent()) {
             return new GeneralResponse<>(
@@ -76,6 +176,9 @@ public class CartServiceImpl implements CartService {
         }
 
         cartItemRepository.delete(cartItemOpt.get());
+
+        log.info("Removed product {} from cart for user {}", productId, userId);
+
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
                 null,
@@ -85,6 +188,32 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public GeneralResponse<?> getCart(long userId) {
+        // Validate user exists
+        try {
+            UserResponse user = userClient.getUserById(userId);
+            if (user == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("User not found: {}", userId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling user service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra người dùng", "Error validating user"),
+                    null,
+                    null
+            );
+        }
+
         List<CartItemEntity> items = cartItemRepository.findByUserId(userId);
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -94,7 +223,60 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public GeneralResponse<?> updateQuantity(long userId, UUID productId, int quantity) {
+        // Validate user exists
+        try {
+            UserResponse user = userClient.getUserById(userId);
+            if (user == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("User not found: {}", userId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling user service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra người dùng", "Error validating user"),
+                    null,
+                    null
+            );
+        }
+
+        // Validate product exists
+        try {
+            ProductResponse product = productClient.getProductById(productId);
+            if (product == null) {
+                return new GeneralResponse<>(
+                        new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
+                        null,
+                        null
+                );
+            }
+        } catch (FeignException.NotFound e) {
+            log.error("Product not found: {}", productId);
+            return new GeneralResponse<>(
+                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
+                    null,
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Error calling product service: {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi kiểm tra sản phẩm", "Error validating product"),
+                    null,
+                    null
+            );
+        }
+
         Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
         if (!cartItemOpt.isPresent()) {
             return new GeneralResponse<>(
@@ -108,6 +290,7 @@ public class CartServiceImpl implements CartService {
 
         if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
+            log.info("Deleted product {} from cart for user {} due to invalid quantity", productId, userId);
             return new GeneralResponse<>(
                     new ResponseStatus("200", "Đã xóa sản phẩm do số lượng không hợp lệ", "Deleted"),
                     null,
@@ -118,6 +301,8 @@ public class CartServiceImpl implements CartService {
         cartItem.setQuantity(quantity);
         cartItem.setUpdatedAt(LocalDateTime.now());
         cartItemRepository.save(cartItem);
+
+        log.info("Updated quantity for product {} in cart for user {} to {}", productId, userId, quantity);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,

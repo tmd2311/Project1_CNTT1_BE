@@ -12,5 +12,3 @@ public interface ProductClient {
     @GetMapping("/api/products/{id}")
     ProductResponse getProductById(@PathVariable("id") UUID productId);
 }
-
-
