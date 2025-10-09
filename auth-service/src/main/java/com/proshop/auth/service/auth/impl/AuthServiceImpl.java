@@ -10,6 +10,7 @@ import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.dto.response.OtpResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.DomainEntity;
+import com.proshop.auth.entity.RoleEntity;
 import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.mapper.LoginMapper;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -123,22 +125,24 @@ public class AuthServiceImpl implements AuthService {
       newAuth.setDetails(Map.of("provider", loginProvider));
       SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
-    List<DomainEntity> domainEntities = domainRepository.findDomainForUser(entity.getId());
-    List<String> domainNames = new ArrayList<>();
-    if (domainEntities != null && !domainEntities.isEmpty()) {
-      domainNames = domainEntities.stream().map(DomainEntity::getName).toList();
+    List<RoleEntity> roles = userRepository.getRoleByUserId(entity.getId());
+    List<String> roleNames = new ArrayList<>();
+    for (RoleEntity role : roles) {
+      String code = role.getCode();
+      roleNames.add(code);
     }
+    info.put("roles", roleNames);
     List<String> roleNames = userRepository.getRoleNamesByUserId(entity.getId());
     info.put("domain", domainNames);
     info.put("userId", entity.getId());
     String token = jwtAuthService.generateAndStoreToken(entity, info);
     LoginResponse loginResponse = loginMapper.toDTO(entity);
     loginResponse.setToken(token);
-    loginResponse.setRoleNames(roleNames);
+    loginResponse.setRoleNames( roles.stream().map(RoleEntity::getName).toList());
+
     if (entity.getLastLogin() == null) {
       loginResponse.setFirstLogin(true);
     }
-
     LocalDateTime now = LocalDateTime.now();
     entity.setLastLogin(now);
     entity.setModifiedDate(now);
@@ -218,7 +222,6 @@ public class AuthServiceImpl implements AuthService {
       throw new ResException(ResErrorCode.TOKEN_INVALID);
     }
   }
-
 
   private void validateLoginRequest(LoginRequest request) {
     if (request.getPassword().isEmpty()) {

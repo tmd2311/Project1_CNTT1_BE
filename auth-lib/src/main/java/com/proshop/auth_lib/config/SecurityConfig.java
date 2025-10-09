@@ -1,8 +1,9 @@
 package com.proshop.auth_lib.config;
 
+import com.proshop.auth_lib.exceptions.ResException;
 import com.proshop.auth_lib.filter.JwtAuthenticationFilter;
 import com.proshop.auth_lib.utils.JwtUtil;
-import java.util.List;
+import com.proshop.auth_lib.utils.enums.ResErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -35,18 +37,6 @@ public class SecurityConfig {
       "/api/auth/**"   // auth-service endpoints
   };
 
-  private static final List<String> ALLOWED_METHODS = List.of(
-      "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-
-  private static final List<String> ALLOWED_HEADERS = List.of(
-      "Authorization", "Content-Type");
-
-  private static final List<String> EXPOSE_HEADERS = List.of(
-      "Authorization");
-
-  /**
-   * Đăng ký JwtAuthenticationFilter như một bean.
-   */
   @Bean
   public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
     return new JwtAuthenticationFilter(jwtUtil);
@@ -62,10 +52,23 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.GET, "/**").permitAll()
             .requestMatchers(PUBLIC_URLS).permitAll()
-            .anyRequest().authenticated())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .requestMatchers(HttpMethod.GET, "/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PATCH, "/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) -> {
+              throw new ResException(ResErrorCode.UNAUTHORIZED);
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+              throw new ResException(ResErrorCode.PERMISSION_DENIED);
+            })
+        );
 
     logger.debug("Security filter chain configuration completed");
     return http.build();

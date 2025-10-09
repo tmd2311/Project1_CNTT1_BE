@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -63,25 +62,27 @@ public class SecurityConfig {
   @Bean
   public UserDetailsService userDetailsService() {
     return account -> userRepository
-        .findByAccount(account)
+        .findByAccountWithRoles(account)
         .orElseThrow(
             () -> new UsernameNotFoundException(String.format("User: %s, not found", account)));
   }
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http,
-      CorsConfigurationSource corsConfigurationSource) throws Exception {
-    logger.debug("Configuring security filter chain");
-
+      JwtAuthenticationFilter jwtAuthenticationFilter)
+      throws Exception {
     http
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(PUBLIC_URLS).permitAll()
+            .requestMatchers("/api/v1/user/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2SuccessHandler))
-        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
     logger.debug("Security filter chain configuration completed");
     return http.build();
   }
