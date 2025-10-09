@@ -1,8 +1,8 @@
 package com.proshop.auth_lib.filter;
 
-import com.proshop.auth_lib.exceptions.ResException;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.auth_lib.utils.JwtUtil;
-import com.proshop.auth_lib.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

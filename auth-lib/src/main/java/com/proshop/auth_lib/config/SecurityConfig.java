@@ -1,9 +1,9 @@
 package com.proshop.auth_lib.config;
 
-import com.proshop.auth_lib.exceptions.ResException;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.auth_lib.filter.JwtAuthenticationFilter;
 import com.proshop.auth_lib.utils.JwtUtil;
-import com.proshop.auth_lib.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

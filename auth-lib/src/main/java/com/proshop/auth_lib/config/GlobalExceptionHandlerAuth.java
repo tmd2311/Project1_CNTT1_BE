@@ -4,10 +4,10 @@ package com.proshop.auth_lib.config;
 
 import com.proshop.auth_lib.dto.response.ErrorResponse;
 import com.proshop.auth_lib.dto.response.ResponseStatus;
-import com.proshop.auth_lib.exceptions.ResException;
+import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import com.proshop.auth_lib.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import java.nio.file.AccessDeniedException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
