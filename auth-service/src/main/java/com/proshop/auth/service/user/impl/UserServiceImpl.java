@@ -1,18 +1,17 @@
 package com.proshop.auth.service.user.impl;
 
-import com.proshop.auth.dto.response.GeneralPageResponse;
 import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.PageResponse;
 import com.proshop.auth.dto.response.PageResponseUtil;
 import com.proshop.auth.dto.response.ResponseStatus;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.UserEntity;
-import com.proshop.auth.exceptions.ResException;
 import com.proshop.auth.mapper.UserMapper;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.user.UserService;
-import com.proshop.auth.utils.enums.ResErrorCode;
 import com.proshop.auth.utils.enums.UserStatus;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

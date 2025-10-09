@@ -1,13 +1,17 @@
 package com.proshop.product.config;
 
+import com.proshop.product.entity.CategoryImageEntity;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.CategoryEntity;
 import com.proshop.product.entity.BrandEntity;
 import com.proshop.product.entity.SKUEntity;
+import com.proshop.product.entity.ProductImageEntity;
+import com.proshop.product.repository.CategoryImageRepository;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.repository.CategoryRepository;
 import com.proshop.product.repository.BrandRepository;
 import com.proshop.product.repository.SKURepository;
+import com.proshop.product.repository.ProductImageRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,320 +22,139 @@ import java.util.Map;
 
 @Configuration
 public class DataLoader {
-
     @Bean
     CommandLineRunner initDatabase(
-            ProductRepository productRepository,
-            CategoryRepository categoryRepository,
-            BrandRepository brandRepository,
-            SKURepository skuRepository) {
+        ProductRepository productRepository,
+        CategoryRepository categoryRepository,
+        BrandRepository brandRepository,
+        SKURepository skuRepository,
+        CategoryImageRepository categoryImageRepository,
+        ProductImageRepository productImageRepository // 👈 thêm repository cho product image
+    ) {
 
         return args -> {
-            // ✅ Chỉ chạy khi DB rỗng
             if (productRepository.count() == 0) {
 
-                // ========== CATEGORY HIERARCHY FOR PC STORE ==========
+                // ================= CATEGORY + IMAGE =================
+                CategoryEntity televisions = CategoryEntity.builder()
+                    .name("Televisions")
+                    .slug("televisions")
+                    .build();
 
-                // 🖥️ LEVEL 1: LAPTOPS
-                CategoryEntity laptopsCategory = CategoryEntity.builder()
-                        .name("Laptops")
-                        .slug("laptops")
-                        .parent(null)
-                        .build();
-                categoryRepository.save(laptopsCategory);
+                CategoryEntity laptops = CategoryEntity.builder()
+                    .name("Laptop & PC")
+                    .slug("laptop-pc")
+                    .build();
 
-                // Laptop Sub-categories (Level 2)
-                CategoryEntity gamingLaptopsCategory = CategoryEntity.builder()
-                        .name("Gaming Laptops")
-                        .slug("gaming-laptops")
-                        .parent(laptopsCategory)
-                        .build();
-                categoryRepository.save(gamingLaptopsCategory);
+                CategoryEntity mobiles = CategoryEntity.builder()
+                    .name("Mobile & Tablets")
+                    .slug("mobile-tablets")
+                    .build();
 
-                CategoryEntity officeLaptopsCategory = CategoryEntity.builder()
-                        .name("Office Laptops")
-                        .slug("office-laptops")
-                        .parent(laptopsCategory)
-                        .build();
-                categoryRepository.save(officeLaptopsCategory);
+                CategoryEntity games = CategoryEntity.builder()
+                    .name("Games & Videos")
+                    .slug("games-videos")
+                    .build();
 
-                CategoryEntity workstationLaptopsCategory = CategoryEntity.builder()
-                        .name("Workstation Laptops")
-                        .slug("workstation-laptops")
-                        .parent(laptopsCategory)
-                        .build();
-                categoryRepository.save(workstationLaptopsCategory);
+                CategoryEntity appliances = CategoryEntity.builder()
+                    .name("Home Appliances")
+                    .slug("home-appliances")
+                    .build();
 
-                CategoryEntity ultraBookCategory = CategoryEntity.builder()
-                        .name("Ultrabooks")
-                        .slug("ultrabooks")
-                        .parent(laptopsCategory)
-                        .build();
-                categoryRepository.save(ultraBookCategory);
+                CategoryEntity sports = CategoryEntity.builder()
+                    .name("Health & Sports")
+                    .slug("health-sports")
+                    .build();
 
-                // 🖥️ LEVEL 1: DESKTOP PCs
-                CategoryEntity desktopPCsCategory = CategoryEntity.builder()
-                        .name("Desktop PCs")
-                        .slug("desktop-pcs")
-                        .parent(null)
-                        .build();
-                categoryRepository.save(desktopPCsCategory);
+                CategoryEntity watches = CategoryEntity.builder()
+                    .name("Watches")
+                    .slug("watches")
+                    .build();
 
-                // Desktop PC Sub-categories (Level 2)
-                CategoryEntity prebuiltPCsCategory = CategoryEntity.builder()
-                        .name("Pre-built PCs")
-                        .slug("prebuilt-pcs")
-                        .parent(desktopPCsCategory)
-                        .build();
-                categoryRepository.save(prebuiltPCsCategory);
+                CategoryEntity televisions2 = CategoryEntity.builder()
+                    .name("Televisions")
+                    .slug("televisions-2")
+                    .build();
 
-                CategoryEntity gamingPCsCategory = CategoryEntity.builder()
-                        .name("Gaming PCs")
-                        .slug("gaming-pcs")
-                        .parent(prebuiltPCsCategory)
-                        .build();
-                categoryRepository.save(gamingPCsCategory);
+                categoryRepository.saveAll(
+                    java.util.List.of(televisions, laptops, mobiles, games, appliances, sports, watches, televisions2)
+                );
 
-                CategoryEntity officePCsCategory = CategoryEntity.builder()
-                        .name("Office PCs")
-                        .slug("office-pcs")
-                        .parent(prebuiltPCsCategory)
-                        .build();
-                categoryRepository.save(officePCsCategory);
+                categoryImageRepository.saveAll(java.util.List.of(
+                    CategoryImageEntity.builder().category(televisions).url("/images/categories/categories-01.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(laptops).url("/images/categories/categories-02.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(mobiles).url("/images/categories/categories-03.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(games).url("/images/categories/categories-04.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(appliances).url("/images/categories/categories-05.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(sports).url("/images/categories/categories-06.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(watches).url("/images/categories/categories-07.png").isPrimary(true).build(),
+                    CategoryImageEntity.builder().category(televisions2).url("/images/categories/categories-04.png").isPrimary(true).build()
+                ));
 
-                CategoryEntity workstationPCsCategory = CategoryEntity.builder()
-                        .name("Workstation PCs")
-                        .slug("workstation-pcs")
-                        .parent(prebuiltPCsCategory)
-                        .build();
-                categoryRepository.save(workstationPCsCategory);
-
-                // 🔧 LEVEL 1: PC COMPONENTS
-                CategoryEntity pcComponentsCategory = CategoryEntity.builder()
-                        .name("PC Components")
-                        .slug("pc-components")
-                        .parent(null)
-                        .build();
-                categoryRepository.save(pcComponentsCategory);
-
-                // Core Components (Level 2)
-                CategoryEntity cpuCategory = CategoryEntity.builder()
-                        .name("CPUs (Processors)")
-                        .slug("cpus")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(cpuCategory);
-
-                CategoryEntity gpuCategory = CategoryEntity.builder()
-                        .name("Graphics Cards (GPUs)")
-                        .slug("graphics-cards")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(gpuCategory);
-
-                CategoryEntity motherboardCategory = CategoryEntity.builder()
-                        .name("Motherboards")
-                        .slug("motherboards")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(motherboardCategory);
-
-                CategoryEntity ramCategory = CategoryEntity.builder()
-                        .name("RAM Memory")
-                        .slug("ram-memory")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(ramCategory);
-
-                CategoryEntity storageCategory = CategoryEntity.builder()
-                        .name("Storage")
-                        .slug("storage")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(storageCategory);
-
-                CategoryEntity psuCategory = CategoryEntity.builder()
-                        .name("Power Supplies (PSU)")
-                        .slug("power-supplies")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(psuCategory);
-
-                CategoryEntity coolingCategory = CategoryEntity.builder()
-                        .name("Cooling Systems")
-                        .slug("cooling-systems")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(coolingCategory);
-
-                CategoryEntity casesCategory = CategoryEntity.builder()
-                        .name("PC Cases")
-                        .slug("pc-cases")
-                        .parent(pcComponentsCategory)
-                        .build();
-                categoryRepository.save(casesCategory);
-
-                // Storage Sub-categories (Level 3)
-                CategoryEntity ssdCategory = CategoryEntity.builder()
-                        .name("SSDs")
-                        .slug("ssds")
-                        .parent(storageCategory)
-                        .build();
-                categoryRepository.save(ssdCategory);
-
-                CategoryEntity hddCategory = CategoryEntity.builder()
-                        .name("HDDs")
-                        .slug("hdds")
-                        .parent(storageCategory)
-                        .build();
-                categoryRepository.save(hddCategory);
-
-                CategoryEntity nvmeSSDCategory = CategoryEntity.builder()
-                        .name("NVMe SSDs")
-                        .slug("nvme-ssds")
-                        .parent(ssdCategory)
-                        .build();
-                categoryRepository.save(nvmeSSDCategory);
-
-                CategoryEntity sata3SSDCategory = CategoryEntity.builder()
-                        .name("SATA III SSDs")
-                        .slug("sata3-ssds")
-                        .parent(ssdCategory)
-                        .build();
-                categoryRepository.save(sata3SSDCategory);
-
-                // Cooling Sub-categories (Level 3)
-                CategoryEntity cpuCoolersCategory = CategoryEntity.builder()
-                        .name("CPU Coolers")
-                        .slug("cpu-coolers")
-                        .parent(coolingCategory)
-                        .build();
-                categoryRepository.save(cpuCoolersCategory);
-
-                CategoryEntity caseFansCategory = CategoryEntity.builder()
-                        .name("Case Fans")
-                        .slug("case-fans")
-                        .parent(coolingCategory)
-                        .build();
-                categoryRepository.save(caseFansCategory);
-
-                CategoryEntity liquidCoolingCategory = CategoryEntity.builder()
-                        .name("Liquid Cooling")
-                        .slug("liquid-cooling")
-                        .parent(coolingCategory)
-                        .build();
-                categoryRepository.save(liquidCoolingCategory);
-
-                // 🖱️ LEVEL 1: PERIPHERALS
-                CategoryEntity peripheralsCategory = CategoryEntity.builder()
-                        .name("Peripherals")
-                        .slug("peripherals")
-                        .parent(null)
-                        .build();
-                categoryRepository.save(peripheralsCategory);
-
-                // Peripheral Sub-categories (Level 2)
-                CategoryEntity monitorsCategory = CategoryEntity.builder()
-                        .name("Monitors")
-                        .slug("monitors")
-                        .parent(peripheralsCategory)
-                        .build();
-                categoryRepository.save(monitorsCategory);
-
-                CategoryEntity keyboardsCategory = CategoryEntity.builder()
-                        .name("Keyboards")
-                        .slug("keyboards")
-                        .parent(peripheralsCategory)
-                        .build();
-                categoryRepository.save(keyboardsCategory);
-
-                CategoryEntity mouseCategory = CategoryEntity.builder()
-                        .name("Mice")
-                        .slug("mice")
-                        .parent(peripheralsCategory)
-                        .build();
-                categoryRepository.save(mouseCategory);
-
-                CategoryEntity headphonesCategory = CategoryEntity.builder()
-                        .name("Headphones & Audio")
-                        .slug("headphones-audio")
-                        .parent(peripheralsCategory)
-                        .build();
-                categoryRepository.save(headphonesCategory);
-
-                // ========== BRANDS ==========
-
-                // Laptop Brands
+                // ================= BRAND =================
                 BrandEntity dellBrand = BrandEntity.builder()
-                        .name("Dell")
-                        .slug("dell")
-                        .logoUrl("https://example.com/logo/dell.png")
-                        .build();
+                    .name("Dell")
+                    .slug("dell")
+                    .logoUrl("https://example.com/logo/dell.png")
+                    .build();
                 brandRepository.save(dellBrand);
 
                 BrandEntity hpBrand = BrandEntity.builder()
-                        .name("HP")
-                        .slug("hp")
-                        .logoUrl("https://example.com/logo/hp.png")
-                        .build();
+                    .name("HP")
+                    .slug("hp")
+                    .logoUrl("https://example.com/logo/hp.png")
+                    .build();
                 brandRepository.save(hpBrand);
 
-                BrandEntity asusLaptopBrand = BrandEntity.builder()
-                        .name("ASUS")
-                        .slug("asus")
-                        .logoUrl("https://example.com/logo/asus.png")
-                        .build();
-                brandRepository.save(asusLaptopBrand);
+                // ================= SAMPLE PRODUCTS =================
+                Map<String, Object> baseSpecs = new HashMap<>();
+                baseSpecs.put("CPU", "Intel Core i7");
+                baseSpecs.put("Display", "15.6 inch FHD");
 
-                BrandEntity msiBrand = BrandEntity.builder()
-                        .name("MSI")
-                        .slug("msi")
-                        .logoUrl("https://example.com/logo/msi.png")
-                        .build();
-                brandRepository.save(msiBrand);
+                for (int i = 1; i <= 10; i++) {
+                    BrandEntity brand = (i % 2 == 0) ? dellBrand : hpBrand;
 
-                // CPU Brands
-                BrandEntity intelBrand = BrandEntity.builder()
-                        .name("Intel")
-                        .slug("intel")
-                        .logoUrl("https://example.com/logo/intel.png")
+                    ProductEntity product = ProductEntity.builder()
+                        .name(brand.getName() + " Laptop " + i)
+                        .category(laptops) // cho vào Laptop & PC
+                        .brand(brand)
+                        .description("Mẫu laptop số " + i + " cho lập trình viên và designer")
+                        .specs(new HashMap<>(baseSpecs))
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
                         .build();
-                brandRepository.save(intelBrand);
 
-                BrandEntity amdBrand = BrandEntity.builder()
-                        .name("AMD")
-                        .slug("amd")
-                        .logoUrl("https://example.com/logo/amd.png")
+                    productRepository.save(product);
+
+                    // ================= PRODUCT IMAGES =================
+                    ProductImageEntity primaryImage = ProductImageEntity.builder()
+                        .product(product)
+                        .url("/images/products/product-" + i + "-1.png")
+                        .isPrimary(true)
                         .build();
-                brandRepository.save(amdBrand);
+                    productImageRepository.save(primaryImage);
 
-                // GPU Brands
-                BrandEntity nvidiaBrand = BrandEntity.builder()
-                        .name("NVIDIA")
-                        .slug("nvidia")
-                        .logoUrl("https://example.com/logo/nvidia.png")
-                        .build();
-                brandRepository.save(nvidiaBrand);
+                    for (int imgIndex = 2; imgIndex <= 3; imgIndex++) {
+                        ProductImageEntity extraImage = ProductImageEntity.builder()
+                            .product(product)
+                            .url("/images/products/product-" + i + "-" + imgIndex + ".png")
+                            .isPrimary(false)
+                            .build();
+                        productImageRepository.save(extraImage);
+                    }
 
-                // Memory & Storage Brands
-                BrandEntity corsairBrand = BrandEntity.builder()
-                        .name("Corsair")
-                        .slug("corsair")
-                        .logoUrl("https://example.com/logo/corsair.png")
-                        .build();
-                brandRepository.save(corsairBrand);
-
-                BrandEntity kingstonBrand = BrandEntity.builder()
-                        .name("Kingston")
-                        .slug("kingston")
-                        .logoUrl("https://example.com/logo/kingston.png")
-                        .build();
-                brandRepository.save(kingstonBrand);
-
-                BrandEntity samsungBrand = BrandEntity.builder()
-                        .name("Samsung")
-                        .slug("samsung")
-                        .logoUrl("https://example.com/logo/samsung.png")
+                    // ================= SKU =================
+                    SKUEntity sku1 = SKUEntity.builder()
+                        .product(product)
+                        .skuCode("SKU-" + brand.getSlug().toUpperCase() + "-" + i + "-8GB")
+                        .specs(Map.of("RAM", "8GB", "Storage", "512GB SSD", "Color", "Silver"))
+                        .price(12000000.0 + i * 500000)
+                        .discountPrice(11500000.0 + i * 400000)
+                        .stock(20 + i)
+                        .barcode("BARCODE-" + i + "-8GB")
+                        .isActive(true)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
                         .build();
                 brandRepository.save(samsungBrand);
 
@@ -396,197 +219,28 @@ public class DataLoader {
         };
     }
 
-    private void createGamingLaptop(String name, BrandEntity brand, CategoryEntity category,
-                                    ProductRepository productRepository, SKURepository skuRepository) {
-        Map<String, Object> specs = Map.of(
-                "CPU", "Intel Core i7-12700H",
-                "GPU", "NVIDIA RTX 4060",
-                "Display", "15.6\" FHD 144Hz",
-                "Type", "Gaming Laptop"
-        );
-
-        ProductEntity laptop = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("Gaming laptop hiệu suất cao với GPU rời và màn hình 144Hz")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(laptop);
-
-        createLaptopSKUs(laptop, brand, skuRepository);
-    }
-
-    private void createOfficeLaptop(String name, BrandEntity brand, CategoryEntity category,
-                                    ProductRepository productRepository, SKURepository skuRepository) {
-        Map<String, Object> specs = Map.of(
-                "CPU", "Intel Core i5-1235U",
-                "GPU", "Intel Iris Xe",
-                "Display", "15.6\" FHD",
-                "Type", "Office Laptop"
-        );
-
-        ProductEntity laptop = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("Laptop văn phòng nhẹ nhàng, tiết kiệm pin")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(laptop);
-
-        createLaptopSKUs(laptop, brand, skuRepository);
-    }
-
-    private void createCPUProduct(String name, BrandEntity brand, CategoryEntity category,
-                                  ProductRepository productRepository, SKURepository skuRepository) {
-        Map<String, Object> specs = Map.of(
-                "Socket", brand.getName().equals("Intel") ? "LGA1700" : "AM4",
-                "Cores", brand.getName().equals("Intel") ? "12" : "8",
-                "Threads", brand.getName().equals("Intel") ? "20" : "16",
-                "Base Clock", brand.getName().equals("Intel") ? "3.6 GHz" : "3.8 GHz"
-        );
-
-        ProductEntity cpu = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("CPU hiệu suất cao cho gaming và công việc")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(cpu);
-
-        createComponentSKU(cpu, brand, "CPU", skuRepository, 8000000.0);
-    }
-
-    private void createGPUProduct(String name, BrandEntity brand, CategoryEntity category,
-                                  ProductRepository productRepository, SKURepository skuRepository) {
-        Map<String, Object> specs = Map.of(
-                "GPU Chip", "NVIDIA RTX 4070",
-                "VRAM", "12GB GDDR6X",
-                "Memory Bus", "192-bit",
-                "Boost Clock", "2610 MHz"
-        );
-
-        ProductEntity gpu = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("Card đồ họa RTX 4070 cho gaming 1440p")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(gpu);
-
-        createComponentSKU(gpu, brand, "GPU", skuRepository, 18000000.0);
-    }
-
-    private void createRAMProduct(String name, BrandEntity brand, CategoryEntity category,
-                                  ProductRepository productRepository, SKURepository skuRepository) {
-        boolean is32GB = name.contains("32GB");
-        Map<String, Object> specs = Map.of(
-                "Capacity", is32GB ? "32GB (2x16GB)" : "16GB (2x8GB)",
-                "Speed", "DDR4-3200",
-                "Latency", "CL16",
-                "Type", "DDR4 DIMM"
-        );
-
-        ProductEntity ram = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("RAM DDR4 hiệu suất cao cho gaming và multitasking")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(ram);
-
-        createComponentSKU(ram, brand, "RAM", skuRepository, is32GB ? 4500000.0 : 2200000.0);
-    }
-
-    private void createSSDProduct(String name, BrandEntity brand, CategoryEntity category,
-                                  ProductRepository productRepository, SKURepository skuRepository) {
-        boolean is1TB = name.contains("1TB");
-        Map<String, Object> specs = Map.of(
-                "Capacity", is1TB ? "1TB" : "500GB",
-                "Interface", "PCIe 4.0 x4",
-                "Form Factor", "M.2 2280",
-                "Read Speed", "7000 MB/s",
-                "Write Speed", "6900 MB/s"
-        );
-
-        ProductEntity ssd = ProductEntity.builder()
-                .name(name)
-                .category(category)
-                .brand(brand)
-                .description("SSD NVMe PCIe 4.0 tốc độ cao")
-                .specs(specs)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        productRepository.save(ssd);
-
-        createComponentSKU(ssd, brand, "SSD", skuRepository, is1TB ? 3500000.0 : 1800000.0);
-    }
-
-    private void createLaptopSKUs(ProductEntity laptop, BrandEntity brand, SKURepository skuRepository) {
-        String[] ramConfigs = {"8GB", "16GB", "32GB"};
-        String[] storageConfigs = {"512GB", "1TB"};
-
-        int skuIndex = 1;
-        for (String ram : ramConfigs) {
-            for (String storage : storageConfigs) {
-                SKUEntity sku = SKUEntity.builder()
-                        .product(laptop)
-                        .skuCode(laptop.getName().replaceAll(" ", "-").toUpperCase() + "-" + ram + "-" + storage)
-                        .specs(Map.of(
-                                "RAM", ram,
-                                "Storage", storage + " SSD",
-                                "Warranty", "24 months"
-                        ))
-                        .price(20000000.0 + skuIndex * 2000000)
-                        .discountPrice(19000000.0 + skuIndex * 1800000)
-                        .stock(10 + skuIndex * 2)
-                        .barcode("LAPTOP-" + brand.getSlug().toUpperCase() + "-" + skuIndex)
+                    SKUEntity sku2 = SKUEntity.builder()
+                        .product(product)
+                        .skuCode("SKU-" + brand.getSlug().toUpperCase() + "-" + i + "-16GB")
+                        .specs(Map.of("RAM", "16GB", "Storage", "1TB SSD", "Color", "Black"))
+                        .price(14000000.0 + i * 500000)
+                        .discountPrice(13500000.0 + i * 400000)
+                        .stock(15 + i)
+                        .barcode("BARCODE-" + i + "-16GB")
                         .isActive(true)
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .build();
 
-                skuRepository.save(sku);
-                skuIndex++;
+                    skuRepository.save(sku1);
+                    skuRepository.save(sku2);
+                }
+
+                System.out.println("Sample categories, brands, products, SKUs and images inserted!");
+            } else {
+                System.out.println("Database already has data, skipping sample insert.");
             }
-        }
-    }
-
-    private void createComponentSKU(ProductEntity product, BrandEntity brand, String type,
-                                    SKURepository skuRepository, Double basePrice) {
-        SKUEntity sku = SKUEntity.builder()
-                .product(product)
-                .skuCode(product.getName().replaceAll(" ", "-").toUpperCase())
-                .specs(Map.of(
-                        "Warranty", "36 months",
-                        "Condition", "New",
-                        "Type", type
-                ))
-                .price(basePrice)
-                .discountPrice(basePrice * 0.95)
-                .stock(25)
-                .barcode(type + "-" + brand.getSlug().toUpperCase() + "-" + System.currentTimeMillis())
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        skuRepository.save(sku);
+        };
     }
     private void createMonitorProduct(String name, BrandEntity brand, CategoryEntity category,
                                       ProductRepository productRepository, SKURepository skuRepository) {

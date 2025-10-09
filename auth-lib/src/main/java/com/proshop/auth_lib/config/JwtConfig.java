@@ -1,6 +1,6 @@
 package com.proshop.auth_lib.config;
 
-import com.proshop.auth_lib.exceptions.PrivateKeyInitializationException;
+import com.proshop.exceptionlib.exceptions.PrivateKeyInitializationException;
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -25,6 +25,6 @@ public class UserRoleEntity extends BaseEntity {
   @JoinColumn(name = "domain_id")
   private DomainEntity domainEntity;
 
-  @Column(name = "context_data", columnDefinition = "jsonb") // jsonb tốt hơn
+  @Column(name = "context_data", columnDefinition = "jsonb")
   private String contextData;
 }

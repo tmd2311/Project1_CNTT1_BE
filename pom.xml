@@ -10,6 +10,7 @@
 
   <modules>
     <module>auth-lib</module>
+    <module>exception-lib</module>
     <module>auth-service</module>
     <module>gateway-service/gateway-service</module>
     <module>order-service/order-service</module>

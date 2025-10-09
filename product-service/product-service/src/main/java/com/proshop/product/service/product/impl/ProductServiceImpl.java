@@ -12,7 +12,7 @@ import com.proshop.product.entity.BrandEntity;
 import com.proshop.product.entity.CategoryEntity;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.SKUEntity;
-import com.proshop.product.exceptions.ResException;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.repository.BrandRepository;
 import com.proshop.product.repository.CategoryRepository;
 import com.proshop.product.repository.ProductRepository;
@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.time.LocalDateTime;
 
-import com.proshop.product.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -209,8 +209,14 @@ public class ProductServiceImpl implements ProductService {
                     .min(Double::compareTo)
                     .orElse(null));
         }
+      if (entity.getImages() != null && !entity.getImages().isEmpty()) {
+        entity.getImages().stream()
+            .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+            .findFirst()
+            .ifPresent(primaryImage -> dto.setThumbnailUrl(primaryImage.getUrl()));
+      }
 
-        return dto;
+      return dto;
     }
 
   @Override

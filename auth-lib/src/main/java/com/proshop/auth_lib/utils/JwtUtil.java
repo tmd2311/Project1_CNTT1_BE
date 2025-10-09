@@ -2,7 +2,7 @@ package com.proshop.auth_lib.utils;
 
 
 import com.proshop.auth_lib.config.JwtConfig;
-import com.proshop.auth_lib.exceptions.PrivateKeyInitializationException;
+import com.proshop.exceptionlib.exceptions.PrivateKeyInitializationException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -40,6 +40,8 @@ public class JwtUtil {
   public String getUserCodeFromToken(String token) {
     return getClaims(token).get("user_code", String.class);
   }
+
+  public Long getUserIDFromToken(String token) { return getClaims(token).get("user_id", Long.class); }
 
   public boolean validateToken(String token) {
     try {

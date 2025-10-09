@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -57,6 +58,7 @@ public class SecurityConfig {
   private final UserRepository userRepository;
 
   private final JwtAuthenticationFilter tokenAuthenticationFilter;
+  private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
   @Bean
   public UserDetailsService userDetailsService() {
@@ -73,10 +75,12 @@ public class SecurityConfig {
 
     http
         .csrf(AbstractHttpConfigurer::disable)
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(PUBLIC_URLS).permitAll()
             .anyRequest().authenticated())
+        .oauth2Login(oauth2 -> oauth2
+            .successHandler(oAuth2SuccessHandler))
         .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     logger.debug("Security filter chain configuration completed");
     return http.build();
@@ -87,12 +91,13 @@ public class SecurityConfig {
     logger.debug("Configuring cors configuration source");
 
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of(ALL_ORIGINS));
+    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
     configuration.setAllowedMethods(ALLOWED_METHODS);
     configuration.setAllowedHeaders(ALLOWED_HEADERS);
+    configuration.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration(ALL_ORIGINS, configuration);
+    source.registerCorsConfiguration(ALL_PATTERNS, configuration);
 
     logger.debug("Configuring cors configuration source completed");
     return source;
