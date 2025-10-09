@@ -3,6 +3,7 @@ package com.proshop.auth.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.entity.DomainEntity;
+import com.proshop.auth.entity.RoleEntity;
 import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.mapper.LoginMapper;
@@ -153,13 +154,13 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
       newAuth.setDetails(Map.of("provider", provider));
       SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
-    List<DomainEntity> domainEntities = domainRepository.findDomainForUser(entity.getId());
-    List<String> domainNames = new ArrayList<>();
-    if (domainEntities != null && !domainEntities.isEmpty()) {
-      domainNames = domainEntities.stream().map(DomainEntity::getName).toList();
+    List<RoleEntity> roles = userRepository.getRoleByUserId(entity.getId());
+    List<String> roleNames = new ArrayList<>();
+    for (RoleEntity role : roles) {
+      String code = role.getCode();
+      roleNames.add(code);
     }
-    List<String> roleNames = userRepository.getRoleNamesByUserId(entity.getId());
-    info.put("domain", domainNames);
+    info.put("roles", roleNames);
     String token = jwtAuthService.generateAndStoreToken(entity, info);
     LoginResponse loginResponse = loginMapper.toDTO(entity);
     loginResponse.setToken(token);

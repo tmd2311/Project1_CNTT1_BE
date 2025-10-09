@@ -1,7 +1,9 @@
 package com.proshop.auth_lib.utils;
 
 import com.proshop.auth_lib.config.JwtConfig;
+import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.PrivateKeyInitializationException;
+import com.proshop.exceptionlib.exceptions.ResException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -48,6 +50,9 @@ public class JwtUtil {
       return ((List<?>) rolesObj).stream()
           .map(Object::toString)
           .toList();
+    }
+    return List.of();
+  }
 
   public Long getUserIDFromToken(String token) { return getClaims(token).get("user_id", Long.class); }
 
@@ -58,6 +63,5 @@ public class JwtUtil {
     } catch (PrivateKeyInitializationException e) {
       return false;
     }
-    return List.of();
   }
 }

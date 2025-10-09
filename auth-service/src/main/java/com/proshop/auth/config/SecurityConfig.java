@@ -59,18 +59,9 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter tokenAuthenticationFilter;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-  @Bean
-  public UserDetailsService userDetailsService() {
-    return account -> userRepository
-        .findByAccountWithRoles(account)
-        .orElseThrow(
-            () -> new UsernameNotFoundException(String.format("User: %s, not found", account)));
-  }
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http,
-      JwtAuthenticationFilter jwtAuthenticationFilter)
-      throws Exception {
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
@@ -80,8 +71,7 @@ public class SecurityConfig {
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2SuccessHandler))
-        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     logger.debug("Security filter chain configuration completed");
     return http.build();
