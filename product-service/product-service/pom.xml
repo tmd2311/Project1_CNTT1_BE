@@ -112,7 +112,7 @@
     <dependency>
       <artifactId>commons-lang3</artifactId>
       <groupId>org.apache.commons</groupId>
-      <version>3.13.0</version> <!-- hoặc phiên bản mới nhất -->
+      <version>3.13.0</version>
     </dependency>
 
     <dependency>
@@ -126,10 +126,15 @@
       <groupId>org.mapstruct</groupId>
       <version>1.5.5.Final</version>
     </dependency>
-
     <dependency>
       <groupId>com.proshop</groupId>
       <artifactId>auth-lib</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.proshop</groupId>
+      <artifactId>exception-lib</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
 

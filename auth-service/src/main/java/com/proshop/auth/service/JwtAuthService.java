@@ -30,7 +30,7 @@ public class JwtAuthService {
 
 
   public String generateAndStoreToken(UserEntity userEntity, Map<String, Object> claims ){
-    String token = jwtUtil.generateToken(userEntity.getAccount(), claims);
+    String token = jwtUtil.generateToken(userEntity.getAccount(),claims);
     TokenEntity tokenEntity = new TokenEntity();
     tokenEntity.setToken(token);
     List<SystemPolicy> systemPolicies = buildSystemPolicy(userEntity);

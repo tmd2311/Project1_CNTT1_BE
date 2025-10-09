@@ -54,4 +54,5 @@ public interface SocialProviderRepository extends JpaRepository<SocialProviderEn
    *         found
    */
   Optional<SocialProviderEntity> findByUserEntityAndProviderName(UserEntity userEntity, String providerName);
+
 }
