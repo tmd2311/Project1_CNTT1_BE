@@ -23,6 +23,8 @@ import com.proshop.auth.service.auth.AuthService;
 import com.proshop.auth.utils.JwtUtil;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +38,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -342,7 +343,7 @@ public class AuthServiceImpl implements AuthService {
     Object verified = redisTemplate.opsForValue().get(verifiedKey);
 
     if (verified == null) {
-      throw new ResException(ResErrorCode.OTP_NOT_VERIFICATION);
+      throw new ResException(ResErrorCode.OTP_VERIFICATION_FAIL);
     }
 
     if (newPassword == null || confirmPassword == null || !newPassword.equals(confirmPassword)) {
