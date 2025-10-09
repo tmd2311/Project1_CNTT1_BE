@@ -5,14 +5,41 @@ spring:
   application:
     name: auth-service   # tên service đăng ký trên Consul, phải trùng với gateway gọi
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:  ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8081/login/oauth2/code/google}
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+    default-encoding: UTF-8
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: clone1abc.23.11@gmail.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
   cloud:
     consul:
-      host: localhost    # địa chỉ Consul server
+      host: localhost
       port: 8500
       discovery:
-        register: true   # đăng ký service lên Consul
+        register: true
         enabled: true
-        prefer-ip-address: true  # dùng IP thay vì hostname (nên dùng khi trong Docker hoặc mạng LAN)
+        prefer-ip-address: true
+
   datasource:
     url: jdbc:postgresql://localhost:5432/authen_user
     username: postgres
@@ -23,9 +50,9 @@ spring:
       ddl-auto: update
     show-sql: true
     properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
   data:
     redis:
       host: localhost
