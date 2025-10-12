@@ -1,6 +1,8 @@
 package com.proshop.order.controller;
 
 import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.CartRequest;
 import com.proshop.order.dto.response.CartResponse;
 import com.proshop.order.dto.response.ResponseStatus;
@@ -50,6 +52,28 @@ public class CartController {
             return userId;
         } catch (Exception e) {
             log.error("❌ Failed to extract userId from token: {}", e.getMessage(), e);
+            throw new RuntimeException("Invalid token: " + e.getMessage());
+        }
+    }
+
+    private List<String> getRoleFromToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("Missing or invalid Authorization header");
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7).trim();
+
+        log.debug("Token extracted, length: {}", token.length());
+
+        try {
+            List<String> roles = jwtUtil.extractRoles(token);
+            log.info("✅ Successfully extracted role from token: {}", roles);
+            return roles;
+        } catch (Exception e) {
+            log.error("❌ Failed to extract role from token: {}", e.getMessage(), e);
             throw new RuntimeException("Invalid token: " + e.getMessage());
         }
     }
@@ -131,9 +155,18 @@ public class CartController {
      * Get all carts (Admin only)
      */
     @GetMapping("/admin/all")
-    public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts() {
+    public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts(HttpServletRequest httpRequest) {
         log.info("Getting all carts (admin)");
 
+        List<String> roles = getRoleFromToken(httpRequest);
+
+        // ✅ Kiểm tra nếu có quyền Admin
+        boolean isAdmin = roles.stream().anyMatch(role -> role.equalsIgnoreCase("Admin"));
+        if (!isAdmin) {
+            throw new ResException(ResErrorCode.PERMISSION_DENIED);
+        }
+
+        // ✅ Nếu là admin thì xử lý bình thường
         List<CartEntity> carts = cartRepository.findAll();
         List<CartResponse> response = cartMapper.toResponseList(carts);
 
@@ -142,6 +175,7 @@ public class CartController {
 
         return ResponseEntity.ok(generalResponse);
     }
+
 
     /**
      * Get cart by userId (Admin only)
