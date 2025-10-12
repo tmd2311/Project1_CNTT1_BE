@@ -4,13 +4,17 @@ package com.proshop.auth.entity;
 import com.proshop.auth.utils.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 
@@ -41,11 +45,23 @@ public class UserEntity extends BaseEntity implements UserDetails {
   @Column(name = "last_login")
   private LocalDateTime lastLogin;
   @Column(name = "status", length = 20)
-  private String status;
+  private String status = UserStatus.ACTIVE.name();
+
+  @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY)
+  private List<UserRoleEntity> userRoles = new ArrayList<>();
+
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of();
+    List<GrantedAuthority> authorities = new ArrayList<>();
+    for (UserRoleEntity userRole : userRoles) {
+      RoleEntity role = userRole.getRoleEntity();
+      authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
+      role.getPermissions().forEach(permission ->
+          authorities.add(new SimpleGrantedAuthority(permission.getCode()))
+      );
+    }
+    return authorities;
   }
 
   @Override

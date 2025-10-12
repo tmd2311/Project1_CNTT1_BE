@@ -4,6 +4,8 @@ import static com.proshop.auth.utils.constant.ServiceConstants.REDIS_TOKEN_PREFI
 
 import com.proshop.auth.redis.TokenEntity;
 import com.proshop.auth.utils.JsonUtils;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +39,7 @@ public class TokenRedisRepository {
     String key = REDIS_TOKEN_PREFIX + id;
     List<String> tokenJsonList = redisTemplate.opsForList().range(key, 0, -1);
     if (tokenJsonList == null || tokenJsonList.isEmpty()) {
-      return false;
+      throw new ResException(ResErrorCode.TOKEN_NOT_FOUND);
     }
     for (String tokenJson : tokenJsonList) {
       Optional<TokenEntity> optionalTokenEntity = JsonUtils.jsonToObject(tokenJson, TokenEntity.class);

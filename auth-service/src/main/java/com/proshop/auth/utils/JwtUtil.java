@@ -4,14 +4,13 @@ import static com.proshop.auth.utils.enums.UserStatus.INACTIVE;
 
 import com.proshop.auth.config.JwtConfig;
 import com.proshop.auth.entity.UserEntity;
-import com.proshop.auth.exceptions.ResException;
 import com.proshop.auth.repository.UserRepository;
-import com.proshop.auth.utils.enums.ResErrorCode;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -108,5 +107,22 @@ public class JwtUtil {
         .build()
         .parseClaimsJws(token)
         .getBody();
+  }
+
+  public String getUserCodeFromToken(String token) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+          .setSigningKey(jwtConfig.getPublicKey())
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
+
+      String userCode = claims.get("user_code", String.class);
+      log.debug("Extracted user_code from token: {}", userCode);
+      return userCode;
+    } catch (Exception e) {
+      log.error("Failed to extract user_code from token", e);
+      throw new ResException(ResErrorCode.UNAUTHORIZED);
+    }
   }
 }
