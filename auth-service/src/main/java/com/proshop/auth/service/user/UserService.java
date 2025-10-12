@@ -7,8 +7,10 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserService {
   GeneralResponse<PageResponse<UserInfoResponse>> getAllUsers(Pageable pageable);
+  GeneralResponse<UserInfoResponse> getUserById(long id);
 
-  /**
+
+    /**
    * Xóa mềm user (deactivate)
    */
   void deactivateUser(Long id);

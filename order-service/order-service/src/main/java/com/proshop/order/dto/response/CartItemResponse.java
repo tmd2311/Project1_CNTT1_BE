@@ -13,9 +13,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemResponse {
-
     private UUID id;
     private UUID productId;
+    private String productName;  // Optional: from Product Service
+    private Double productPrice; // Optional: from Product Service
     private Integer quantity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
