@@ -1,16 +1,18 @@
 package com.proshop.order.service.cart.impl;
 
+import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.client.ProductClient;
-import com.proshop.order.dto.response.CartItemResponse;
-import com.proshop.order.dto.response.ProductResponse;
+import com.proshop.order.dto.response.*;
 import com.proshop.order.entity.CartEntity;
 import com.proshop.order.entity.CartItemEntity;
+import com.proshop.order.mapper.CartMapper;
 import com.proshop.order.repository.CartItemRepository;
 import com.proshop.order.repository.CartRepository;
 import com.proshop.order.service.cart.CartService;
-import com.proshop.order.dto.response.GeneralResponse;
-import com.proshop.order.dto.response.ResponseStatus;
 import feign.FeignException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,8 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductClient productClient;
+    private final JwtUtil jwtUtil;
+    private final CartMapper cartMapper;
 
     /**
      * Convert CartItemEntity to CartItemResponse DTO
@@ -276,5 +280,78 @@ public class CartServiceImpl implements CartService {
                 response,
                 null
         );
+    }
+    /**
+     * ✅ Lấy tất cả carts (Admin)
+     */
+    public GeneralResponse<List<CartResponse>> getAllCarts(HttpServletRequest httpRequest) {
+        checkAdminRole(httpRequest);
+
+        List<CartEntity> carts = cartRepository.findAll();
+        List<CartResponse> response = cartMapper.toResponseList(carts);
+
+        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
+        return new GeneralResponse<>(status, response, null);
+    }
+
+    /**
+     * ✅ Lấy cart theo userId (Admin)
+     */
+    public GeneralResponse<CartResponse> getCartByUserId(HttpServletRequest httpRequest, long userId) {
+        checkAdminRole(httpRequest);
+
+        CartEntity cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND, "Không tìm thấy giỏ hàng của userId: " + userId));
+
+        CartResponse response = cartMapper.toResponse(cart);
+        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
+        return new GeneralResponse<>(status, response, null);
+    }
+
+    /**
+     * ✅ Lấy cart theo cartId (Admin)
+     */
+    public GeneralResponse<CartResponse> getCartById(HttpServletRequest httpRequest, UUID cartId) {
+        checkAdminRole(httpRequest);
+
+        CartEntity cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND, "Không tìm thấy giỏ hàng: " + cartId));
+
+        CartResponse response = cartMapper.toResponse(cart);
+        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
+        return new GeneralResponse<>(status, response, null);
+    }
+
+    /**
+     * ✅ Hàm kiểm tra quyền Admin từ JWT
+     */
+    private void checkAdminRole(HttpServletRequest httpRequest) {
+        List<String> roles = getRoleFromToken(httpRequest);;
+
+        boolean isAdmin = roles.stream().anyMatch(role -> role.equalsIgnoreCase("Admin"));
+        if (!isAdmin) {
+            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền truy cập tài nguyên này (Admin only)");
+        }
+    }
+    private List<String> getRoleFromToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("Missing or invalid Authorization header");
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7).trim();
+
+        log.debug("Token extracted, length: {}", token.length());
+
+        try {
+            List<String> roles = jwtUtil.extractRoles(token);
+            log.info("✅ Successfully extracted role from token: {}", roles);
+            return roles;
+        } catch (Exception e) {
+            log.error("❌ Failed to extract role from token: {}", e.getMessage(), e);
+            throw new RuntimeException("Invalid token: " + e.getMessage());
+        }
     }
 }

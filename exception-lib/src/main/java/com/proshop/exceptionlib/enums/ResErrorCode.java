@@ -130,8 +130,10 @@ public enum ResErrorCode {
     CATEGORY_HAS_CHILDREN(HttpStatus.BAD_REQUEST, "C014", "Không thể xóa danh mục đang có danh mục con", "Cannot delete category that has subcategories"),
     CATEGORY_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "C015", "Tên danh mục không được để trống", "Category name is required"),
     CATEGORY_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST,"C016","Không tìm thấy ảnh của danh mục", "Category image not found"),
-    CATEGORY_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST,"C017","Chỉ được phép có 1 ảnh chính cho danh mục","Only one primary image is allowed per category");
+    CATEGORY_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST,"C017","Chỉ được phép có 1 ảnh chính cho danh mục","Only one primary image is allowed per category"),
 
+    // ===== CART =====
+    CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found");
 
     private final HttpStatus status;
     private final String code;
