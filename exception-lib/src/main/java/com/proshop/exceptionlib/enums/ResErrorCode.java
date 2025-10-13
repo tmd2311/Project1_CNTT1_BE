@@ -111,6 +111,8 @@ public enum ResErrorCode {
     PRODUCT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "P001", "Tên sản phẩm không được để trống", "Product name is required"),
     PRODUCT_DESCRIPTION_REQUIRED(HttpStatus.BAD_REQUEST, "P002", "Mô tả sản phẩm không được để trống", "Product description is required"),
     PRODUCT_SPECS_REQUIRED(HttpStatus.BAD_REQUEST, "P003", "Thông số kỹ thuật phải có ít nhất 1 mục", "Product specs is required"),
+    PRODUCT_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST, "P004","Chỉ được phép có một ảnh chính cho sản phẩm", "Multiple primary images not allowed for product"),
+    PRODUCT_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "P005","Ảnh sản phẩm không tồn tại", "Image not found"),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found"),
     // --- Brand ---
     BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "Không tìm thấy thương hiệu", "Brand not found"),

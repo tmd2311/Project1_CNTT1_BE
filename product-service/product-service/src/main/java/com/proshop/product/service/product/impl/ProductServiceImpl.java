@@ -1,6 +1,7 @@
 package com.proshop.product.service.product.impl;
 
 import com.proshop.product.dto.request.ProductCreateRequest;
+import com.proshop.product.dto.request.ProductImageRequest;
 import com.proshop.product.dto.request.ProductUpdateRequest;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.PageResponse;
@@ -127,61 +128,120 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request) {
+        // 🔹 1. Tìm product cần cập nhật
         ProductEntity product = productRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_NOT_FOUND));
 
+        // 🔹 2. Validate request
         validateProductUpdateRequest(request);
 
-        // Cập nhật name
+        // 🔹 3. Cập nhật các field cơ bản
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             product.setName(request.getName().trim());
         }
 
-        // Cập nhật description
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription().trim());
         }
 
-        // Cập nhật specs
         if (request.getSpecs() != null) {
             product.setSpecs(request.getSpecs());
         }
 
-        // Cập nhật brand
+        // 🔹 4. Cập nhật brand
         if (request.getBrandId() != null) {
             BrandEntity brand = brandRepository.findById(request.getBrandId())
                     .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
             product.setBrand(brand);
         }
 
-        // Cập nhật category
+        // 🔹 5. Cập nhật category
         if (request.getCategoryId() != null) {
             CategoryEntity category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
             product.setCategory(category);
         }
 
+        // 🔹 6. Xử lý cập nhật danh sách ảnh
+        if (request.getImages() != null) {
+            List<ProductImageRequest> imageRequests = request.getImages();
+
+            // Lấy danh sách ảnh hiện có
+            List<ProductImageEntity> existingImages = product.getImages();
+            if (existingImages == null) {
+                existingImages = new ArrayList<>();
+            }
+
+            // 6.1 Xóa ảnh không còn trong request
+            List<UUID> newIds = imageRequests.stream()
+                    .map(ProductImageRequest::getId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            existingImages.removeIf(img -> img.getId() != null && !newIds.contains(img.getId()));
+
+            // 6.2 Cập nhật hoặc thêm ảnh mới
+            for (ProductImageRequest imgReq : imageRequests) {
+                if (imgReq.getUrl() == null || imgReq.getUrl().trim().isEmpty()) {
+                    continue;
+                }
+
+                ProductImageEntity image;
+
+                if (imgReq.getId() != null) {
+                    // Cập nhật ảnh cũ
+                    image = existingImages.stream()
+                            .filter(i -> i.getId().equals(imgReq.getId()))
+                            .findFirst()
+                            .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_IMAGE_NOT_FOUND));
+
+                    image.setUrl(imgReq.getUrl().trim());
+                    image.setIsPrimary(imgReq.getIsPrimary() != null && imgReq.getIsPrimary());
+                } else {
+                    // Thêm ảnh mới
+                    image = ProductImageEntity.builder()
+                            .url(imgReq.getUrl().trim())
+                            .isPrimary(imgReq.getIsPrimary() != null && imgReq.getIsPrimary())
+                            .product(product)
+                            .build();
+                    existingImages.add(image);
+                }
+            }
+
+            // 6.3 Kiểm tra chỉ có 1 ảnh chính
+            long primaryCount = existingImages.stream()
+                    .filter(img -> img.getIsPrimary() != null && img.getIsPrimary())
+                    .count();
+
+            if (primaryCount > 1) {
+                throw new ResException(ResErrorCode.PRODUCT_MULTIPLE_PRIMARY_IMAGES);
+            }
+
+            // 6.4 Cập nhật thumbnailUrl
+            ProductImageEntity primaryImage = existingImages.stream()
+                    .filter(img -> img.getIsPrimary() != null && img.getIsPrimary())
+                    .findFirst()
+                    .orElse(null);
+
+            if (primaryImage != null) {
+                // Có ảnh chính
+                product.setThumbnailUrl(primaryImage.getUrl());
+            } else if (!existingImages.isEmpty()) {
+                // Không có ảnh chính → dùng ảnh đầu tiên
+                product.setThumbnailUrl(existingImages.get(0).getUrl());
+            } else {
+                // Không có ảnh nào
+                product.setThumbnailUrl(null);
+            }
+
+            product.setImages(existingImages);
+        }
+
+        // 🔹 7. Cập nhật thời gian và lưu
         product.setUpdatedAt(LocalDateTime.now());
         ProductEntity updated = productRepository.save(product);
 
-        // ✅ Xử lý cập nhật ảnh
-        if (request.getImageUrls() != null) {
-            // Xóa toàn bộ ảnh cũ
-            productImageRepository.deleteAllByProductId(product.getId());
-
-            // Thêm ảnh mới
-            List<ProductImageEntity> newImages = request.getImageUrls().stream()
-                    .map(url -> ProductImageEntity.builder()
-                            .product(product)
-                            .url(url)
-                            .isPrimary(false)
-                            .build())
-                    .toList();
-
-            productImageRepository.saveAll(newImages);
-            updated.setImages(newImages);
-        }
-
+        // 🔹 8. Chuyển sang DTO và trả về
         ProductResponse productResponse = convertToDTO(updated);
 
         return new GeneralResponse<>(
@@ -273,14 +333,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request) {
+        // 🔹 1. Validate dữ liệu đầu vào
         validateProductCreationRequest(request);
 
+        // 🔹 2. Lấy Brand và Category
         BrandEntity brand = brandRepository.findById(request.getBrandId())
-                .orElseThrow(() -> new RuntimeException("Brand not found"));
-        CategoryEntity category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
 
-        // Tạo product
+        CategoryEntity category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        // 🔹 3. Tạo Product (chưa có ảnh)
         ProductEntity product = ProductEntity.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -291,23 +354,71 @@ public class ProductServiceImpl implements ProductService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+        // 🔹 4. Lưu Product trước để có ID
         ProductEntity savedProduct = productRepository.save(product);
 
-        // ✅ Lưu danh sách ảnh nếu có
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-            List<ProductImageEntity> imageEntities = request.getImageUrls().stream()
-                    .map(url -> ProductImageEntity.builder()
-                            .product(savedProduct)
-                            .url(url)
-                            .isPrimary(false)
-                            .build())
-                    .toList();
+        // 🔹 5. Xử lý danh sách ảnh
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            List<ProductImageRequest> imageRequests = request.getImages();
 
-            productImageRepository.saveAll(imageEntities);
-            savedProduct.setImages(imageEntities);
+            // 5.1 Giới hạn chỉ 1 ảnh chính
+            long primaryCount = imageRequests.stream()
+                    .filter(imgReq -> imgReq.getIsPrimary() != null && imgReq.getIsPrimary())
+                    .count();
+
+            if (primaryCount > 1) {
+                throw new ResException(ResErrorCode.PRODUCT_MULTIPLE_PRIMARY_IMAGES);
+            }
+
+            // 5.2 Tạo danh sách ảnh entities
+            List<ProductImageEntity> imageEntities = new ArrayList<>();
+            String thumbnailUrl = null;
+
+            for (ProductImageRequest imgReq : imageRequests) {
+                // Bỏ qua nếu URL null hoặc rỗng
+                if (imgReq.getUrl() == null || imgReq.getUrl().trim().isEmpty()) {
+                    continue;
+                }
+
+                String cleanUrl = imgReq.getUrl().trim();
+                Boolean isPrimary = imgReq.getIsPrimary() != null && imgReq.getIsPrimary();
+
+                ProductImageEntity image = ProductImageEntity.builder()
+                        .product(savedProduct)
+                        .url(cleanUrl)
+                        .isPrimary(isPrimary)
+                        .build();
+
+                imageEntities.add(image);
+
+                // Lưu URL của ảnh chính
+                if (isPrimary && thumbnailUrl == null) {
+                    thumbnailUrl = cleanUrl;
+                }
+            }
+
+            // 5.3 Lưu danh sách ảnh
+            if (!imageEntities.isEmpty()) {
+                productImageRepository.saveAll(imageEntities);
+                savedProduct.setImages(imageEntities);
+
+                // 5.4 Set thumbnail URL
+                if (thumbnailUrl != null) {
+                    // Có ảnh chính
+                    savedProduct.setThumbnailUrl(thumbnailUrl);
+                } else {
+                    // Không có ảnh chính → dùng ảnh đầu tiên
+                    savedProduct.setThumbnailUrl(imageEntities.get(0).getUrl());
+                }
+
+                // 5.5 Lưu lại product với thumbnailUrl
+                savedProduct = productRepository.save(savedProduct);
+            }
         }
 
+        // 🔹 6. Chuyển sang DTO để trả về
         ProductResponse response = convertToDTO(savedProduct);
+
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null);
     }
 

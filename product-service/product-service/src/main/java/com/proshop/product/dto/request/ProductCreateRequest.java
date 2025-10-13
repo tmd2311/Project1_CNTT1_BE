@@ -17,5 +17,5 @@ public class ProductCreateRequest {
     private Map<String, Object> specs; // nếu bạn dùng JSON
     private UUID brandId;
     private UUID categoryId;
-    private List<String> imageUrls; // <== thêm mới
+    private List<ProductImageRequest> images; // <== thêm mới
 }
