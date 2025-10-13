@@ -1,19 +1,17 @@
 package com.proshop.order.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserResponse {
-
-    private long id;
+public class UserInfoResponse {
+    private Long id;
     private String code;
     private String account;
     private String username;

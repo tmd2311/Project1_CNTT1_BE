@@ -56,28 +56,6 @@ public class CartController {
         }
     }
 
-    private List<String> getRoleFromToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.error("Missing or invalid Authorization header");
-            throw new RuntimeException("Missing or invalid Authorization header");
-        }
-
-        String token = authHeader.substring(7).trim();
-
-        log.debug("Token extracted, length: {}", token.length());
-
-        try {
-            List<String> roles = jwtUtil.extractRoles(token);
-            log.info("✅ Successfully extracted role from token: {}", roles);
-            return roles;
-        } catch (Exception e) {
-            log.error("❌ Failed to extract role from token: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid token: " + e.getMessage());
-        }
-    }
-
     /**
      * Add product to cart (userId from token)
      */
@@ -154,62 +132,30 @@ public class CartController {
     /**
      * Get all carts (Admin only)
      */
+    /**
+     * ✅ Lấy toàn bộ giỏ hàng (Admin)
+     */
     @GetMapping("/admin/all")
     public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts(HttpServletRequest httpRequest) {
         log.info("Getting all carts (admin)");
-
-        List<String> roles = getRoleFromToken(httpRequest);
-
-        // ✅ Kiểm tra nếu có quyền Admin
-        boolean isAdmin = roles.stream().anyMatch(role -> role.equalsIgnoreCase("Admin"));
-        if (!isAdmin) {
-            throw new ResException(ResErrorCode.PERMISSION_DENIED);
-        }
-
-        // ✅ Nếu là admin thì xử lý bình thường
-        List<CartEntity> carts = cartRepository.findAll();
-        List<CartResponse> response = cartMapper.toResponseList(carts);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<List<CartResponse>> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        return ResponseEntity.ok(cartService.getAllCarts(httpRequest));
     }
 
-
     /**
-     * Get cart by userId (Admin only)
+     * ✅ Lấy giỏ hàng theo userId (Admin)
      */
     @GetMapping("/admin/user/{userId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(@PathVariable long userId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(HttpServletRequest httpRequest, @PathVariable long userId) {
         log.info("Getting cart for user {} (admin)", userId);
-
-        CartEntity cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
-
-        CartResponse response = cartMapper.toResponse(cart);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<CartResponse> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        return ResponseEntity.ok(cartService.getCartByUserId(httpRequest, userId));
     }
 
     /**
-     * Get cart by cartId (Admin only)
+     * ✅ Lấy giỏ hàng theo cartId (Admin)
      */
     @GetMapping("/admin/{cartId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(@PathVariable UUID cartId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(HttpServletRequest httpRequest, @PathVariable UUID cartId) {
         log.info("Getting cart by id {} (admin)", cartId);
-
-        CartEntity cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart not found: " + cartId));
-
-        CartResponse response = cartMapper.toResponse(cart);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<CartResponse> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        return ResponseEntity.ok(cartService.getCartById(httpRequest, cartId));
     }
 }

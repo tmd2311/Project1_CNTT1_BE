@@ -1,5 +1,8 @@
 package com.proshop.order.service.order.impl;
 
+import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.client.ProductClient;
 import com.proshop.order.client.UserClient;
 import com.proshop.order.dto.request.OrderCreateRequest;
@@ -10,6 +13,7 @@ import com.proshop.order.entity.OrderStatus;
 import com.proshop.order.repository.OrderRepository;
 import com.proshop.order.service.order.OrderService;
 import feign.FeignException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,64 +33,17 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
     private final UserClient userClient;
+    private final JwtUtil jwtUtil;
 
-    @Override
-    public GeneralResponse<List<OrderResponse>> getAllOrders() {
-        try {
-            List<OrderResponse> data = orderRepository.findAll().stream()
-                    .map(o -> new OrderResponse(
-                            o.getOrderId(),
-                            o.getUserId(),
-                            o.getTotalAmount(),
-                            o.getStatus().name(),
-                            o.getCreatedAt()
-                    ))
-                    .toList();
-
-            return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
-        } catch (Exception e) {
-            log.error("Error getting all orders: {}", e.getMessage());
-            return new GeneralResponse<>(
-                    new ResponseStatus("500", "Lỗi khi lấy danh sách đơn hàng", "Internal Server Error"),
-                    null,
-                    null
-            );
-        }
-    }
-
-    @Override
-    public GeneralResponse<OrderResponse> getOrderById(UUID id) {
-        try {
-            return orderRepository.findById(id)
-                    .map(order -> new GeneralResponse<>(
-                            ResponseStatus.SUCCESS_STATUS,
-                            new OrderResponse(
-                                    order.getOrderId(),
-                                    order.getUserId(),
-                                    order.getTotalAmount(),
-                                    order.getStatus().name(),
-                                    order.getCreatedAt()
-                            ),
-                            null
-                    ))
-                    .orElseGet(() -> new GeneralResponse<>(
-                            new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
-                            null,
-                            null
-                    ));
-        } catch (Exception e) {
-            log.error("Error getting order by id {}: {}", id, e.getMessage());
-            return new GeneralResponse<>(
-                    new ResponseStatus("500", "Lỗi khi lấy thông tin đơn hàng", "Internal Server Error"),
-                    null,
-                    null
-            );
-        }
-    }
+    // ============================================
+    // USER METHODS
+    // ============================================
 
     @Override
     @Transactional
     public GeneralResponse<OrderResponse> createOrder(OrderCreateRequest request) {
+        log.info("Creating order for user: {}", request.getUserId());
+
         // Validate request
         if (request.getItems() == null || request.getItems().isEmpty()) {
             return new GeneralResponse<>(
@@ -96,38 +53,19 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        // Validate user exists
-        UserResponse user;
-        try {
-            user = userClient.getUserById(request.getUserId());
-            if (user == null) {
-                return new GeneralResponse<>(
-                        new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
-                        null,
-                        null
-                );
-            }
-        } catch (FeignException.NotFound e) {
-            log.error("User not found: {}", request.getUserId());
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy người dùng", "User not found"),
-                    null,
-                    null
-            );
-        } catch (Exception e) {
-            log.error("Error calling user service: {}", e.getMessage());
-            return new GeneralResponse<>(
-                    new ResponseStatus("500", "Lỗi khi kiểm tra người dùng", "Error validating user"),
-                    null,
-                    null
-            );
-        }
+
+
+
 
         // Validate all products exist and get product details
         List<ProductResponse> products = new ArrayList<>();
         for (var item : request.getItems()) {
             try {
+                log.info("📞 Calling Product Service to validate product: {}", item.getProductId());
+
+                // Nếu Product Service cũng trả về wrapped response, cập nhật tương tự
                 ProductResponse product = productClient.getProductById(item.getProductId());
+
                 if (product == null) {
                     return new GeneralResponse<>(
                             new ResponseStatus("404",
@@ -150,8 +88,11 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 products.add(product);
+                log.info("✅ Successfully validated product: {} (price: {})",
+                        product.getId(), product.getPrice());
+
             } catch (FeignException.NotFound e) {
-                log.error("Product not found: {}", item.getProductId());
+                log.error("❌ Product not found (404): {}", item.getProductId());
                 return new GeneralResponse<>(
                         new ResponseStatus("404",
                                 "Không tìm thấy sản phẩm với ID: " + item.getProductId(),
@@ -160,7 +101,8 @@ public class OrderServiceImpl implements OrderService {
                         null
                 );
             } catch (Exception e) {
-                log.error("Error calling product service for product {}: {}", item.getProductId(), e.getMessage());
+                log.error("❌ Error calling product service for product {}: {}",
+                        item.getProductId(), e.getMessage());
                 return new GeneralResponse<>(
                         new ResponseStatus("500",
                                 "Lỗi khi kiểm tra sản phẩm",
@@ -184,8 +126,11 @@ public class OrderServiceImpl implements OrderService {
 
                 totalAmount = totalAmount.add(itemTotal);
             }
+
+            log.info("💰 Calculated total amount: {}", totalAmount);
+
         } catch (Exception e) {
-            log.error("Error calculating total amount: {}", e.getMessage());
+            log.error("❌ Error calculating total amount: {}", e.getMessage());
             return new GeneralResponse<>(
                     new ResponseStatus("500", "Lỗi khi tính tổng tiền", "Error calculating total"),
                     null,
@@ -205,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
         // Create order entity
         try {
             OrderEntity order = OrderEntity.builder()
-                    .userId(user.getId())
+                    .userId(request.getUserId())
                     .totalAmount(totalAmount)
                     .status(OrderStatus.PENDING)
                     .createdAt(LocalDateTime.now())
@@ -213,8 +158,8 @@ public class OrderServiceImpl implements OrderService {
 
             orderRepository.save(order);
 
-            log.info("Created order {} for user {} with total amount {}",
-                    order.getOrderId(), user.getId(), totalAmount);
+            log.info("✅ Created order {} for user {} with total amount {}",
+                    order.getOrderId(), request.getUserId(), totalAmount);
 
             OrderResponse data = new OrderResponse(
                     order.getOrderId(),
@@ -226,7 +171,7 @@ public class OrderServiceImpl implements OrderService {
 
             return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
         } catch (Exception e) {
-            log.error("Error creating order: {}", e.getMessage());
+            log.error("❌ Error creating order: {}", e.getMessage(), e);
             return new GeneralResponse<>(
                     new ResponseStatus("500", "Lỗi khi tạo đơn hàng", "Error creating order"),
                     null,
@@ -236,25 +181,52 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
-    public GeneralResponse<OrderResponse> updateOrder(UUID id, OrderRequest request) {
-        // Validate request
-        if (request.getTotalAmount() == null || request.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+    public GeneralResponse<List<OrderResponse>> getOrdersByUserId(Long userId) {
+        log.info("Getting orders for user: {}", userId);
+
+        try {
+            List<OrderEntity> orders = orderRepository.findByUserId(userId);
+
+            List<OrderResponse> data = orders.stream()
+                    .map(o -> new OrderResponse(
+                            o.getOrderId(),
+                            o.getUserId(),
+                            o.getTotalAmount(),
+                            o.getStatus().name(),
+                            o.getCreatedAt()
+                    ))
+                    .toList();
+
+            log.info("✅ Found {} orders for user {}", data.size(), userId);
+
+            return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+        } catch (Exception e) {
+            log.error("Error getting orders for user {}: {}", userId, e.getMessage());
             return new GeneralResponse<>(
-                    new ResponseStatus("400", "Tổng tiền phải lớn hơn 0", "Invalid total amount"),
+                    new ResponseStatus("500", "Lỗi khi lấy danh sách đơn hàng", "Internal Server Error"),
                     null,
                     null
             );
         }
+    }
+
+    @Override
+    public GeneralResponse<OrderResponse> getOrderByIdAndUserId(UUID orderId, Long userId) {
+        log.info("Getting order {} for user {}", orderId, userId);
 
         try {
-            return orderRepository.findById(id)
+            return orderRepository.findById(orderId)
                     .map(order -> {
-                        order.setTotalAmount(request.getTotalAmount());
-                        order.setStatus(OrderStatus.PENDING);
-                        orderRepository.save(order);
-
-                        log.info("Updated order {} with new total amount {}", id, request.getTotalAmount());
+                        // Check if order belongs to user
+                        if (order.getUserId() != userId) {
+                            log.warn("User {} attempted to access order {} which belongs to user {}",
+                                    userId, orderId, order.getUserId());
+                            return new GeneralResponse<OrderResponse>(
+                                    new ResponseStatus("403", "Bạn không có quyền truy cập đơn hàng này", "Forbidden"),
+                                    null,
+                                    null
+                            );
+                        }
 
                         OrderResponse data = new OrderResponse(
                                 order.getOrderId(),
@@ -267,7 +239,7 @@ public class OrderServiceImpl implements OrderService {
                         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
                     })
                     .orElseGet(() -> {
-                        log.warn("Order not found for update: {}", id);
+                        log.warn("Order not found: {}", orderId);
                         return new GeneralResponse<>(
                                 new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
                                 null,
@@ -275,7 +247,224 @@ public class OrderServiceImpl implements OrderService {
                         );
                     });
         } catch (Exception e) {
-            log.error("Error updating order {}: {}", id, e.getMessage());
+            log.error("Error getting order {} for user {}: {}", orderId, userId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy thông tin đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse<OrderResponse> cancelOrder(UUID orderId, Long userId) {
+        log.info("Cancelling order {} for user {}", orderId, userId);
+
+        try {
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        // Check if order belongs to user
+                        if (order.getUserId() != userId) {
+                            log.warn("User {} attempted to cancel order {} which belongs to user {}",
+                                    userId, orderId, order.getUserId());
+                            return new GeneralResponse<OrderResponse>(
+                                    new ResponseStatus("403", "Bạn không có quyền hủy đơn hàng này", "Forbidden"),
+                                    null,
+                                    null
+                            );
+                        }
+
+                        // Check if order can be cancelled (only PENDING orders)
+                        if (order.getStatus() != OrderStatus.PENDING) {
+                            log.warn("Cannot cancel order {} with status {}", orderId, order.getStatus());
+                            return new GeneralResponse<OrderResponse>(
+                                    new ResponseStatus("400",
+                                            "Chỉ có thể hủy đơn hàng đang chờ xử lý",
+                                            "Cannot cancel order"),
+                                    null,
+                                    null
+                            );
+                        }
+
+                        // Cancel order
+                        order.setStatus(OrderStatus.CANCELLED);
+                        orderRepository.save(order);
+
+                        log.info("✅ Cancelled order {} for user {}", orderId, userId);
+
+                        OrderResponse data = new OrderResponse(
+                                order.getOrderId(),
+                                order.getUserId(),
+                                order.getTotalAmount(),
+                                order.getStatus().name(),
+                                order.getCreatedAt()
+                        );
+
+                        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Order not found: {}", orderId);
+                        return new GeneralResponse<>(
+                                new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
+                                null,
+                                null
+                        );
+                    });
+        } catch (Exception e) {
+            log.error("Error cancelling order {} for user {}: {}", orderId, userId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi hủy đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+    // ============================================
+    // ADMIN METHODS
+    // ============================================
+
+    @Override
+    public GeneralResponse<List<OrderResponse>> getAllOrders(HttpServletRequest httpRequest) {
+        checkAdminRole(httpRequest);
+        log.info("Getting all orders (admin)");
+
+        try {
+            List<OrderResponse> data = orderRepository.findAll().stream()
+                    .map(o -> new OrderResponse(
+                            o.getOrderId(),
+                            o.getUserId(),
+                            o.getTotalAmount(),
+                            o.getStatus().name(),
+                            o.getCreatedAt()
+                    ))
+                    .toList();
+
+            log.info("✅ Found {} orders (admin)", data.size());
+
+            return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+        } catch (Exception e) {
+            log.error("Error getting all orders (admin): {}", e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy danh sách đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+    @Override
+    public GeneralResponse<OrderResponse> getOrderById(HttpServletRequest httpRequest, UUID orderId) {
+        checkAdminRole(httpRequest);
+        log.info("Getting order {} (admin)", orderId);
+
+        try {
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        OrderResponse data = new OrderResponse(
+                                order.getOrderId(),
+                                order.getUserId(),
+                                order.getTotalAmount(),
+                                order.getStatus().name(),
+                                order.getCreatedAt()
+                        );
+
+                        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Order not found: {}", orderId);
+                        return new GeneralResponse<>(
+                                new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
+                                null,
+                                null
+                        );
+                    });
+        } catch (Exception e) {
+            log.error("Error getting order {} (admin): {}", orderId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy thông tin đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+    @Override
+    public GeneralResponse<List<OrderResponse>> getOrdersByUserIdAdmin(HttpServletRequest httpRequest, Long userId) {
+        checkAdminRole(httpRequest);
+        log.info("Getting orders for user {} (admin)", userId);
+
+        try {
+            List<OrderEntity> orders = orderRepository.findByUserId(userId);
+
+            List<OrderResponse> data = orders.stream()
+                    .map(o -> new OrderResponse(
+                            o.getOrderId(),
+                            o.getUserId(),
+                            o.getTotalAmount(),
+                            o.getStatus().name(),
+                            o.getCreatedAt()
+                    ))
+                    .toList();
+
+            log.info("✅ Found {} orders for user {} (admin)", data.size(), userId);
+
+            return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+        } catch (Exception e) {
+            log.error("Error getting orders for user {} (admin): {}", userId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy danh sách đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request) {
+        checkAdminRole(httpRequest);
+        log.info("Updating order {} (admin)", orderId);
+
+        // Validate request
+        if (request.getTotalAmount() == null || request.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return new GeneralResponse<>(
+                    new ResponseStatus("400", "Tổng tiền phải lớn hơn 0", "Invalid total amount"),
+                    null,
+                    null
+            );
+        }
+
+        try {
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        order.setTotalAmount(request.getTotalAmount());
+                        order.setStatus(OrderStatus.PENDING);
+                        orderRepository.save(order);
+
+                        log.info("✅ Updated order {} with new total amount {} (admin)", orderId, request.getTotalAmount());
+
+                        OrderResponse data = new OrderResponse(
+                                order.getOrderId(),
+                                order.getUserId(),
+                                order.getTotalAmount(),
+                                order.getStatus().name(),
+                                order.getCreatedAt()
+                        );
+
+                        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Order not found for update: {}", orderId);
+                        return new GeneralResponse<>(
+                                new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
+                                null,
+                                null
+                        );
+                    });
+        } catch (Exception e) {
+            log.error("Error updating order {} (admin): {}", orderId, e.getMessage());
             return new GeneralResponse<>(
                     new ResponseStatus("500", "Lỗi khi cập nhật đơn hàng", "Internal Server Error"),
                     null,
@@ -286,13 +475,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public GeneralResponse<OrderDeleteResponse> deleteOrder(UUID id) {
+    public GeneralResponse<OrderDeleteResponse> deleteOrder(HttpServletRequest httpRequest, UUID orderId) {
+        checkAdminRole(httpRequest);
+        log.info("Deleting order {} (admin)", orderId);
+
         try {
-            return orderRepository.findById(id)
+            return orderRepository.findById(orderId)
                     .map(order -> {
                         orderRepository.delete(order);
 
-                        log.info("Deleted order {} for user {}", order.getOrderId(), order.getUserId());
+                        log.info("✅ Deleted order {} for user {} (admin)", order.getOrderId(), order.getUserId());
 
                         return new GeneralResponse<>(
                                 ResponseStatus.SUCCESS_STATUS,
@@ -301,7 +493,7 @@ public class OrderServiceImpl implements OrderService {
                         );
                     })
                     .orElseGet(() -> {
-                        log.warn("Order not found for deletion: {}", id);
+                        log.warn("Order not found for deletion: {}", orderId);
                         return new GeneralResponse<>(
                                 new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
                                 null,
@@ -309,12 +501,53 @@ public class OrderServiceImpl implements OrderService {
                         );
                     });
         } catch (Exception e) {
-            log.error("Error deleting order {}: {}", id, e.getMessage());
+            log.error("Error deleting order {} (admin): {}", orderId, e.getMessage());
             return new GeneralResponse<>(
                     new ResponseStatus("500", "Lỗi khi xóa đơn hàng", "Internal Server Error"),
                     null,
                     null
             );
+        }
+    }
+
+    // ============================================
+    // HELPER METHODS
+    // ============================================
+
+    /**
+     * Check if user has Admin role from JWT token
+     */
+    private void checkAdminRole(HttpServletRequest httpRequest) {
+        List<String> roles = getRoleFromToken(httpRequest);
+
+        boolean isAdmin = roles.stream().anyMatch(role -> role.equalsIgnoreCase("Admin"));
+        if (!isAdmin) {
+            throw new ResException(ResErrorCode.PERMISSION_DENIED,
+                    "Bạn không có quyền truy cập tài nguyên này (Admin only)");
+        }
+    }
+
+    /**
+     * Extract roles from JWT token
+     */
+    private List<String> getRoleFromToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("Missing or invalid Authorization header");
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7).trim();
+        log.debug("Token extracted, length: {}", token.length());
+
+        try {
+            List<String> roles = jwtUtil.extractRoles(token);
+            log.info("✅ Successfully extracted roles from token: {}", roles);
+            return roles;
+        } catch (Exception e) {
+            log.error("❌ Failed to extract roles from token: {}", e.getMessage(), e);
+            throw new RuntimeException("Invalid token: " + e.getMessage());
         }
     }
 }
