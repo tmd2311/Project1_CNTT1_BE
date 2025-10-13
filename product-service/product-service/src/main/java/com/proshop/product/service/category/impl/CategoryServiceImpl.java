@@ -1,12 +1,15 @@
 package com.proshop.product.service.category.impl;
 
 import com.proshop.product.dto.request.CategoryCreateRequest;
+import com.proshop.product.dto.request.CategoryImageRequest;
 import com.proshop.product.dto.request.CategoryUpdateRequest;
 import com.proshop.product.dto.response.CategoryDeleteResponse;
 import com.proshop.product.dto.response.CategoryResponse;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.entity.CategoryEntity;
+import com.proshop.product.entity.CategoryImageEntity;
+import com.proshop.product.repository.CategoryImageRepository;
 import com.proshop.product.repository.CategoryRepository;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.service.category.CategoryService;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryImageRepository categoryImageRepository;
 
     @Override
     @Transactional
@@ -74,7 +79,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request) {
-        // Validation
+        // --- Validation cơ bản ---
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             throw new ResException(ResErrorCode.CATEGORY_NAME_REQUIRED);
         }
@@ -83,29 +88,26 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ResException(ResErrorCode.CATEGORY_NAME_TOO_SHORT);
         }
 
-        // Check slug uniqueness if provided
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
             if (categoryRepository.existsBySlug(request.getSlug().trim())) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_ALREADY_EXISTS);
             }
 
-            // Validate slug format
             if (!request.getSlug().matches("^[a-z0-9-]+$")) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_INVALID_FORMAT);
             }
         }
 
-        // Create new category
+        // --- Tạo category ---
         CategoryEntity category = new CategoryEntity();
         category.setName(request.getName().trim());
         category.setSlug(request.getSlug() != null ? request.getSlug().trim() : generateSlugFromName(request.getName()));
 
-        // Handle parent category
+        // --- Gán parent nếu có ---
         if (request.getParentId() != null) {
             CategoryEntity parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_PARENT_NOT_FOUND));
 
-            // Validate hierarchy depth
             if (getHierarchyDepth(parent) >= 3) {
                 throw new ResException(ResErrorCode.CATEGORY_MAX_DEPTH_EXCEEDED);
             }
@@ -113,7 +115,26 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(parent);
         }
 
+        // --- Lưu category trước để có ID ---
         CategoryEntity saved = categoryRepository.save(category);
+
+        // --- Thêm danh sách ảnh ---
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            List<CategoryImageEntity> imageEntities = request.getImageUrls().stream()
+                    .map(url -> CategoryImageEntity.builder()
+                            .url(url)
+                            .isPrimary(request.getPrimaryImage() != null && request.getPrimaryImage().equals(url))
+                            .category(saved)
+                            .build())
+                    .toList();
+
+            // Lưu ảnh vào DB
+            categoryImageRepository.saveAll(imageEntities);
+
+            // Gán danh sách ảnh lại cho category (để trả về trong response)
+            saved.setImages(imageEntities);
+        }
+
         CategoryResponse response = convertToDTO(saved);
 
         return new GeneralResponse<>(
@@ -126,38 +147,38 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request) {
-        // Find category
+        // 🔹 1. Tìm category cần cập nhật
         CategoryEntity category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
 
-        // Validation
+        // 🔹 2. Validate request
         validateCategoryUpdateRequest(request);
 
-        // Update fields
+        // 🔹 3. Cập nhật các field cơ bản
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             category.setName(request.getName().trim());
         }
 
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
-            // Validate slug uniqueness (excluding current category)
-            if (categoryRepository.existsBySlugAndIdNot(request.getSlug().trim(), id)) {
+            String slug = request.getSlug().trim();
+            // Check slug trùng (ngoại trừ chính nó)
+            if (categoryRepository.existsBySlugAndIdNot(slug, id)) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_ALREADY_EXISTS);
             }
-            category.setSlug(request.getSlug().trim());
+            category.setSlug(slug);
         }
 
-        // Handle parent category changes
+        // 🔹 4. Xử lý parent category
         if (request.getParentId() != null) {
-            // Validate parent exists
             CategoryEntity parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_PARENT_NOT_FOUND));
 
-            // Prevent circular reference (category cannot be its own parent or descendant)
+            // Không được tự làm parent chính mình
             if (parent.getId().equals(id) || isDescendant(parent, id)) {
                 throw new ResException(ResErrorCode.CATEGORY_CIRCULAR_REFERENCE);
             }
 
-            // Validate hierarchy depth (PC store usually doesn't need more than 3 levels)
+            // Giới hạn độ sâu phân cấp
             if (getHierarchyDepth(parent) >= 3) {
                 throw new ResException(ResErrorCode.CATEGORY_MAX_DEPTH_EXCEEDED);
             }
@@ -167,6 +188,59 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(null);
         }
 
+        // 🔹 5. Cập nhật danh sách ảnh (nếu có)
+        if (request.getImages() != null) {
+            List<CategoryImageRequest> imageRequests = request.getImages();
+
+            // Lấy danh sách ảnh hiện có
+            List<CategoryImageEntity> existingImages = category.getImages();
+            if (existingImages == null) existingImages = new ArrayList<>();
+
+            // 5.1 Xóa ảnh không còn trong request
+            List<UUID> newIds = imageRequests.stream()
+                    .map(CategoryImageRequest::getId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            existingImages.removeIf(img -> img.getId() != null && !newIds.contains(img.getId()));
+
+            // 5.2 Cập nhật hoặc thêm ảnh mới
+            for (CategoryImageRequest imgReq : imageRequests) {
+                if (imgReq.getUrl() == null || imgReq.getUrl().trim().isEmpty()) continue;
+
+                CategoryImageEntity image;
+                if (imgReq.getId() != null) {
+                    // Cập nhật ảnh cũ
+                    image = existingImages.stream()
+                            .filter(i -> i.getId().equals(imgReq.getId()))
+                            .findFirst()
+                            .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_IMAGE_NOT_FOUND));
+
+                    image.setUrl(imgReq.getUrl().trim());
+                    image.setIsPrimary(imgReq.getIsPrimary() != null && imgReq.getIsPrimary());
+                } else {
+                    // Thêm ảnh mới
+                    image = CategoryImageEntity.builder()
+                            .url(imgReq.getUrl().trim())
+                            .isPrimary(imgReq.getIsPrimary() != null && imgReq.getIsPrimary())
+                            .category(category)
+                            .build();
+                    existingImages.add(image);
+                }
+            }
+
+            // 5.3 Chỉ cho phép 1 ảnh chính
+            long primaryCount = existingImages.stream()
+                    .filter(CategoryImageEntity::getIsPrimary)
+                    .count();
+            if (primaryCount > 1) {
+                throw new ResException(ResErrorCode.CATEGORY_MULTIPLE_PRIMARY_IMAGES);
+            }
+
+            category.setImages(existingImages);
+        }
+
+        // 🔹 6. Lưu và trả kết quả
         CategoryEntity updated = categoryRepository.save(category);
         CategoryResponse categoryResponse = convertToDTO(updated);
 
@@ -176,6 +250,7 @@ public class CategoryServiceImpl implements CategoryService {
                 null
         );
     }
+
 
     @Override
     public GeneralResponse<Page<CategoryResponse>> searchCategories(String name, int page, int size) {

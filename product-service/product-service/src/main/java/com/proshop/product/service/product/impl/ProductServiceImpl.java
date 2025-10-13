@@ -8,13 +8,11 @@ import com.proshop.product.dto.response.PageResponseUtil;
 import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.dto.response.ProductResponse;
-import com.proshop.product.entity.BrandEntity;
-import com.proshop.product.entity.CategoryEntity;
-import com.proshop.product.entity.ProductEntity;
-import com.proshop.product.entity.SKUEntity;
+import com.proshop.product.entity.*;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.repository.BrandRepository;
 import com.proshop.product.repository.CategoryRepository;
+import com.proshop.product.repository.ProductImageRepository;
 import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.service.product.ProductService;
 
@@ -44,6 +42,7 @@ public class ProductServiceImpl implements ProductService {
   private final ProductRepository productRepository;
   private final BrandRepository brandRepository;
   private final CategoryRepository categoryRepository;
+  private final ProductImageRepository productImageRepository;
 
   @Override
   public GeneralResponse<PageResponse<ProductResponse>> getProducts(int page, int size) {
@@ -128,34 +127,34 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request) {
-        // Sử dụng PRODUCT_NOT_FOUND thay vì RuntimeException
         ProductEntity product = productRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_NOT_FOUND));
 
-        // Validation
         validateProductUpdateRequest(request);
 
-        // Update fields
+        // Cập nhật name
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             product.setName(request.getName().trim());
         }
 
+        // Cập nhật description
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription().trim());
         }
 
+        // Cập nhật specs
         if (request.getSpecs() != null) {
             product.setSpecs(request.getSpecs());
         }
 
-        // Brand validation
+        // Cập nhật brand
         if (request.getBrandId() != null) {
             BrandEntity brand = brandRepository.findById(request.getBrandId())
                     .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
             product.setBrand(brand);
         }
 
-        // Category validation
+        // Cập nhật category
         if (request.getCategoryId() != null) {
             CategoryEntity category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
@@ -165,6 +164,24 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdatedAt(LocalDateTime.now());
         ProductEntity updated = productRepository.save(product);
 
+        // ✅ Xử lý cập nhật ảnh
+        if (request.getImageUrls() != null) {
+            // Xóa toàn bộ ảnh cũ
+            productImageRepository.deleteAllByProductId(product.getId());
+
+            // Thêm ảnh mới
+            List<ProductImageEntity> newImages = request.getImageUrls().stream()
+                    .map(url -> ProductImageEntity.builder()
+                            .product(product)
+                            .url(url)
+                            .isPrimary(false)
+                            .build())
+                    .toList();
+
+            productImageRepository.saveAll(newImages);
+            updated.setImages(newImages);
+        }
+
         ProductResponse productResponse = convertToDTO(updated);
 
         return new GeneralResponse<>(
@@ -173,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
                 null
         );
     }
+
 
     private void validateProductUpdateRequest(ProductUpdateRequest request) {
         if (request.getName() != null && request.getName().isBlank()) {
@@ -252,15 +270,17 @@ public class ProductServiceImpl implements ProductService {
     );
   }
 
-  @Override
+    @Override
     @Transactional
     public GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request) {
         validateProductCreationRequest(request);
+
         BrandEntity brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new RuntimeException("Brand not found"));
         CategoryEntity category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
+        // Tạo product
         ProductEntity product = ProductEntity.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -271,18 +291,27 @@ public class ProductServiceImpl implements ProductService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        ProductEntity saved = productRepository.save(product);
+        ProductEntity savedProduct = productRepository.save(product);
 
-        // map sang ProductResponse
-        // TODO: Sau này bổ sung logic để lấy SKU và giá (price) cho ProductResponse
-        ProductResponse response = convertToDTO(saved);
+        // ✅ Lưu danh sách ảnh nếu có
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            List<ProductImageEntity> imageEntities = request.getImageUrls().stream()
+                    .map(url -> ProductImageEntity.builder()
+                            .product(savedProduct)
+                            .url(url)
+                            .isPrimary(false)
+                            .build())
+                    .toList();
 
-        return new GeneralResponse<>(
-                ResponseStatus.SUCCESS_STATUS,
-                response,
-                null
-        );
+            productImageRepository.saveAll(imageEntities);
+            savedProduct.setImages(imageEntities);
+        }
+
+        ProductResponse response = convertToDTO(savedProduct);
+        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null);
     }
+
+
 
     private void validateProductCreationRequest(ProductCreateRequest request) {
         if (request.getName() == null || request.getName().isBlank()) {
@@ -298,6 +327,5 @@ public class ProductServiceImpl implements ProductService {
             throw new ResException(ResErrorCode.CATEGORY_NOT_FOUND);
         }
     }
-
 }
 
