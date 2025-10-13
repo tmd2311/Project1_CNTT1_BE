@@ -56,9 +56,13 @@ public class CartServiceImpl implements CartService {
 
         // Try to get product info
         try {
-            ProductResponse product = productClient.getProductById(entity.getProductId());
-            response.setProductName(product.getName());
-            response.setProductPrice(product.getPrice());
+            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(entity.getProductId());
+            ProductResponse product = productResponse.getData(); // ← Lấy data từ wrapper
+
+            if (product != null) {
+                response.setProductName(product.getName());
+                response.setProductPrice(product.getPrice());
+            }
         } catch (Exception e) {
             log.warn("Could not fetch product info for productId: {}", entity.getProductId());
             // Continue without product info
@@ -85,7 +89,9 @@ public class CartServiceImpl implements CartService {
         // Validate product exists
         ProductResponse product;
         try {
-            product = productClient.getProductById(productId);
+            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(productId);
+            product = productResponse.getData(); // ← Lấy data từ wrapper
+
             if (product == null) {
                 log.error("Product not found: {}", productId);
                 return new GeneralResponse<>(
@@ -94,6 +100,7 @@ public class CartServiceImpl implements CartService {
                         null
                 );
             }
+
             log.info("Product validated: id={}, name={}, price={}",
                     product.getId(), product.getName(), product.getPrice());
         } catch (FeignException.NotFound e) {
@@ -216,7 +223,9 @@ public class CartServiceImpl implements CartService {
         // Validate product exists
         ProductResponse product;
         try {
-            product = productClient.getProductById(productId);
+            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(productId);
+            product = productResponse.getData(); // ← Lấy data từ wrapper
+
             if (product == null) {
                 log.error("Product not found: {}", productId);
                 return new GeneralResponse<>(

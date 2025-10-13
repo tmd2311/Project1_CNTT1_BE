@@ -9,13 +9,16 @@ import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.response.*;
 import com.proshop.order.entity.OrderEntity;
+import com.proshop.order.entity.OrderItemEntity;
 import com.proshop.order.entity.OrderStatus;
+import com.proshop.order.repository.OrderItemRepository;
 import com.proshop.order.repository.OrderRepository;
 import com.proshop.order.service.order.OrderService;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +37,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductClient productClient;
     private final UserClient userClient;
     private final JwtUtil jwtUtil;
-
+    @Autowired
+    private OrderItemRepository orderItemRepository;
     // ============================================
     // USER METHODS
     // ============================================
@@ -52,25 +56,32 @@ public class OrderServiceImpl implements OrderService {
                     null
             );
         }
-
-
-
-
-
         // Validate all products exist and get product details
         List<ProductResponse> products = new ArrayList<>();
         for (var item : request.getItems()) {
             try {
                 log.info("📞 Calling Product Service to validate product: {}", item.getProductId());
 
-                // Nếu Product Service cũng trả về wrapped response, cập nhật tương tự
-                ProductResponse product = productClient.getProductById(item.getProductId());
+                // Lấy wrapped response và extract data
+                GeneralResponse<ProductResponse> productResponse = productClient.getProductById(item.getProductId());
+                ProductResponse product = productResponse.getData(); // ← Lấy data từ wrapper
 
                 if (product == null) {
                     return new GeneralResponse<>(
                             new ResponseStatus("404",
                                     "Không tìm thấy sản phẩm với ID: " + item.getProductId(),
                                     "Product not found"),
+                            null,
+                            null
+                    );
+                }
+
+                // Validate price
+                if (product.getPrice() == null || product.getPrice() <= 0) {
+                    return new GeneralResponse<>(
+                            new ResponseStatus("400",
+                                    "Giá sản phẩm không hợp lệ",
+                                    "Invalid product price"),
                             null,
                             null
                     );
@@ -102,7 +113,7 @@ public class OrderServiceImpl implements OrderService {
                 );
             } catch (Exception e) {
                 log.error("❌ Error calling product service for product {}: {}",
-                        item.getProductId(), e.getMessage());
+                        item.getProductId(), e.getMessage(), e);
                 return new GeneralResponse<>(
                         new ResponseStatus("500",
                                 "Lỗi khi kiểm tra sản phẩm",
@@ -156,10 +167,36 @@ public class OrderServiceImpl implements OrderService {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            orderRepository.save(order);
+            // Save order first to get orderId
+            order = orderRepository.save(order);
 
-            log.info("✅ Created order {} for user {} with total amount {}",
-                    order.getOrderId(), request.getUserId(), totalAmount);
+            // ← NEW: Create and save order items
+            List<OrderItemEntity> orderItems = new ArrayList<>();
+            for (int i = 0; i < request.getItems().size(); i++) {
+                var item = request.getItems().get(i);
+                ProductResponse product = products.get(i);
+
+                BigDecimal itemPrice = BigDecimal.valueOf(product.getPrice());
+                BigDecimal itemQuantity = BigDecimal.valueOf(item.getQuantity());
+                BigDecimal itemSubtotal = itemPrice.multiply(itemQuantity);
+
+                OrderItemEntity orderItem = OrderItemEntity.builder()
+                        .order(order)
+                        .productId(item.getProductId())
+                        .quantity(item.getQuantity())
+                        .price(itemPrice)
+                        .subtotal(itemSubtotal)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+                orderItems.add(orderItem);
+            }
+
+            orderItemRepository.saveAll(orderItems);
+            // ← END NEW
+
+            log.info("✅ Created order {} for user {} with {} items and total amount {}",
+                    order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount);
 
             OrderResponse data = new OrderResponse(
                     order.getOrderId(),
@@ -548,6 +585,163 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("❌ Failed to extract roles from token: {}", e.getMessage(), e);
             throw new RuntimeException("Invalid token: " + e.getMessage());
+        }
+    }
+    @Override
+    public GeneralResponse<OrderDetailResponse> getOrderDetailByIdAndUserId(UUID orderId, Long userId) {
+        log.info("Getting order detail {} for user {}", orderId, userId);
+
+        try {
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        // Check if order belongs to user
+                        if (!order.getUserId().equals(userId)) {
+                            log.warn("User {} attempted to access order {} which belongs to user {}",
+                                    userId, orderId, order.getUserId());
+                            return new GeneralResponse<OrderDetailResponse>(
+                                    new ResponseStatus("403", "Bạn không có quyền truy cập đơn hàng này", "Forbidden"),
+                                    null,
+                                    null
+                            );
+                        }
+
+                        // Get order items
+                        List<OrderItemEntity> orderItems = orderItemRepository.findByOrderOrderId(orderId);
+
+                        // Build order detail response
+                        List<OrderDetailResponse.OrderItemDetail> itemDetails = new ArrayList<>();
+
+                        for (OrderItemEntity item : orderItems) {
+                            // Try to get product info from Product Service
+                            String productName = "Unknown Product";
+                            Double productPrice = item.getPrice().doubleValue();
+
+                            try {
+                                GeneralResponse<ProductResponse> productResponse = productClient.getProductById(item.getProductId());
+                                ProductResponse product = productResponse.getData();
+                                if (product != null) {
+                                    productName = product.getName();
+                                    // Use current price from Product Service (optional)
+                                    // productPrice = product.getPrice();
+                                }
+                            } catch (Exception e) {
+                                log.warn("Could not fetch product info for productId: {}", item.getProductId());
+                            }
+
+                            OrderDetailResponse.OrderItemDetail itemDetail = OrderDetailResponse.OrderItemDetail.builder()
+                                    .productId(item.getProductId())
+                                    .productName(productName)
+                                    .productPrice(productPrice)
+                                    .quantity(item.getQuantity())
+                                    .subtotal(item.getSubtotal())
+                                    .build();
+
+                            itemDetails.add(itemDetail);
+                        }
+
+                        OrderDetailResponse data = OrderDetailResponse.builder()
+                                .orderId(order.getOrderId())
+                                .userId(order.getUserId())
+                                .totalAmount(order.getTotalAmount())
+                                .status(order.getStatus().name())
+                                .createdAt(order.getCreatedAt())
+                                .items(itemDetails)
+                                .build();
+
+                        log.info("✅ Found order detail for order {} with {} items", orderId, itemDetails.size());
+
+                        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Order not found: {}", orderId);
+                        return new GeneralResponse<>(
+                                new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
+                                null,
+                                null
+                        );
+                    });
+        } catch (Exception e) {
+            log.error("Error getting order detail {} for user {}: {}", orderId, userId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy chi tiết đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
+        }
+    }
+
+// ============================================
+// ADMIN METHOD - Get Order Detail
+// ============================================
+
+    @Override
+    public GeneralResponse<OrderDetailResponse> getOrderDetailById(HttpServletRequest httpRequest, UUID orderId) {
+        checkAdminRole(httpRequest);
+        log.info("Getting order detail {} (admin)", orderId);
+
+        try {
+            return orderRepository.findById(orderId)
+                    .map(order -> {
+                        // Get order items
+                        List<OrderItemEntity> orderItems = orderItemRepository.findByOrderOrderId(orderId);
+
+                        // Build order detail response
+                        List<OrderDetailResponse.OrderItemDetail> itemDetails = new ArrayList<>();
+
+                        for (OrderItemEntity item : orderItems) {
+                            // Try to get product info from Product Service
+                            String productName = "Unknown Product";
+                            Double productPrice = item.getPrice().doubleValue();
+
+                            try {
+                                GeneralResponse<ProductResponse> productResponse = productClient.getProductById(item.getProductId());
+                                ProductResponse product = productResponse.getData();
+                                if (product != null) {
+                                    productName = product.getName();
+                                }
+                            } catch (Exception e) {
+                                log.warn("Could not fetch product info for productId: {}", item.getProductId());
+                            }
+
+                            OrderDetailResponse.OrderItemDetail itemDetail = OrderDetailResponse.OrderItemDetail.builder()
+                                    .productId(item.getProductId())
+                                    .productName(productName)
+                                    .productPrice(productPrice)
+                                    .quantity(item.getQuantity())
+                                    .subtotal(item.getSubtotal())
+                                    .build();
+
+                            itemDetails.add(itemDetail);
+                        }
+
+                        OrderDetailResponse data = OrderDetailResponse.builder()
+                                .orderId(order.getOrderId())
+                                .userId(order.getUserId())
+                                .totalAmount(order.getTotalAmount())
+                                .status(order.getStatus().name())
+                                .createdAt(order.getCreatedAt())
+                                .items(itemDetails)
+                                .build();
+
+                        log.info("✅ Found order detail for order {} with {} items (admin)", orderId, itemDetails.size());
+
+                        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
+                    })
+                    .orElseGet(() -> {
+                        log.warn("Order not found: {} (admin)", orderId);
+                        return new GeneralResponse<>(
+                                new ResponseStatus("404", "Không tìm thấy đơn hàng", "Order Not Found"),
+                                null,
+                                null
+                        );
+                    });
+        } catch (Exception e) {
+            log.error("Error getting order detail {} (admin): {}", orderId, e.getMessage());
+            return new GeneralResponse<>(
+                    new ResponseStatus("500", "Lỗi khi lấy chi tiết đơn hàng", "Internal Server Error"),
+                    null,
+                    null
+            );
         }
     }
 }

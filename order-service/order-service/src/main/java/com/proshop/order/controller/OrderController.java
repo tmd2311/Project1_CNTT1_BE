@@ -5,6 +5,7 @@ import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
+import com.proshop.order.dto.response.OrderDetailResponse;
 import com.proshop.order.dto.response.OrderResponse;
 import com.proshop.order.service.order.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -182,5 +183,23 @@ public class OrderController {
         log.info("Deleting order {} (admin)", orderId);
         GeneralResponse<OrderDeleteResponse> response = orderService.deleteOrder(httpRequest, orderId);
         return ResponseEntity.ok(response);
+    }
+    // USER ENDPOINTS
+    @GetMapping("/detail/{orderId}")
+    public GeneralResponse<OrderDetailResponse> getOrderDetail(
+            @PathVariable UUID orderId,
+            HttpServletRequest request) {
+        Long userId = getUserIdFromToken(request);
+        log.info("User {} getting order detail: {}", userId, orderId);
+        return orderService.getOrderDetailByIdAndUserId(orderId, userId);
+    }
+
+    // ADMIN ENDPOINTS
+    @GetMapping("/admin/detail/{orderId}")
+    public GeneralResponse<OrderDetailResponse> getOrderDetailAdmin(
+            @PathVariable UUID orderId,
+            HttpServletRequest request) {
+        log.info("Admin getting order detail: {}", orderId);
+        return orderService.getOrderDetailById(request, orderId);
     }
 }
