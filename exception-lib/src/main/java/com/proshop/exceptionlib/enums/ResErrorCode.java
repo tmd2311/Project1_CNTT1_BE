@@ -132,8 +132,26 @@ public enum ResErrorCode {
     CATEGORY_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST,"C016","Không tìm thấy ảnh của danh mục", "Category image not found"),
     CATEGORY_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST,"C017","Chỉ được phép có 1 ảnh chính cho danh mục","Only one primary image is allowed per category"),
 
+    // ===== ORDER =====
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORD01", "Không tìm thấy đơn hàng", "Order not found"),
+    ORDER_ITEMS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD02", "Đơn hàng phải có ít nhất 1 sản phẩm", "Order must have at least 1 item"),
+    ORDER_INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "ORD03", "Số lượng sản phẩm phải lớn hơn 0", "Product quantity must be greater than 0"),
+    ORDER_INVALID_PRICE(HttpStatus.BAD_REQUEST, "ORD04", "Giá sản phẩm không hợp lệ", "Invalid product price"),
+    ORDER_INVALID_TOTAL(HttpStatus.BAD_REQUEST, "ORD05", "Tổng tiền đơn hàng phải lớn hơn 0", "Order total must be greater than 0"),
+    ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORD06", "Bạn không có quyền truy cập đơn hàng này", "Access denied to this order"),
+    ORDER_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "ORD07", "Chỉ có thể hủy đơn hàng đang chờ xử lý", "Can only cancel pending orders"),
+    ORDER_CALCULATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD08", "Lỗi khi tính tổng tiền", "Error calculating order total"),
+    ORDER_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD09", "Lỗi khi tạo đơn hàng", "Error creating order"),
+
     // ===== CART =====
-    CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found");
+    CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found"),
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART02", "Không tìm thấy sản phẩm trong giỏ", "Cart item not found"),
+    CART_INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "CART03", "Số lượng phải lớn hơn 0", "Quantity must be greater than 0"),
+
+    // ===== PRODUCT CLIENT =====
+    PRODUCT_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PRD01", "Không thể kết nối Product Service", "Product service unavailable"),
+    PRODUCT_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRD02", "Lỗi khi kiểm tra sản phẩm", "Error validating product");
+
 
     private final HttpStatus status;
     private final String code;

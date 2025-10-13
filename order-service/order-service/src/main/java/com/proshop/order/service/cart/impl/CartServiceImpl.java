@@ -35,41 +35,9 @@ public class CartServiceImpl implements CartService {
     private final JwtUtil jwtUtil;
     private final CartMapper cartMapper;
 
-    /**
-     * Convert CartItemEntity to CartItemResponse DTO
-     */
-    private CartItemResponse toCartItemResponse(CartItemEntity entity) {
-        return CartItemResponse.builder()
-                .id(entity.getId())
-                .productId(entity.getProductId())
-                .quantity(entity.getQuantity())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    /**
-     * Convert CartItemEntity to CartItemResponse with product info
-     */
-    private CartItemResponse toCartItemResponseWithProduct(CartItemEntity entity) {
-        CartItemResponse response = toCartItemResponse(entity);
-
-        // Try to get product info
-        try {
-            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(entity.getProductId());
-            ProductResponse product = productResponse.getData(); // ← Lấy data từ wrapper
-
-            if (product != null) {
-                response.setProductName(product.getName());
-                response.setProductPrice(product.getPrice());
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch product info for productId: {}", entity.getProductId());
-            // Continue without product info
-        }
-
-        return response;
-    }
+    // ============================================
+    // USER METHODS
+    // ============================================
 
     @Override
     @Transactional
@@ -79,45 +47,11 @@ public class CartServiceImpl implements CartService {
         // Validate quantity
         if (quantity <= 0) {
             log.warn("Invalid quantity: {}", quantity);
-            return new GeneralResponse<>(
-                    new ResponseStatus("400", "Số lượng phải lớn hơn 0", "Invalid quantity"),
-                    null,
-                    null
-            );
+            throw new ResException(ResErrorCode.CART_INVALID_QUANTITY);
         }
 
         // Validate product exists
-        ProductResponse product;
-        try {
-            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(productId);
-            product = productResponse.getData(); // ← Lấy data từ wrapper
-
-            if (product == null) {
-                log.error("Product not found: {}", productId);
-                return new GeneralResponse<>(
-                        new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
-                        null,
-                        null
-                );
-            }
-
-            log.info("Product validated: id={}, name={}, price={}",
-                    product.getId(), product.getName(), product.getPrice());
-        } catch (FeignException.NotFound e) {
-            log.error("Product not found: {}", productId);
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
-                    null,
-                    null
-            );
-        } catch (Exception e) {
-            log.error("Error calling product service: {}", e.getMessage());
-            return new GeneralResponse<>(
-                    new ResponseStatus("503", "Không thể kết nối Product Service", "Service unavailable"),
-                    null,
-                    null
-            );
-        }
+        ProductResponse product = validateAndGetProduct(productId);
 
         // Get or create cart
         CartEntity cart = cartRepository.findByUserId(userId)
@@ -157,14 +91,14 @@ public class CartServiceImpl implements CartService {
         log.info("✅ Successfully added product {} to cart for user {} with quantity {}",
                 productId, userId, quantity);
 
-        // ✅ Return DTO instead of Entity
+        // Return DTO with product info
         CartItemResponse response = toCartItemResponse(cartItem);
         response.setProductName(product.getName());
         response.setProductPrice(product.getPrice());
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
-                response,  // ← Return DTO, not Entity!
+                response,
                 null
         );
     }
@@ -174,17 +108,10 @@ public class CartServiceImpl implements CartService {
     public GeneralResponse<?> removeFromCart(long userId, UUID productId) {
         log.info("Removing from cart: userId={}, productId={}", userId, productId);
 
-        Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
-        if (!cartItemOpt.isPresent()) {
-            log.warn("Cart item not found for user {} and product {}", userId, productId);
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy sản phẩm trong giỏ", "Item not found"),
-                    null,
-                    null
-            );
-        }
+        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductId(userId, productId)
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_ITEM_NOT_FOUND));
 
-        cartItemRepository.delete(cartItemOpt.get());
+        cartItemRepository.delete(cartItem);
 
         log.info("✅ Removed product {} from cart for user {}", productId, userId);
 
@@ -210,7 +137,7 @@ public class CartServiceImpl implements CartService {
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
-                responses,  // ← Return List<DTO>, not List<Entity>!
+                responses,
                 null
         );
     }
@@ -221,46 +148,10 @@ public class CartServiceImpl implements CartService {
         log.info("Updating quantity: userId={}, productId={}, quantity={}", userId, productId, quantity);
 
         // Validate product exists
-        ProductResponse product;
-        try {
-            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(productId);
-            product = productResponse.getData(); // ← Lấy data từ wrapper
+        ProductResponse product = validateAndGetProduct(productId);
 
-            if (product == null) {
-                log.error("Product not found: {}", productId);
-                return new GeneralResponse<>(
-                        new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
-                        null,
-                        null
-                );
-            }
-        } catch (FeignException.NotFound e) {
-            log.error("Product not found: {}", productId);
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy sản phẩm", "Product not found"),
-                    null,
-                    null
-            );
-        } catch (Exception e) {
-            log.error("Error calling product service: {}", e.getMessage());
-            return new GeneralResponse<>(
-                    new ResponseStatus("503", "Không thể kết nối Product Service", "Service unavailable"),
-                    null,
-                    null
-            );
-        }
-
-        Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
-        if (!cartItemOpt.isPresent()) {
-            log.warn("Cart item not found for user {} and product {}", userId, productId);
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy sản phẩm trong giỏ", "Item not found"),
-                    null,
-                    null
-            );
-        }
-
-        CartItemEntity cartItem = cartItemOpt.get();
+        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductId(userId, productId)
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_ITEM_NOT_FOUND));
 
         if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
@@ -279,7 +170,7 @@ public class CartServiceImpl implements CartService {
         log.info("✅ Updated quantity for product {} in cart for user {} to {}",
                 productId, userId, quantity);
 
-        // ✅ Return DTO with product info
+        // Return DTO with product info
         CartItemResponse response = toCartItemResponse(cartItem);
         response.setProductName(product.getName());
         response.setProductPrice(product.getPrice());
@@ -290,68 +181,150 @@ public class CartServiceImpl implements CartService {
                 null
         );
     }
-    /**
-     * ✅ Lấy tất cả carts (Admin)
-     */
+
+    // ============================================
+    // ADMIN METHODS
+    // ============================================
+
+    @Override
     public GeneralResponse<List<CartResponse>> getAllCarts(HttpServletRequest httpRequest) {
         checkAdminRole(httpRequest);
 
         List<CartEntity> carts = cartRepository.findAll();
         List<CartResponse> response = cartMapper.toResponseList(carts);
 
+        log.info("✅ Found {} carts (admin)", carts.size());
+
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
     }
 
-    /**
-     * ✅ Lấy cart theo userId (Admin)
-     */
+    @Override
     public GeneralResponse<CartResponse> getCartByUserId(HttpServletRequest httpRequest, long userId) {
         checkAdminRole(httpRequest);
 
         CartEntity cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND, "Không tìm thấy giỏ hàng của userId: " + userId));
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND,
+                        "Không tìm thấy giỏ hàng của userId: " + userId));
 
         CartResponse response = cartMapper.toResponse(cart);
+
+        log.info("✅ Found cart for user {} (admin)", userId);
+
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
     }
 
-    /**
-     * ✅ Lấy cart theo cartId (Admin)
-     */
+    @Override
     public GeneralResponse<CartResponse> getCartById(HttpServletRequest httpRequest, UUID cartId) {
         checkAdminRole(httpRequest);
 
         CartEntity cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND, "Không tìm thấy giỏ hàng: " + cartId));
+                .orElseThrow(() -> new ResException(ResErrorCode.CART_NOT_FOUND,
+                        "Không tìm thấy giỏ hàng: " + cartId));
 
         CartResponse response = cartMapper.toResponse(cart);
+
+        log.info("✅ Found cart {} (admin)", cartId);
+
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
     }
 
+    // ============================================
+    // HELPER METHODS
+    // ============================================
+
     /**
-     * ✅ Hàm kiểm tra quyền Admin từ JWT
+     * Validate product exists and get product details
+     */
+    private ProductResponse validateAndGetProduct(UUID productId) {
+        try {
+            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(productId);
+            ProductResponse product = productResponse.getData();
+
+            if (product == null) {
+                log.error("Product not found: {}", productId);
+                throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND);
+            }
+
+            log.info("Product validated: id={}, name={}, price={}",
+                    product.getId(), product.getName(), product.getPrice());
+
+            return product;
+
+        } catch (FeignException.NotFound e) {
+            log.error("Product not found: {}", productId);
+            throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND);
+        } catch (ResException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error calling product service: {}", e.getMessage());
+            throw new ResException(ResErrorCode.PRODUCT_SERVICE_UNAVAILABLE);
+        }
+    }
+
+    /**
+     * Convert CartItemEntity to CartItemResponse DTO
+     */
+    private CartItemResponse toCartItemResponse(CartItemEntity entity) {
+        return CartItemResponse.builder()
+                .id(entity.getId())
+                .productId(entity.getProductId())
+                .quantity(entity.getQuantity())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    /**
+     * Convert CartItemEntity to CartItemResponse with product info
+     */
+    private CartItemResponse toCartItemResponseWithProduct(CartItemEntity entity) {
+        CartItemResponse response = toCartItemResponse(entity);
+
+        // Try to get product info
+        try {
+            GeneralResponse<ProductResponse> productResponse = productClient.getProductById(entity.getProductId());
+            ProductResponse product = productResponse.getData();
+
+            if (product != null) {
+                response.setProductName(product.getName());
+                response.setProductPrice(product.getPrice());
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch product info for productId: {}", entity.getProductId());
+            // Continue without product info
+        }
+
+        return response;
+    }
+
+    /**
+     * Check if user has Admin role from JWT token
      */
     private void checkAdminRole(HttpServletRequest httpRequest) {
-        List<String> roles = getRoleFromToken(httpRequest);;
+        List<String> roles = getRoleFromToken(httpRequest);
 
         boolean isAdmin = roles.stream().anyMatch(role -> role.equalsIgnoreCase("Admin"));
         if (!isAdmin) {
-            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền truy cập tài nguyên này (Admin only)");
+            throw new ResException(ResErrorCode.PERMISSION_DENIED,
+                    "Bạn không có quyền truy cập tài nguyên này (Admin only)");
         }
     }
+
+    /**
+     * Extract roles from JWT token
+     */
     private List<String> getRoleFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or invalid Authorization header");
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new ResException(ResErrorCode.UNAUTHORIZED);
         }
 
         String token = authHeader.substring(7).trim();
-
         log.debug("Token extracted, length: {}", token.length());
 
         try {
@@ -360,7 +333,7 @@ public class CartServiceImpl implements CartService {
             return roles;
         } catch (Exception e) {
             log.error("❌ Failed to extract role from token: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid token: " + e.getMessage());
+            throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
 }
