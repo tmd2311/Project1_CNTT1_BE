@@ -14,5 +14,5 @@ public class CategoryUpdateRequest {
     private String slug;
     private UUID parentId;
     private boolean removeParent; // để remove parent category
-    private List<CategoryImageRequest> images;
+    private CategoryImageRequest images;
 }

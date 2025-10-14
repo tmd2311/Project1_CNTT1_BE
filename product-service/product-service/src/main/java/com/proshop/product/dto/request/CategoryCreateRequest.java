@@ -14,7 +14,7 @@ public class CategoryCreateRequest {
     private String name;
     @NotBlank private String slug;
     private UUID parentId;
-    private List<String> imageUrls;
+    private CategoryImageRequest image;
     private String primaryImage; // tùy chọn — đường dẫn ảnh chính
 
 }
