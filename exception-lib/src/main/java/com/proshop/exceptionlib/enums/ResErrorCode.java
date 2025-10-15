@@ -114,6 +114,9 @@ public enum ResErrorCode {
     PRODUCT_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST, "P004","Chỉ được phép có một ảnh chính cho sản phẩm", "Multiple primary images not allowed for product"),
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "P005","Ảnh sản phẩm không tồn tại", "Image not found"),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found"),
+    PRODUCT_INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "PRODUCT_003", "Không đủ số lượng sản phẩm trong kho", "Insufficient product stock"),
+    PRODUCT_STOCK_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRODUCT_004", "Lỗi khi cập nhật số lượng sản phẩm", "Error updating product stock"),
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "SKU1", "Không tìm thấy SKU", "SKU not found"),
     // --- Brand ---
     BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "Không tìm thấy thương hiệu", "Brand not found"),
     BRAND_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "B001", "Tên thương hiệu không được để trống", "Brand name is required"),
@@ -133,7 +136,6 @@ public enum ResErrorCode {
     CATEGORY_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "C015", "Tên danh mục không được để trống", "Category name is required"),
     CATEGORY_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST,"C016","Không tìm thấy ảnh của danh mục", "Category image not found"),
     CATEGORY_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST,"C017","Chỉ được phép có 1 ảnh chính cho danh mục","Only one primary image is allowed per category"),
-
     // ===== ORDER =====
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORD01", "Không tìm thấy đơn hàng", "Order not found"),
     ORDER_ITEMS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD02", "Đơn hàng phải có ít nhất 1 sản phẩm", "Order must have at least 1 item"),
@@ -144,15 +146,26 @@ public enum ResErrorCode {
     ORDER_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "ORD07", "Chỉ có thể hủy đơn hàng đang chờ xử lý", "Can only cancel pending orders"),
     ORDER_CALCULATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD08", "Lỗi khi tính tổng tiền", "Error calculating order total"),
     ORDER_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD09", "Lỗi khi tạo đơn hàng", "Error creating order"),
-
+    ORDER_INVALID_STATUS_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "ORDER_015", "Trạng thái đơn hàng không hợp lệ để thanh toán", "Invalid order status for payment"),
     // ===== CART =====
     CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found"),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART02", "Không tìm thấy sản phẩm trong giỏ", "Cart item not found"),
     CART_INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "CART03", "Số lượng phải lớn hơn 0", "Quantity must be greater than 0"),
-
     // ===== PRODUCT CLIENT =====
     PRODUCT_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PRD01", "Không thể kết nối Product Service", "Product service unavailable"),
-    PRODUCT_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRD02", "Lỗi khi kiểm tra sản phẩm", "Error validating product");
+    PRODUCT_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRD02", "Lỗi khi kiểm tra sản phẩm", "Error validating product"),
+    // Payment errors
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_001", "Không tìm thấy thanh toán", "Payment not found"),
+    PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT_002", "Bạn không có quyền truy cập thanh toán này", "Access denied for this payment"),
+    PAYMENT_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_003", "Lỗi khi tạo thanh toán", "Error creating payment"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_004", "Số tiền thanh toán không khớp với tổng đơn hàng", "Payment amount does not match order total"),
+    PAYMENT_METHOD_REQUIRED(HttpStatus.BAD_REQUEST, "PAYMENT_005", "Phương thức thanh toán là bắt buộc", "Payment method is required"),
+    PAYMENT_INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "PAYMENT_006", "Số tiền thanh toán không hợp lệ", "Invalid payment amount"),
+    PAYMENT_STATUS_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PAYMENT_007", "Chuyển đổi trạng thái thanh toán không hợp lệ", "Invalid payment status transition"),
+    PAYMENT_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "PAYMENT_008", "Không thể xóa thanh toán này", "Cannot delete this payment"),
+    PAYMENT_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_009", "Lỗi khi cập nhật thanh toán", "Error updating payment"),
+    PAYMENT_ORDER_ID_REQUIRED(HttpStatus.BAD_REQUEST,"PAYMENT_010","OrderId là bắt buộc","Order Id is required");
+
 
 
     private final HttpStatus status;

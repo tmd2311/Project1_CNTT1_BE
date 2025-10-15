@@ -2,6 +2,7 @@
 package com.proshop.product.service.sku.impl;
 
 import com.proshop.product.dto.request.SKURequest;
+import com.proshop.product.dto.request.SKUstockRequest;
 import com.proshop.product.dto.response.SKUResponse;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.SKUEntity;
@@ -98,4 +99,20 @@ public class SKUServiceImpl implements SKUService {
                 .isActive(sku.getIsActive())
                 .build();
     }
+    @Override
+    public SKUResponse updateStockSKU(UUID id, SKUstockRequest request) {
+        SKUEntity sku = skuRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("SKU not found"));
+
+        if (request.getProductId() != null) {
+            ProductEntity product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            sku.setProduct(product);
+        }
+        sku.setStock(request.getStock());
+
+        skuRepository.save(sku);
+        return mapToResponse(sku);
+    }
+
 }
