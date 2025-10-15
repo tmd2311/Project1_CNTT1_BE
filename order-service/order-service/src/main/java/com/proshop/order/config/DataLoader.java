@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -103,6 +101,7 @@ public class DataLoader {
             OrderItemEntity oi1 = OrderItemEntity.builder()
                     .order(order1)
                     .productId(laptop1)
+                    .skuId(UUID.randomUUID())
                     .quantity(1)
                     .price(new BigDecimal("20000000"))
                     .subtotal(new BigDecimal("20000000")) // 1 * 20M
@@ -113,6 +112,7 @@ public class DataLoader {
             OrderItemEntity oi2 = OrderItemEntity.builder()
                     .order(order1)
                     .productId(gpu1)
+                    .skuId(UUID.randomUUID())
                     .quantity(1)
                     .price(new BigDecimal("5000000"))
                     .subtotal(new BigDecimal("5000000")) // 1 * 5M
@@ -135,6 +135,7 @@ public class DataLoader {
             OrderItemEntity oi3 = OrderItemEntity.builder()
                     .order(order2)
                     .productId(cpu1)
+                    .skuId(UUID.randomUUID())
                     .quantity(1)
                     .price(new BigDecimal("6000000"))
                     .subtotal(new BigDecimal("6000000")) // 1 * 6M
@@ -145,6 +146,7 @@ public class DataLoader {
             OrderItemEntity oi4 = OrderItemEntity.builder()
                     .order(order2)
                     .productId(ram1)
+                    .skuId(UUID.randomUUID())
                     .quantity(2)
                     .price(new BigDecimal("1500000"))
                     .subtotal(new BigDecimal("3000000")) // 2 * 1.5M
@@ -166,6 +168,7 @@ public class DataLoader {
             OrderItemEntity oi5 = OrderItemEntity.builder()
                     .order(order3)
                     .productId(laptop2)
+                    .skuId(UUID.randomUUID())
                     .quantity(1)
                     .price(new BigDecimal("25000000"))
                     .subtotal(new BigDecimal("25000000"))
@@ -176,6 +179,7 @@ public class DataLoader {
             OrderItemEntity oi6 = OrderItemEntity.builder()
                     .order(order3)
                     .productId(ssd1)
+                    .skuId(UUID.randomUUID())
                     .quantity(3)
                     .price(new BigDecimal("3500000"))
                     .subtotal(new BigDecimal("10500000")) // 3 * 3.5M

@@ -2,6 +2,7 @@
 package com.proshop.product.service.sku;
 
 import com.proshop.product.dto.request.SKURequest;
+import com.proshop.product.dto.request.SKUstockRequest;
 import com.proshop.product.dto.response.SKUResponse;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface SKUService {
     void deleteSKU(UUID id);
     SKUResponse getById(UUID id);
     List<SKUResponse> getAll();
+    SKUResponse updateStockSKU(UUID id, SKUstockRequest request);
 }

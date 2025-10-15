@@ -29,6 +29,7 @@ public class OrderDetailResponse {
     public static class OrderItemDetail {
         private UUID productId;
         private String productName;
+        private UUID skuId;
         private Double productPrice;
         private Integer quantity;
         private BigDecimal subtotal;

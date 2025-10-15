@@ -28,7 +28,7 @@ public class OrderEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    @Column(name = "total_amount", nullable = false, precision = 100, scale = 2)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)

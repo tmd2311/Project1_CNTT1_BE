@@ -29,13 +29,16 @@ public class OrderItemEntity {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "sku_id", nullable = false)
+    private UUID skuId;
+
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 100, scale = 2)
     private BigDecimal price; // Giá tại thời điểm đặt hàng
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 100, scale = 2)
     private BigDecimal subtotal; // price * quantity
 
     @Column(name = "created_at")
