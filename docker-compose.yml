@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  # ===========================
+  # Consul Service (Service Discovery)
+  # ===========================
+  consul:
+    image: hashicorp/consul:1.16
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: ["agent", "-dev", "-client=0.0.0.0"]
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Product Service
+  # ===========================
+  product-service:
+    build:
+      context: .
+      dockerfile: ./product-service/product-service/Dockerfile
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - consul
+      - redis
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Gateway Service
+  # ===========================
+  gateway-service:
+    build:
+      context: .
+      dockerfile: ./gateway-service/gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - consul
+      - product-service
+      - redis
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Redis Service
+  # ===========================
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - proshop-net
+
+networks:
+  proshop-net:
+    driver: bridge
