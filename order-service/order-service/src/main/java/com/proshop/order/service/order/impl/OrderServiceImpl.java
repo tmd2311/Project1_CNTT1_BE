@@ -42,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     // USER METHODS
     // ============================================
 
+
     @Override
     @Transactional
     public GeneralResponse<OrderResponse> createOrder(OrderCreateRequest request) {
@@ -396,42 +397,58 @@ public class OrderServiceImpl implements OrderService {
         try {
             for (int i = 0; i < request.getItems().size(); i++) {
                 var item = request.getItems().get(i);
-                ProductResponse product = products.get(i);
 
-                BigDecimal itemPrice = BigDecimal.valueOf(product.getPrice());
-                BigDecimal itemQuantity = BigDecimal.valueOf(item.getQuantity());
-                BigDecimal itemTotal = itemPrice.multiply(itemQuantity);
+                // ✅ Thêm try-catch riêng cho từng SKU
+                try {
+                    GeneralResponse<SKUResponse> skuResponse = productClient.getSkuById(item.getSkuId());
 
-                totalAmount = totalAmount.add(itemTotal);
+                    if (skuResponse == null || skuResponse.getData() == null) {
+                        log.error("❌ Không tìm thấy SKU với ID: {}", item.getSkuId());
+                        throw new ResException(ResErrorCode.SKU_NOT_FOUND,
+                                "Không tìm thấy SKU với ID: " + item.getSkuId());
+                    }
+
+                    BigDecimal itemPrice = BigDecimal.valueOf(skuResponse.getData().getPrice());
+                    BigDecimal itemQuantity = BigDecimal.valueOf(item.getQuantity());
+                    BigDecimal itemTotal = itemPrice.multiply(itemQuantity);
+
+                    totalAmount = totalAmount.add(itemTotal);
+
+                } catch (FeignException.NotFound e) {
+                    log.error("❌ SKU not found (404): {}", item.getSkuId());
+                    throw new ResException(ResErrorCode.SKU_NOT_FOUND,
+                            "Không tìm thấy SKU với ID: " + item.getSkuId());
+                }
             }
 
             log.info("💰 Calculated total amount: {}", totalAmount);
             return totalAmount;
 
+        } catch (ResException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("❌ Error calculating total amount: {}", e.getMessage());
+            log.error("❌ Error calculating total amount: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.ORDER_CALCULATION_ERROR);
         }
     }
 
-    /**
-     * Create order items from request
-     */
     private List<OrderItemEntity> createOrderItems(OrderEntity order, OrderCreateRequest request,
                                                    List<ProductResponse> products) {
         List<OrderItemEntity> orderItems = new ArrayList<>();
 
         for (int i = 0; i < request.getItems().size(); i++) {
             var item = request.getItems().get(i);
-            ProductResponse product = products.get(i);
 
-            BigDecimal itemPrice = BigDecimal.valueOf(product.getPrice());
+            // ✅ Sửa: Dùng item.getSkuId() thay vì item.getProductId()
+            GeneralResponse<SKUResponse> skuResponse = productClient.getSkuById(item.getSkuId());
+            BigDecimal itemPrice = BigDecimal.valueOf(skuResponse.getData().getPrice());
             BigDecimal itemQuantity = BigDecimal.valueOf(item.getQuantity());
             BigDecimal itemSubtotal = itemPrice.multiply(itemQuantity);
 
             OrderItemEntity orderItem = OrderItemEntity.builder()
                     .order(order)
                     .productId(item.getProductId())
+                    .skuId(item.getSkuId())
                     .quantity(item.getQuantity())
                     .price(itemPrice)
                     .subtotal(itemSubtotal)
@@ -457,7 +474,7 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItemEntity item : orderItems) {
             // Try to get product info from Product Service
             String productName = "Unknown Product";
-            Double productPrice = item.getPrice().doubleValue();
+            double productPrice = Double.valueOf(productClient.getSkuById(item.getSkuId()).getData().getPrice());
 
             try {
                 GeneralResponse<ProductResponse> productResponse = productClient.getProductById(item.getProductId());
@@ -472,6 +489,7 @@ public class OrderServiceImpl implements OrderService {
             OrderDetailResponse.OrderItemDetail itemDetail = OrderDetailResponse.OrderItemDetail.builder()
                     .productId(item.getProductId())
                     .productName(productName)
+                    .skuId(item.getSkuId())
                     .productPrice(productPrice)
                     .quantity(item.getQuantity())
                     .subtotal(item.getSubtotal())
