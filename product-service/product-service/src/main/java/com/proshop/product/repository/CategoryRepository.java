@@ -99,7 +99,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
             ELSE 'COMPONENT_SUBTYPE'
         END,
         0L,
-        true
+        true,
+        (SELECT MAX(ci.url) FROM CategoryImageEntity ci WHERE ci.category.id = c.id AND ci.isPrimary = true)
     )
     FROM CategoryEntity c
     WHERE (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
