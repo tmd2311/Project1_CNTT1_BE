@@ -1,16 +1,10 @@
 package com.proshop.order.controller;
 
 import com.proshop.auth_lib.utils.JwtUtil;
-import com.proshop.exceptionlib.enums.ResErrorCode;
-import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.CartRequest;
 import com.proshop.order.dto.response.CartResponse;
-import com.proshop.order.dto.response.ResponseStatus;
-import com.proshop.order.entity.CartEntity;
-import com.proshop.order.mapper.CartMapper;
-import com.proshop.order.repository.CartRepository;
-import com.proshop.order.service.cart.CartService;
 import com.proshop.order.dto.response.GeneralResponse;
+import com.proshop.order.service.cart.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +21,6 @@ import java.util.UUID;
 public class CartController {
 
     private final CartService cartService;
-    private final CartRepository cartRepository;
-    private final CartMapper cartMapper;
     private final JwtUtil jwtUtil;
 
     /**
@@ -43,7 +35,6 @@ public class CartController {
         }
 
         String token = authHeader.substring(7).trim();
-
         log.debug("Token extracted, length: {}", token.length());
 
         try {
@@ -130,32 +121,38 @@ public class CartController {
     // ============================================
 
     /**
-     * Get all carts (Admin only)
-     */
-    /**
      * ✅ Lấy toàn bộ giỏ hàng (Admin)
      */
     @GetMapping("/admin/all")
     public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts(HttpServletRequest httpRequest) {
         log.info("Getting all carts (admin)");
-        return ResponseEntity.ok(cartService.getAllCarts(httpRequest));
+        GeneralResponse<List<CartResponse>> response = cartService.getAllCarts(httpRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
      * ✅ Lấy giỏ hàng theo userId (Admin)
      */
     @GetMapping("/admin/user/{userId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(HttpServletRequest httpRequest, @PathVariable long userId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(
+        @PathVariable long userId,
+        HttpServletRequest httpRequest) {
+
         log.info("Getting cart for user {} (admin)", userId);
-        return ResponseEntity.ok(cartService.getCartByUserId(httpRequest, userId));
+        GeneralResponse<CartResponse> response = cartService.getCartByUserId(httpRequest, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
      * ✅ Lấy giỏ hàng theo cartId (Admin)
      */
     @GetMapping("/admin/{cartId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(HttpServletRequest httpRequest, @PathVariable UUID cartId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(
+        @PathVariable UUID cartId,
+        HttpServletRequest httpRequest) {
+
         log.info("Getting cart by id {} (admin)", cartId);
-        return ResponseEntity.ok(cartService.getCartById(httpRequest, cartId));
+        GeneralResponse<CartResponse> response = cartService.getCartById(httpRequest, cartId);
+        return ResponseEntity.ok(response);
     }
 }
