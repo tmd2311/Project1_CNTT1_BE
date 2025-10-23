@@ -14,6 +14,44 @@ services:
       - proshop-net
 
   # ===========================
+  # Redis Service
+  # ===========================
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Auth Service
+  # ===========================
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/authen_user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    depends_on:
+      - consul
+      - redis
+    networks:
+      - proshop-net
+  # ===========================
   # Product Service
   # ===========================
   product-service:
@@ -22,9 +60,13 @@ services:
       dockerfile: ./product-service/product-service/Dockerfile
     container_name: product-service
     ports:
-      - "8081:8081"
+      - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
     depends_on:
       - consul
       - redis
@@ -44,21 +86,21 @@ services:
     depends_on:
       - consul
       - product-service
+      - auth-service
       - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
     networks:
       - proshop-net
 
-  # ===========================
-  # Redis Service
-  # ===========================
-  redis:
-    image: redis:7
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - proshop-net
-
+# ===========================
+# Networks & Volumes
+# ===========================
 networks:
   proshop-net:
     driver: bridge
+
+volumes:
+  postgres_auth_data:

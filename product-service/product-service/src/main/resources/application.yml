@@ -17,7 +17,7 @@ spring:
         enabled: true
         prefer-ip-address: true  # dùng IP thay vì hostname (nên dùng khi trong Docker hoặc mạng LAN)
   datasource:
-    url: jdbc:postgresql://localhost:5432/proshop_product
+    url: jdbc:postgresql://103.90.225.90:5432/proshop_product
     username: postgres
     password: 123456
     driver-class-name: org.postgresql.Driver

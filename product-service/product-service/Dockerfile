@@ -14,9 +14,9 @@ RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 # Copy mã nguồn product-service
 COPY ../../product-service/product-service /app/product-service
 
-# Build ứng dụng chính
+# Build ứng dụng chính (có repackage)
 WORKDIR /app/product-service
-RUN mvn clean package -DskipTests
+RUN mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
 # Stage 2: Run
@@ -25,6 +25,5 @@ FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
 COPY --from=builder /app/product-service/target/*.jar app.jar
-EXPOSE 8081
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]
-

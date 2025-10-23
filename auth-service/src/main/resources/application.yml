@@ -3,14 +3,14 @@ server:
 
 spring:
   application:
-    name: auth-service   # tên service đăng ký trên Consul, phải trùng với gateway gọi
+    name: auth-service
 
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id:  ${GOOGLE_CLIENT_ID}
+            client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8081/login/oauth2/code/google}
             scope:
@@ -21,7 +21,7 @@ spring:
             authorization-uri: https://accounts.google.com/o/oauth2/auth
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-    default-encoding: UTF-8
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -33,7 +33,7 @@ spring:
 
   cloud:
     consul:
-      host: localhost
+      host: consul
       port: 8500
       discovery:
         register: true
@@ -41,9 +41,9 @@ spring:
         prefer-ip-address: true
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/authen_user
+    url: jdbc:postgresql://103.90.225.90:5432/authen_user
     username: postgres
-    password: 123456
+    password: ${DB_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -55,7 +55,7 @@ spring:
 
   data:
     redis:
-      host: localhost
+      host: redis
       port: 6379
       password:
       expired-time: 60  # minutes
