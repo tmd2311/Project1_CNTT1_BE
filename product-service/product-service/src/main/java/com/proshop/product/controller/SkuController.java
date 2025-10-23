@@ -7,6 +7,7 @@ import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.dto.response.SKUResponse;
 import com.proshop.product.service.sku.SKUService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,41 +23,42 @@ public class SkuController {
 
     @PostMapping
     public ResponseEntity<GeneralResponse<SKUResponse>> create(@RequestBody SKURequest request) {
-        return success(skuService.createSKU(request));
+        SKUResponse response = skuService.createSKU(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<GeneralResponse<SKUResponse>> update(
-            @PathVariable UUID id,
-            @RequestBody SKURequest request) {
-        return success(skuService.updateSKU(id, request));
+        @PathVariable("id") UUID id,
+        @RequestBody SKURequest request) {
+        SKUResponse response = skuService.updateSKU(id, request);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<GeneralResponse<Void>> delete(@PathVariable UUID id) {
+    public ResponseEntity<GeneralResponse<Void>> delete(@PathVariable("id") UUID id) {
         skuService.deleteSKU(id);
-        return success(null);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GeneralResponse<SKUResponse>> getById(@PathVariable UUID id) {
-        return success(skuService.getById(id));
+    public ResponseEntity<GeneralResponse<SKUResponse>> getById(@PathVariable("id") UUID id) {
+        SKUResponse response = skuService.getById(id);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
     }
 
     @GetMapping
     public ResponseEntity<GeneralResponse<List<SKUResponse>>> getAll() {
-        return success(skuService.getAll());
+        List<SKUResponse> list = skuService.getAll();
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, list, null));
     }
 
     @PutMapping("/stock/{id}")
     public ResponseEntity<GeneralResponse<SKUResponse>> updateStock(
-            @PathVariable UUID id,
-            @RequestBody SKUstockRequest request) {
-        return success(skuService.updateStockSKU(id, request));
-    }
-
-    // Helper method
-    private <T> ResponseEntity<GeneralResponse<T>> success(T data) {
-        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null));
+        @PathVariable("id") UUID id,
+        @RequestBody SKUstockRequest request) {
+        SKUResponse response = skuService.updateStockSKU(id, request);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
     }
 }
