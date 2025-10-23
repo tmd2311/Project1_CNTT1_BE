@@ -54,31 +54,21 @@ public class OrderController {
     // USER ENDPOINTS (Authenticated)
     // ============================================
 
-    /**
-     * Create order for current user (userId from token)
-     */
     @PostMapping("/create")
     public ResponseEntity<GeneralResponse<OrderResponse>> createOrder(
-            @RequestBody OrderCreateRequest request,
-            HttpServletRequest httpRequest) {
+        @RequestBody OrderCreateRequest request,
+        HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Creating order for user: {}", userId);
-
-        // Set userId from token to ensure security
         request.setUserId(userId);
 
         GeneralResponse<OrderResponse> response = orderService.createOrder(request);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get all orders of current user (userId from token)
-     */
     @GetMapping("/my-orders")
-    public ResponseEntity<GeneralResponse<List<OrderResponse>>> getMyOrders(
-            HttpServletRequest httpRequest) {
-
+    public ResponseEntity<GeneralResponse<List<OrderResponse>>> getMyOrders(HttpServletRequest httpRequest) {
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Getting orders for user: {}", userId);
 
@@ -86,14 +76,10 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get specific order by ID (only if belongs to current user)
-     */
     @GetMapping("/my-orders/{orderId}")
     public ResponseEntity<GeneralResponse<OrderResponse>> getMyOrderById(
-            @PathVariable UUID orderId,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("orderId") UUID orderId,
+        HttpServletRequest httpRequest) {
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Getting order {} for user: {}", orderId, userId);
 
@@ -101,14 +87,10 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Cancel order (only if belongs to current user and status is PENDING)
-     */
     @PutMapping("/my-orders/{orderId}/cancel")
     public ResponseEntity<GeneralResponse<OrderResponse>> cancelMyOrder(
-            @PathVariable UUID orderId,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("orderId") UUID orderId,
+        HttpServletRequest httpRequest) {
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Cancelling order {} for user: {}", orderId, userId);
 
@@ -120,66 +102,45 @@ public class OrderController {
     // ADMIN ENDPOINTS
     // ============================================
 
-    /**
-     * Get all orders (Admin only)
-     */
     @GetMapping("/admin/all")
-    public ResponseEntity<GeneralResponse<List<OrderResponse>>> getAllOrders(
-            HttpServletRequest httpRequest) {
-
+    public ResponseEntity<GeneralResponse<List<OrderResponse>>> getAllOrders(HttpServletRequest httpRequest) {
         log.info("Getting all orders (admin)");
         GeneralResponse<List<OrderResponse>> response = orderService.getAllOrders(httpRequest);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get order by ID (Admin only)
-     */
     @GetMapping("/admin/{orderId}")
     public ResponseEntity<GeneralResponse<OrderResponse>> getOrderById(
-            @PathVariable UUID orderId,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("orderId") UUID orderId,
+        HttpServletRequest httpRequest) {
         log.info("Getting order {} (admin)", orderId);
         GeneralResponse<OrderResponse> response = orderService.getOrderById(httpRequest, orderId);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Get all orders of a specific user (Admin only)
-     */
     @GetMapping("/admin/user/{userId}")
     public ResponseEntity<GeneralResponse<List<OrderResponse>>> getOrdersByUserId(
-            @PathVariable Long userId,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("userId") Long userId,
+        HttpServletRequest httpRequest) {
         log.info("Getting orders for user {} (admin)", userId);
         GeneralResponse<List<OrderResponse>> response = orderService.getOrdersByUserIdAdmin(httpRequest, userId);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Update order status (Admin only)
-     */
     @PutMapping("/admin/{orderId}")
     public ResponseEntity<GeneralResponse<OrderResponse>> updateOrder(
-            @PathVariable UUID orderId,
-            @RequestBody OrderRequest request,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("orderId") UUID orderId,
+        @RequestBody OrderRequest request,
+        HttpServletRequest httpRequest) {
         log.info("Updating order {} (admin)", orderId);
         GeneralResponse<OrderResponse> response = orderService.updateOrder(httpRequest, orderId, request);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Delete order (Admin only)
-     */
     @DeleteMapping("/admin/{orderId}")
     public ResponseEntity<GeneralResponse<OrderDeleteResponse>> deleteOrder(
-            @PathVariable UUID orderId,
-            HttpServletRequest httpRequest) {
-
+        @PathVariable("orderId") UUID orderId,
+        HttpServletRequest httpRequest) {
         log.info("Deleting order {} (admin)", orderId);
         GeneralResponse<OrderDeleteResponse> response = orderService.deleteOrder(httpRequest, orderId);
         return ResponseEntity.ok(response);
@@ -187,9 +148,9 @@ public class OrderController {
     // USER ENDPOINTS
     @GetMapping("/detail/{orderId}")
     public GeneralResponse<OrderDetailResponse> getOrderDetail(
-            @PathVariable UUID orderId,
-            HttpServletRequest request) {
-        Long userId = getUserIdFromToken(request);
+        @PathVariable("orderId") UUID orderId,
+        HttpServletRequest httpRequest) {
+        Long userId = getUserIdFromToken(httpRequest);
         log.info("User {} getting order detail: {}", userId, orderId);
         return orderService.getOrderDetailByIdAndUserId(orderId, userId);
     }

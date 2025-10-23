@@ -32,24 +32,24 @@ public class AuthController {
   private final AuthService authService;
   private final JwtUtil jwtUtil;
 
-
   @PostMapping("/auth/login")
   public ResponseEntity<GeneralResponse<LoginResponse>> login(
-      @RequestBody @Valid LoginRequest loginRequest) {
+      @Valid @RequestBody LoginRequest loginRequest) {
     LoginResponse loginResponse = authService.login(loginRequest);
     return ResponseFactory.success(loginResponse);
   }
 
   @PostMapping("/change-password")
   public ResponseEntity<GeneralResponse<UserInfoResponse>> changePassword(
-      @RequestBody @Valid ChangePasswordRequest request,
-      @RequestHeader("Authorization") String authHeader) {
-    String token = authHeader.substring(7); // Remove "Bearer "
+      @Valid @RequestBody ChangePasswordRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    String token = (authHeader != null && authHeader.startsWith("Bearer "))
+        ? authHeader.substring(7)
+        : null;
     String userCode = jwtUtil.getUserCodeFromToken(token);
     UserInfoResponse response = authService.changePassword(request, userCode);
     return ResponseFactory.success(response);
   }
-
 
   @PostMapping("/auth/register")
   public ResponseEntity<GeneralResponse<UserInfoResponse>> register(
@@ -59,25 +59,27 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<GeneralResponse<Boolean>> logout(@RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<GeneralResponse<Boolean>> logout(
+      @RequestHeader(value = "Authorization", required = false) String authHeader) {
     Boolean result = authService.logout(authHeader);
     return ResponseFactory.success(result);
   }
 
   @PostMapping("/auth/forgot-password")
-  public ResponseEntity<GeneralResponse<OtpResponse>> sendOtp(@RequestBody SendOtpRequest request) {
+  public ResponseEntity<GeneralResponse<OtpResponse>> sendOtp(
+      @Valid @RequestBody SendOtpRequest request) {
     return ResponseFactory.success(authService.sendOtp(request));
   }
 
   @PostMapping("/auth/verify-otp")
-  public ResponseEntity<GeneralResponse<OtpResponse>> verifyOtp(@RequestBody VerifyOtpRequest request) {
+  public ResponseEntity<GeneralResponse<OtpResponse>> verifyOtp(
+      @Valid @RequestBody VerifyOtpRequest request) {
     return ResponseFactory.success(authService.verifyOtp(request));
   }
 
   @PostMapping("/auth/reset-password")
-  public ResponseEntity<GeneralResponse<OtpResponse>> resetPassword(@RequestBody ResetPasswordRequest request) {
+  public ResponseEntity<GeneralResponse<OtpResponse>> resetPassword(
+      @Valid @RequestBody ResetPasswordRequest request) {
     return ResponseFactory.success(authService.resetPassword(request));
   }
-
-
 }
