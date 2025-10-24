@@ -51,6 +51,7 @@ services:
       - redis
     networks:
       - proshop-net
+
   # ===========================
   # Product Service
   # ===========================
@@ -63,13 +64,36 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/proshop_product
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
-      - SPRING_REDIS_HOST=redis
-      - SPRING_REDIS_PORT=6379
     depends_on:
       - consul
-      - redis
+    networks:
+      - proshop-net
+
+
+  # ===========================
+  # 🧾 Order Service
+  # ===========================
+  order-service:
+    build:
+      context: .
+      dockerfile: ./order-service/order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/proshop_order
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+    depends_on:
+      - consul
     networks:
       - proshop-net
 
@@ -86,6 +110,7 @@ services:
     depends_on:
       - consul
       - product-service
+      - order-service
       - auth-service
       - redis
     environment:

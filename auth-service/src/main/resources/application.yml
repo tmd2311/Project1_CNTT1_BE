@@ -33,17 +33,17 @@ spring:
 
   cloud:
     consul:
-      host: consul
-      port: 8500
+      host: ${SPRING_CLOUD_CONSUL_HOST}
+      port: ${SPRING_CLOUD_CONSUL_PORT}
       discovery:
         register: true
         enabled: true
         prefer-ip-address: true
 
   datasource:
-    url: jdbc:postgresql://103.90.225.90:5432/authen_user
-    username: postgres
-    password: ${DB_PASSWORD:123456}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -55,8 +55,8 @@ spring:
 
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_REDIS_HOST}
+      port: ${SPRING_REDIS_PORT}
       password:
       expired-time: 60  # minutes
 jwt:
