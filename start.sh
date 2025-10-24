@@ -1,7 +1,14 @@
 #!/bin/bash
-echo "Starting all services..."
-docker-compose up -d
+# ===========================
+# Start script for microservices
+# ===========================
 
-echo "All services started successfully!"
-echo "Access Consul UI at: http://localhost:8500"
-echo "Gateway available at: http://localhost:8080"
+SERVICE=$1
+
+if [ -z "$SERVICE" ]; then
+  echo "🚀 Starting all services..."
+  docker-compose up -d
+else
+  echo "🚀 Starting service: $SERVICE"
+  docker-compose up -d $SERVICE
+fi

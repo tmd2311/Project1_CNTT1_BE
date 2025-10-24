@@ -1,5 +1,14 @@
 #!/bin/bash
-echo "Stopping all services..."
-docker-compose down
+# ===========================
+# Stop script for microservices
+# ===========================
 
-echo "All services stopped and removed!"
+SERVICE=$1
+
+if [ -z "$SERVICE" ]; then
+  echo "🛑 Stopping all services..."
+  docker-compose down
+else
+  echo "🛑 Stopping service: $SERVICE"
+  docker-compose stop $SERVICE
+fi
