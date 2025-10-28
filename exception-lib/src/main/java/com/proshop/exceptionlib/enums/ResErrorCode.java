@@ -164,7 +164,12 @@ public enum ResErrorCode {
     PAYMENT_STATUS_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PAYMENT_007", "Chuyển đổi trạng thái thanh toán không hợp lệ", "Invalid payment status transition"),
     PAYMENT_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "PAYMENT_008", "Không thể xóa thanh toán này", "Cannot delete this payment"),
     PAYMENT_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_009", "Lỗi khi cập nhật thanh toán", "Error updating payment"),
-    PAYMENT_ORDER_ID_REQUIRED(HttpStatus.BAD_REQUEST,"PAYMENT_010","OrderId là bắt buộc","Order Id is required");
+    PAYMENT_ORDER_ID_REQUIRED(HttpStatus.BAD_REQUEST,"PAYMENT_010","OrderId là bắt buộc","Order Id is required"),
+
+    // ===== FILE ERRORS =====
+    FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE01", "File trống — vui lòng chọn file để upload", "Empty File"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE02", "Không thể upload file, vui lòng thử lại", "Upload Failed"),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE03", "Không thể xóa file", "Delete Failed");
 
 
 
