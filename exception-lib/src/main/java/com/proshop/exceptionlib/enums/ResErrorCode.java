@@ -68,6 +68,8 @@ public enum ResErrorCode {
         "Email not registered"),
     MAXIMUM_OTP_VERIFICATION_REACHED(HttpStatus.BAD_REQUEST, "OTP17", "Đã đạt giới hạn xác minh OTP",
         "Max OTP verification attempts reached"),
+    OTP_ALREADY_SENT(HttpStatus.BAD_REQUEST, "OTP18", "Mã OTP đã được gửi",
+            "OTP already sent"),
 
     // ===== ACCOUNT =====
     ACCOUNT_BLOCKED(HttpStatus.FORBIDDEN, "ACC01", "Tài khoản đã bị khóa", "Account blocked"),
