@@ -41,8 +41,9 @@ public class SKUServiceImpl implements SKUService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        skuRepository.save(sku);
-        return mapToResponse(sku);
+        SKUEntity savedSku = skuRepository.save(sku);
+        return mapToResponse(savedSku);
+
     }
 
     @Override

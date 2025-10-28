@@ -56,7 +56,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(this::toPaymentResponse)
                 .toList();
 
-        log.info("✅ Found {} payments for user {}", data.size(), userId);
+        log.info(" Found {} payments for user {}", data.size(), userId);
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -100,7 +100,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(this::toPaymentResponse)
                 .toList();
 
-        log.info("✅ Found {} payments for order {}", data.size(), orderId);
+        log.info(" Found {} payments for order {}", data.size(), orderId);
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -147,7 +147,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             payment = paymentRepository.save(payment);
 
-            log.info("✅ Created payment {} for order {} with amount {}",
+            log.info(" Created payment {} for order {} with amount {}",
                     payment.getPaymentId(), order.getOrderId(), payment.getAmount());
 
             PaymentResponse data = toPaymentResponse(payment);
@@ -156,7 +156,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (ResException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error creating payment: {}", e.getMessage(), e);
+            log.error(" Error creating payment: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.PAYMENT_CREATION_ERROR);
         }
     }
@@ -174,7 +174,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(this::toPaymentResponse)
                 .toList();
 
-        log.info("✅ Found {} payments (admin)", data.size());
+        log.info(" Found {} payments (admin)", data.size());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -207,7 +207,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(this::toPaymentResponse)
                 .toList();
 
-        log.info("✅ Found {} payments for order {} (admin)", data.size(), orderId);
+        log.info(" Found {} payments for order {} (admin)", data.size(), orderId);
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -236,7 +236,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             payment = paymentRepository.save(payment);
 
-            log.info("✅ Created payment {} for order {} with amount {} (admin)",
+            log.info(" Created payment {} for order {} with amount {} (admin)",
                     payment.getPaymentId(), order.getOrderId(), payment.getAmount());
 
             PaymentResponse data = toPaymentResponse(payment);
@@ -245,7 +245,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (ResException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error creating payment (admin): {}", e.getMessage(), e);
+            log.error(" Error creating payment (admin): {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.PAYMENT_CREATION_ERROR);
         }
     }
@@ -272,7 +272,7 @@ public class PaymentServiceImpl implements PaymentService {
             if (status == PaymentStatus.PROCESSING) {
                 // Mark payment as processing
                 payment.setPaidAt(null);
-                log.info("💳 Payment {} is now PROCESSING", paymentId);
+                log.info(" Payment {} is now PROCESSING", paymentId);
 
             } else if (status == PaymentStatus.PAID) {
                 // Mark payment as paid
@@ -283,7 +283,7 @@ public class PaymentServiceImpl implements PaymentService {
                 order.setStatus(OrderStatus.PROCESSING);
                 orderRepository.save(order);
 
-                log.info("💰 Payment {} is now PAID, updating order {} to PROCESSING",
+                log.info(" Payment {} is now PAID, updating order {} to PROCESSING",
                         paymentId, order.getOrderId());
 
                 // Deduct product stock
@@ -293,17 +293,17 @@ public class PaymentServiceImpl implements PaymentService {
                 order.setStatus(OrderStatus.CONFIRMED);
                 orderRepository.save(order);
 
-                log.info("📦 Order {} confirmed and stock deducted", order.getOrderId());
+                log.info(" Order {} confirmed and stock deducted", order.getOrderId());
 
             } else if (status == PaymentStatus.FAILED || status == PaymentStatus.CANCELLED) {
                 // Clear paid date if payment failed or cancelled
                 payment.setPaidAt(null);
-                log.info("❌ Payment {} marked as {}", paymentId, status);
+                log.info(" Payment {} marked as {}", paymentId, status);
             }
 
             payment = paymentRepository.save(payment);
 
-            log.info("✅ Updated payment {} from {} to {} (admin)", paymentId, oldStatus, status);
+            log.info(" Updated payment {} from {} to {} (admin)", paymentId, oldStatus, status);
 
             PaymentResponse data = toPaymentResponse(payment);
 
@@ -312,7 +312,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (ResException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error updating payment status: {}", e.getMessage(), e);
+            log.error(" Error updating payment status: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.PAYMENT_UPDATE_ERROR);
         }
     }
@@ -335,7 +335,7 @@ public class PaymentServiceImpl implements PaymentService {
         UUID orderId = payment.getOrder().getOrderId();
         paymentRepository.delete(payment);
 
-        log.info("✅ Deleted payment {} for order {} (admin)", paymentId, orderId);
+        log.info(" Deleted payment {} for order {} (admin)", paymentId, orderId);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -393,14 +393,14 @@ public class PaymentServiceImpl implements PaymentService {
      * Deduct product stock when payment is confirmed
      */
     private void deductProductStock(OrderEntity order) {
-        log.info("📦 Deducting stock for order {}", order.getOrderId());
+        log.info(" Deducting stock for order {}", order.getOrderId());
 
         // Get all order items
         List<OrderItemEntity> orderItems = orderItemRepository.findByOrderOrderId(order.getOrderId());
 
         for (OrderItemEntity item : orderItems) {
             try {
-                log.info("📞 Calling Product Service to deduct stock for product: {} (quantity: {})",
+                log.info(" Calling Product Service to deduct stock for product: {} (quantity: {})",
                         item.getProductId(), item.getQuantity());
 
                 // Create request to update stock
@@ -411,28 +411,28 @@ public class PaymentServiceImpl implements PaymentService {
 
                 stockRequest.setStock(sku.getData().getStock()-item.getQuantity());
                 productClient.updateProductStock(sku.getData().getId(), stockRequest);
-                log.info("✅ Successfully deducted {} units of product {}",
+                log.info(" Successfully deducted {} units of product {}",
                         item.getQuantity(), item.getProductId());
 
             } catch (FeignException.NotFound e) {
-                log.error("❌ Product not found: {}", item.getProductId());
+                log.error(" Product not found: {}", item.getProductId());
                 throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND,
                         "Không tìm thấy sản phẩm với ID: " + item.getProductId());
 
             } catch (FeignException.BadRequest e) {
-                log.error("❌ Insufficient stock for product: {}", item.getProductId());
+                log.error(" Insufficient stock for product: {}", item.getProductId());
                 throw new ResException(ResErrorCode.PRODUCT_INSUFFICIENT_STOCK,
                         "Không đủ số lượng sản phẩm trong kho cho sản phẩm ID: " + item.getProductId());
 
             } catch (Exception e) {
-                log.error("❌ Error deducting stock for product {}: {}",
+                log.error(" Error deducting stock for product {}: {}",
                         item.getProductId(), e.getMessage(), e);
                 throw new ResException(ResErrorCode.PRODUCT_STOCK_UPDATE_ERROR,
                         "Lỗi khi cập nhật số lượng sản phẩm");
             }
         }
 
-        log.info("✅ Successfully deducted stock for all products in order {}", order.getOrderId());
+        log.info(" Successfully deducted stock for all products in order {}", order.getOrderId());
     }
 
     /**
@@ -478,10 +478,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
             List<String> roles = jwtUtil.extractRoles(token);
-            log.info("✅ Successfully extracted roles from token: {}", roles);
+            log.info(" Successfully extracted roles from token: {}", roles);
             return roles;
         } catch (Exception e) {
-            log.error("❌ Failed to extract roles from token: {}", e.getMessage(), e);
+            log.error(" Failed to extract roles from token: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
