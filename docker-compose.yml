@@ -121,11 +121,8 @@ services:
       - proshop-net
 
 # ===========================
-# Networks & Volumes
+# External Shared Network
 # ===========================
 networks:
   proshop-net:
-    driver: bridge
-
-volumes:
-  postgres_auth_data:
+    external: true
