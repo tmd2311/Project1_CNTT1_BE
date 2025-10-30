@@ -36,7 +36,7 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/authen_user
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/authen_user
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_REDIS_HOST=redis
@@ -64,7 +64,7 @@ services:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/proshop_product
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_product
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
@@ -87,7 +87,7 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://103.90.225.90:5432/proshop_order
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_order
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
