@@ -26,7 +26,8 @@ spring:
 # 📂 Cấu hình thư mục lưu file
 # =============================
 file:
-  upload-dir: uploads/images   # Đường dẫn lưu file (tương đối hoặc tuyệt đối)
+  upload-dir: ${FILE_UPLOAD_DIR:F:/uploads/images}
+  base-url: ${FILE_BASE_URL:http://localhost:8084}
 
 logging:
   level:

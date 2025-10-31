@@ -39,7 +39,7 @@ public class FileServiceImpl implements FileService {
       String uniqueName = UUID.randomUUID() + ext;
       Path target = uploadPath.resolve(uniqueName);
       Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-      String fileUrl = baseUrl + "/uploads/" + uniqueName;
+      String fileUrl = baseUrl + "/files/" + uniqueName;
       log.info("Upload file thành công: {}", uniqueName);
       return new FileUploadResponse(uniqueName, fileUrl);
     } catch (IOException e) {
