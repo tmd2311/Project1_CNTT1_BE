@@ -51,6 +51,8 @@ services:
       - redis
     networks:
       - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
 
   # ===========================
   # Product Service
@@ -73,10 +75,11 @@ services:
       - consul
     networks:
       - proshop-net
-
+    volumes:
+      - maven-repo:/root/.m2
 
   # ===========================
-  # 🧾 Order Service
+  # Order Service
   # ===========================
   order-service:
     build:
@@ -96,9 +99,35 @@ services:
       - consul
     networks:
       - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
 
   # ===========================
-  # Gateway Service
+  # File Service
+  # ===========================
+  file-service:
+    build:
+      context: .
+      dockerfile: ./file-service/Dockerfile
+    container_name: file-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - FILE_UPLOAD_DIR=/uploads/images
+      - FILE_BASE_URL=http://file-service:8084
+    depends_on:
+      - consul
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+      - ./file-storage:/uploads/images
+
+  # ===========================
+  # 🌐 Gateway Service
   # ===========================
   gateway-service:
     build:
@@ -113,16 +142,22 @@ services:
       - order-service
       - auth-service
       - redis
+      - file-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
     networks:
       - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
 
 # ===========================
-# External Shared Network
+# 🌍 Shared Network & Volumes
 # ===========================
 networks:
   proshop-net:
     external: true
+
+volumes:
+  maven-repo:

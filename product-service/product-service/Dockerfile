@@ -4,12 +4,16 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# Copy và cài các thư viện nội bộ trước (exception-lib, auth-lib)
-COPY ../../exception-lib /app/exception-lib
-RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
+# 👉 Mount cache Maven để reuse thư viện
+VOLUME ["/root/.m2"]
 
+# Copy thư viện nội bộ
+COPY ../../exception-lib /app/exception-lib
 COPY ../../auth-lib /app/auth-lib
-RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
+
+# Cài các thư viện nội bộ vào local repo ( chỉ chạy nếu các lib thay đổi)
+RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
+RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
 
 # Copy mã nguồn product-service
 COPY ../../product-service/product-service /app/product-service

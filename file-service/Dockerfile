@@ -1,5 +1,5 @@
 # ===========================
-# Stage 1: Build
+# 🏗️ Stage 1: Build Application
 # ===========================
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
@@ -15,19 +15,17 @@ COPY ../../auth-lib /app/auth-lib
 RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
 RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
 
-# Copy mã nguồn auth-service
-COPY ../auth-service /app/auth-service
-
-# Build ứng dụng chính
-WORKDIR /app/auth-service
-RUN mvn clean package -DskipTests
+# Copy service chính
+COPY ../../file-service /app/file-service
+WORKDIR /app/file-service
+RUN mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
-# Stage 2: Run
+# 🚀 Stage 2: Run Application
 # ===========================
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-
-COPY --from=builder /app/auth-service/target/*.jar app.jar
-EXPOSE 8081
+COPY --from=builder /app/file-service/target/*.jar app.jar
+EXPOSE 8084
+ENV SPRING_PROFILES_ACTIVE=docker
 ENTRYPOINT ["java", "-jar", "app.jar"]
