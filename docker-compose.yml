@@ -117,7 +117,7 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
       - FILE_UPLOAD_DIR=/uploads/images
-      - FILE_BASE_URL=http://file-service:8084
+      - FILE_BASE_URL=http://103.90.225.90:8084
     depends_on:
       - consul
     networks:
