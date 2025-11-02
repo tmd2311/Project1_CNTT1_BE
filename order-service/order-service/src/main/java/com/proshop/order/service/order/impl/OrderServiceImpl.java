@@ -35,8 +35,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
     private final JwtUtil jwtUtil;
-    @Autowired
-    private OrderItemRepository orderItemRepository;
+    private final OrderItemRepository orderItemRepository;
 
     // ============================================
     // USER METHODS
@@ -80,7 +79,7 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItemEntity> orderItems = createOrderItems(order, request, products);
             orderItemRepository.saveAll(orderItems);
 
-            log.info("✅ Created order {} for user {} with {} items and total amount {}",
+            log.info("Created order {} for user {} with {} items and total amount {}",
                     order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount);
 
             OrderResponse data = new OrderResponse(
@@ -95,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
         } catch (ResException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error creating order: {}", e.getMessage(), e);
+            log.error("Error creating order: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.ORDER_CREATION_ERROR);
         }
     }
@@ -116,7 +115,7 @@ public class OrderServiceImpl implements OrderService {
                 ))
                 .toList();
 
-        log.info("✅ Found {} orders for user {}", data.size(), userId);
+        log.info("Found {} orders for user {}", data.size(), userId);
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -171,7 +170,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        log.info("✅ Cancelled order {} for user {}", orderId, userId);
+        log.info("Cancelled order {} for user {}", orderId, userId);
 
         OrderResponse data = new OrderResponse(
                 order.getOrderId(),
@@ -203,7 +202,7 @@ public class OrderServiceImpl implements OrderService {
                 ))
                 .toList();
 
-        log.info("✅ Found {} orders (admin)", data.size());
+        log.info("Found {} orders (admin)", data.size());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -244,7 +243,7 @@ public class OrderServiceImpl implements OrderService {
                 ))
                 .toList();
 
-        log.info("✅ Found {} orders for user {} (admin)", data.size(), userId);
+        log.info("Found {} orders for user {} (admin)", data.size(), userId);
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -267,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.PENDING);
         orderRepository.save(order);
 
-        log.info("✅ Updated order {} with new total amount {} (admin)", orderId, request.getTotalAmount());
+        log.info("Updated order {} with new total amount {} (admin)", orderId, request.getTotalAmount());
 
         OrderResponse data = new OrderResponse(
                 order.getOrderId(),
@@ -291,7 +290,7 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.delete(order);
 
-        log.info("✅ Deleted order {} for user {} (admin)", order.getOrderId(), order.getUserId());
+        log.info("Deleted order {} for user {} (admin)", order.getOrderId(), order.getUserId());
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -316,7 +315,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderDetailResponse data = buildOrderDetailResponse(order);
 
-        log.info("✅ Found order detail for order {} with {} items", orderId, data.getItems().size());
+        log.info("Found order detail for order {} with {} items", orderId, data.getItems().size());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -331,7 +330,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderDetailResponse data = buildOrderDetailResponse(order);
 
-        log.info("✅ Found order detail for order {} with {} items (admin)", orderId, data.getItems().size());
+        log.info("Found order detail for order {} with {} items (admin)", orderId, data.getItems().size());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -348,7 +347,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (var item : request.getItems()) {
             try {
-                log.info("📞 Calling Product Service to validate product: {}", item.getProductId());
+                log.info("Calling Product Service to validate product: {}", item.getProductId());
 
                 GeneralResponse<ProductResponse> productResponse = productClient.getProductById(item.getProductId());
                 ProductResponse product = productResponse.getData();
@@ -369,17 +368,17 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 products.add(product);
-                log.info("✅ Successfully validated product: {} (price: {})",
+                log.info("Successfully validated product: {} (price: {})",
                         product.getId(), product.getPrice());
 
             } catch (FeignException.NotFound e) {
-                log.error("❌ Product not found (404): {}", item.getProductId());
+                log.error("Product not found (404): {}", item.getProductId());
                 throw new ResException(ResErrorCode.PRODUCT_NOT_FOUND,
                         "Không tìm thấy sản phẩm với ID: " + item.getProductId());
             } catch (ResException e) {
                 throw e;
             } catch (Exception e) {
-                log.error("❌ Error calling product service for product {}: {}",
+                log.error("Error calling product service for product {}: {}",
                         item.getProductId(), e.getMessage(), e);
                 throw new ResException(ResErrorCode.PRODUCT_VALIDATION_ERROR);
             }
@@ -398,12 +397,12 @@ public class OrderServiceImpl implements OrderService {
             for (int i = 0; i < request.getItems().size(); i++) {
                 var item = request.getItems().get(i);
 
-                // ✅ Thêm try-catch riêng cho từng SKU
+                // Thêm try-catch riêng cho từng SKU
                 try {
                     GeneralResponse<SKUResponse> skuResponse = productClient.getSkuById(item.getSkuId());
 
                     if (skuResponse == null || skuResponse.getData() == null) {
-                        log.error("❌ Không tìm thấy SKU với ID: {}", item.getSkuId());
+                        log.error("Không tìm thấy SKU với ID: {}", item.getSkuId());
                         throw new ResException(ResErrorCode.SKU_NOT_FOUND,
                                 "Không tìm thấy SKU với ID: " + item.getSkuId());
                     }
@@ -415,19 +414,19 @@ public class OrderServiceImpl implements OrderService {
                     totalAmount = totalAmount.add(itemTotal);
 
                 } catch (FeignException.NotFound e) {
-                    log.error("❌ SKU not found (404): {}", item.getSkuId());
+                    log.error("SKU not found (404): {}", item.getSkuId());
                     throw new ResException(ResErrorCode.SKU_NOT_FOUND,
                             "Không tìm thấy SKU với ID: " + item.getSkuId());
                 }
             }
 
-            log.info("💰 Calculated total amount: {}", totalAmount);
+            log.info("Calculated total amount: {}", totalAmount);
             return totalAmount;
 
         } catch (ResException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ Error calculating total amount: {}", e.getMessage(), e);
+            log.error("Error calculating total amount: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.ORDER_CALCULATION_ERROR);
         }
     }
@@ -439,7 +438,7 @@ public class OrderServiceImpl implements OrderService {
         for (int i = 0; i < request.getItems().size(); i++) {
             var item = request.getItems().get(i);
 
-            // ✅ Sửa: Dùng item.getSkuId() thay vì item.getProductId()
+            // Sửa: Dùng item.getSkuId() thay vì item.getProductId()
             GeneralResponse<SKUResponse> skuResponse = productClient.getSkuById(item.getSkuId());
             BigDecimal itemPrice = BigDecimal.valueOf(skuResponse.getData().getPrice());
             BigDecimal itemQuantity = BigDecimal.valueOf(item.getQuantity());
@@ -537,10 +536,10 @@ public class OrderServiceImpl implements OrderService {
 
         try {
             List<String> roles = jwtUtil.extractRoles(token);
-            log.info("✅ Successfully extracted roles from token: {}", roles);
+            log.info("Successfully extracted roles from token: {}", roles);
             return roles;
         } catch (Exception e) {
-            log.error("❌ Failed to extract roles from token: {}", e.getMessage(), e);
+            log.error("Failed to extract roles from token: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }

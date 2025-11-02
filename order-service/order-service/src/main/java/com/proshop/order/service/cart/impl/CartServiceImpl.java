@@ -88,7 +88,7 @@ public class CartServiceImpl implements CartService {
 
         cartItemRepository.save(cartItem);
 
-        log.info("✅ Successfully added product {} to cart for user {} with quantity {}",
+        log.info(" Successfully added product {} to cart for user {} with quantity {}",
                 productId, userId, quantity);
 
         // Return DTO with product info
@@ -113,7 +113,7 @@ public class CartServiceImpl implements CartService {
 
         cartItemRepository.delete(cartItem);
 
-        log.info("✅ Removed product {} from cart for user {}", productId, userId);
+        log.info(" Removed product {} from cart for user {}", productId, userId);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -133,7 +133,7 @@ public class CartServiceImpl implements CartService {
                 .map(this::toCartItemResponseWithProduct)
                 .collect(Collectors.toList());
 
-        log.info("✅ Found {} items in cart for user {}", items.size(), userId);
+        log.info(" Found {} items in cart for user {}", items.size(), userId);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -155,7 +155,7 @@ public class CartServiceImpl implements CartService {
 
         if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
-            log.info("✅ Deleted product {} from cart for user {} (quantity = 0)", productId, userId);
+            log.info(" Deleted product {} from cart for user {} (quantity = 0)", productId, userId);
             return new GeneralResponse<>(
                     new ResponseStatus("200", "Đã xóa sản phẩm", "Deleted"),
                     "Đã xóa sản phẩm khỏi giỏ hàng",
@@ -167,7 +167,7 @@ public class CartServiceImpl implements CartService {
         cartItem.setUpdatedAt(LocalDateTime.now());
         cartItemRepository.save(cartItem);
 
-        log.info("✅ Updated quantity for product {} in cart for user {} to {}",
+        log.info(" Updated quantity for product {} in cart for user {} to {}",
                 productId, userId, quantity);
 
         // Return DTO with product info
@@ -193,7 +193,7 @@ public class CartServiceImpl implements CartService {
         List<CartEntity> carts = cartRepository.findAll();
         List<CartResponse> response = cartMapper.toResponseList(carts);
 
-        log.info("✅ Found {} carts (admin)", carts.size());
+        log.info(" Found {} carts (admin)", carts.size());
 
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
@@ -209,7 +209,7 @@ public class CartServiceImpl implements CartService {
 
         CartResponse response = cartMapper.toResponse(cart);
 
-        log.info("✅ Found cart for user {} (admin)", userId);
+        log.info(" Found cart for user {} (admin)", userId);
 
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
@@ -225,7 +225,7 @@ public class CartServiceImpl implements CartService {
 
         CartResponse response = cartMapper.toResponse(cart);
 
-        log.info("✅ Found cart {} (admin)", cartId);
+        log.info(" Found cart {} (admin)", cartId);
 
         ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
         return new GeneralResponse<>(status, response, null);
@@ -329,7 +329,7 @@ public class CartServiceImpl implements CartService {
 
         try {
             List<String> roles = jwtUtil.extractRoles(token);
-            log.info("✅ Successfully extracted role from token: {}", roles);
+            log.info(" Successfully extracted role from token: {}", roles);
             return roles;
         } catch (Exception e) {
             log.error("❌ Failed to extract role from token: {}", e.getMessage(), e);
