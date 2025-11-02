@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
