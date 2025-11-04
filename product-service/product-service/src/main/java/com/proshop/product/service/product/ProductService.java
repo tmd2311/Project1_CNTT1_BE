@@ -8,18 +8,20 @@ import com.proshop.product.dto.response.ProductDeleteResponse;
 import com.proshop.product.dto.response.ProductResponse;
 
 
+import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 
 public interface ProductService {
   GeneralResponse<PageResponse<ProductResponse>> getProducts(int page, int size);
   GeneralResponse<ProductResponse> getProductById(String idStr);
   GeneralResponse<ProductDeleteResponse> deleteProduct(String idStr);
-  GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request);
+  GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request, List<MultipartFile> images);
   GeneralResponse<PageResponse<ProductResponse>> searchProducts(
       String name, String brand, String category,
       Double minPrice, Double maxPrice,
       int page, int size);
-  GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request);
+  GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request, List<MultipartFile> images);
 
 }

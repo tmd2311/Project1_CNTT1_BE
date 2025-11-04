@@ -1,6 +1,7 @@
 package com.proshop.product.dto.response;
 
 
+import java.util.List;
 import java.util.Map;
 import lombok.*;
 
@@ -20,4 +21,5 @@ public class ProductResponse {
   private Map<String, Object> specs;
   private Double price;        // lấy giá từ SKU rẻ nhất
   private String thumbnailUrl; // lấy ảnh chính
+  private List<String> images;
 }
