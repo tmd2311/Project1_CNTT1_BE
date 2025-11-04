@@ -304,6 +304,16 @@ public class ProductServiceImpl implements ProductService {
           .ifPresent(primaryImage -> dto.setThumbnailUrl(primaryImage.getUrl()));
     }
 
+    if (entity.getImages() != null && !entity.getImages().isEmpty()) {
+      List<String> imageUrls = entity.getImages().stream()
+          .filter(img -> Boolean.FALSE.equals(img.getIsPrimary()))
+          .map(ProductImageEntity::getUrl)
+          .toList();
+      dto.setImages(imageUrls);
+    } else {
+      dto.setImages(Collections.emptyList());
+    }
+
     return dto;
   }
 

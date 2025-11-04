@@ -19,7 +19,6 @@ public class DataLoader {
         CategoryRepository categoryRepository,
         BrandRepository brandRepository,
         SKURepository skuRepository,
-        CategoryImageRepository categoryImageRepository,
         ProductImageRepository productImageRepository
     ) {
 
@@ -37,14 +36,6 @@ public class DataLoader {
             CategoryEntity gpu = CategoryEntity.builder().name("Graphics Cards").slug("graphics-cards").build();
             categoryRepository.saveAll(List.of(laptops, monitors, motherboards, ram, gpu));
 
-            // ================= CATEGORY IMAGES =================
-            categoryImageRepository.saveAll(List.of(
-                CategoryImageEntity.builder().category(laptops).url("/images/categories/categories-02.png").isPrimary(true).build(),
-                CategoryImageEntity.builder().category(monitors).url("/images/categories/categories-03.png").isPrimary(true).build(),
-                CategoryImageEntity.builder().category(motherboards).url("/images/categories/categories-04.png").isPrimary(true).build(),
-                CategoryImageEntity.builder().category(ram).url("/images/categories/categories-05.png").isPrimary(true).build(),
-                CategoryImageEntity.builder().category(gpu).url("/images/categories/categories-06.png").isPrimary(true).build()
-            ));
 
             // ================= BRANDS =================
             BrandEntity dell = brandRepository.save(BrandEntity.builder().name("Dell").slug("dell").logoUrl("https://example.com/logo/dell.png").build());

@@ -19,46 +19,17 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== BASIC QUERIES ==========
 
-    /**
-     * Find category by slug (SEO friendly URLs)
-     */
     Optional<CategoryEntity> findBySlug(String slug);
-
-    /**
-     * Check if slug exists
-     */
     boolean existsBySlug(String slug);
-
-    /**
-     * Check if slug exists excluding a specific category ID
-     */
     boolean existsBySlugAndIdNot(String slug, UUID id);
-
-    /**
-     * Find categories by name containing (case insensitive)
-     */
     List<CategoryEntity> findByNameContainingIgnoreCase(String name);
 
     // ========== HIERARCHY QUERIES ==========
 
-    /**
-     * Find all root categories (no parent) ordered by name
-     */
     List<CategoryEntity> findByParentIsNullOrderByName();
-
-    /**
-     * Find all children of a parent category
-     */
     List<CategoryEntity> findByParentIdOrderByName(UUID parentId);
-
-    /**
-     * Find categories by parent (entity)
-     */
     List<CategoryEntity> findByParentOrderByName(CategoryEntity parent);
 
-    /**
-     * Get all categories ordered by parent hierarchy then name
-     */
     @Query("""
         SELECT c
         FROM CategoryEntity c
@@ -100,7 +71,7 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         END,
         0L,
         true,
-        (SELECT MAX(ci.url) FROM CategoryImageEntity ci WHERE ci.category.id = c.id AND ci.isPrimary = true)
+        c.imageUrl
     )
     FROM CategoryEntity c
     WHERE (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
@@ -108,12 +79,8 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
     """)
     Page<CategoryResponse> searchCategories(@Param("name") String name, Pageable pageable);
 
-
     // ========== HIERARCHY SPECIFIC QUERIES ==========
 
-    /**
-     * Find all descendants of a category (recursive)
-     */
     @Query(value = """
         WITH RECURSIVE category_tree AS (
             SELECT id, name, slug, parent_id, 1 as level
@@ -128,9 +95,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """, nativeQuery = true)
     List<CategoryEntity> findAllDescendants(@Param("categoryId") UUID categoryId);
 
-    /**
-     * Find categories by hierarchy level
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -144,9 +108,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== PC STORE SPECIFIC QUERIES ==========
 
-    /**
-     * Get laptop categories (children of "laptops" root)
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -155,9 +116,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findLaptopCategories();
 
-    /**
-     * Get PC component categories (children of "pc-components" root)
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -166,9 +124,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findComponentCategories();
 
-    /**
-     * Get peripheral categories (children of "peripherals" root)
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -177,9 +132,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findPeripheralCategories();
 
-    /**
-     * Get desktop PC categories (all descendants of "desktop-pcs")
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -188,9 +140,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findDesktopPCCategories();
 
-    /**
-     * Get storage categories (all descendants of "storage")
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -199,9 +148,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findStorageCategories();
 
-    /**
-     * Get cooling categories (all descendants of "cooling-systems")
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -212,9 +158,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== CATEGORY TYPE QUERIES ==========
 
-    /**
-     * Find categories by type with pagination (approximation - will be filtered in service)
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -230,9 +173,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== STATISTICS QUERIES ==========
 
-    /**
-     * Count products in a specific category (placeholder - requires Product entity)
-     */
     @Query("""
         SELECT COUNT(p)
         FROM ProductEntity p 
@@ -240,9 +180,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     Long countProductsInCategory(@Param("categoryId") UUID categoryId);
 
-    /**
-     * Count products in category tree (category and all subcategories)
-     */
     @Query("""
         SELECT COUNT(p)
         FROM ProductEntity p
@@ -252,19 +189,9 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     Long countProductsInCategoryTree(@Param("categoryId") UUID categoryId);
 
-    /**
-     * Count categories by parent
-     */
     Long countByParentId(UUID parentId);
-
-    /**
-     * Count root categories
-     */
     Long countByParentIsNull();
 
-    /**
-     * Get max hierarchy depth
-     */
     @Query("""
         SELECT MAX(
             CASE
@@ -279,9 +206,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== VALIDATION QUERIES ==========
 
-    /**
-     * Check if category has children
-     */
     @Query("""
         SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END
         FROM CategoryEntity c
@@ -289,9 +213,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     boolean hasChildren(@Param("categoryId") UUID categoryId);
 
-    /**
-     * Check if category has products (requires Product entity)
-     */
     @Query("""
         SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
         FROM ProductEntity p
@@ -299,9 +220,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     boolean hasProducts(@Param("categoryId") UUID categoryId);
 
-    /**
-     * Find categories without children (leaf categories)
-     */
     @Query("""
         SELECT c
         FROM CategoryEntity c
@@ -312,9 +230,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<CategoryEntity> findLeafCategories();
 
-    /**
-     * Find categories without products
-     */
     @Query("""
         SELECT c
         FROM CategoryEntity c
@@ -327,9 +242,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
 
     // ========== BULK OPERATIONS ==========
 
-    /**
-     * Find all categories with their children count
-     */
     @Query("""
         SELECT c, SIZE(c.children) as childrenCount
         FROM CategoryEntity c
@@ -337,31 +249,14 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """)
     List<Object[]> findAllWithChildrenCount();
 
-    /**
-     * Find categories by name list (for bulk operations)
-     */
     List<CategoryEntity> findByNameIn(List<String> names);
-
-    /**
-     * Find categories by slug list (for bulk operations)
-     */
     List<CategoryEntity> findBySlugIn(List<String> slugs);
 
     // ========== UTILITY QUERIES ==========
 
-    /**
-     * Check if category exists by name
-     */
     boolean existsByName(String name);
-
-    /**
-     * Check if category exists by name excluding specific ID
-     */
     boolean existsByNameAndIdNot(String name, UUID id);
 
-    /**
-     * Get random categories for featured display
-     */
     @Query(value = """
         SELECT * FROM category 
         WHERE parent_id IS NULL 
@@ -370,9 +265,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         """, nativeQuery = true)
     List<CategoryEntity> findRandomRootCategories(@Param("limit") int limit);
 
-    /**
-     * Search categories by multiple criteria
-     */
     @Query("""
         SELECT c 
         FROM CategoryEntity c 
@@ -383,15 +275,12 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
                (:hasChildren = false AND SIZE(c.children) = 0))
         """)
     Page<CategoryEntity> findByCriteria(
-            @Param("name") String name,
-            @Param("parentId") UUID parentId,
-            @Param("hasChildren") Boolean hasChildren,
-            Pageable pageable
+        @Param("name") String name,
+        @Param("parentId") UUID parentId,
+        @Param("hasChildren") Boolean hasChildren,
+        Pageable pageable
     );
 
-    /**
-     * Get category hierarchy path (for breadcrumb)
-     */
     @Query(value = """
         WITH RECURSIVE category_path AS (
             SELECT id, name, slug, parent_id, 0 as level
@@ -406,8 +295,10 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
         ORDER BY (SELECT level FROM category_path WHERE category_path.id = c.id) DESC
         """, nativeQuery = true)
     List<CategoryEntity> getCategoryPath(@Param("categoryId") UUID categoryId);
+
     List<CategoryEntity> findByParentIsNull(Sort sort);
     List<CategoryEntity> findByParentId(UUID parentId, Sort sort);
+
     @Query("""
     SELECT c 
     FROM CategoryEntity c 
@@ -422,5 +313,4 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, UUID> 
     WHERE c.parent IS NOT NULL AND LOWER(c.parent.name) LIKE LOWER(CONCAT('%', :rootName, '%'))
     """)
     Page<CategoryEntity> findCategoriesByRootName(@Param("rootName") String rootName, Pageable pageable);
-
 }

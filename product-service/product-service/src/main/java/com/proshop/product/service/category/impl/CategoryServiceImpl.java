@@ -1,19 +1,17 @@
 package com.proshop.product.service.category.impl;
 
 import com.proshop.product.dto.request.CategoryCreateRequest;
-import com.proshop.product.dto.request.CategoryImageRequest;
 import com.proshop.product.dto.request.CategoryUpdateRequest;
 import com.proshop.product.dto.response.CategoryDeleteResponse;
 import com.proshop.product.dto.response.CategoryResponse;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.entity.CategoryEntity;
-import com.proshop.product.entity.CategoryImageEntity;
-import com.proshop.product.repository.CategoryImageRepository;
 import com.proshop.product.repository.CategoryRepository;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.service.category.CategoryService;
 import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.product.utils.FileUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +32,7 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final CategoryImageRepository categoryImageRepository;
+    private final FileUtil fileUtil;
 
     @Override
     @Transactional
@@ -78,7 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request) {
+    public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request, MultipartFile image) {
         // --- Validation cơ bản ---
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             throw new ResException(ResErrorCode.CATEGORY_NAME_REQUIRED);
@@ -115,25 +113,19 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(parent);
         }
 
+        // --- Thêm ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest ---
+        if (image != null || !image.isEmpty()) {
+            String imagesUrl=  fileUtil.uploadProductImage(image);
+            if (imagesUrl != null && !imagesUrl.isEmpty()) {
+                category.setImageUrl(imagesUrl);
+            }
+        }
+
+
+
         // --- Lưu category trước để có ID ---
         CategoryEntity saved = categoryRepository.save(category);
 
-        // --- Thêm ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest ---
-        if (request.getImage() != null &&
-                request.getImage().getUrl() != null &&
-                !request.getImage().getUrl().trim().isEmpty()) {
-
-            CategoryImageEntity imageEntity = CategoryImageEntity.builder()
-                    .url(request.getImage().getUrl().trim())
-                    .isPrimary(true)  // Luôn là primary vì chỉ có 1 ảnh
-                    .category(saved)
-                    .build();
-
-            categoryImageRepository.save(imageEntity);
-
-            // Set images cho saved entity để convertToDTO có thể lấy được
-            saved.setImages(List.of(imageEntity));
-        }
 
         CategoryResponse response = convertToDTO(saved);
 
@@ -146,7 +138,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request) {
+    public GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request, MultipartFile image) {
         // 🔹 1. Tìm category cần cập nhật
         CategoryEntity category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
@@ -186,25 +178,10 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         // 🔹 5. Cập nhật ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest
-        if (request.getImages() != null) {
-            CategoryImageRequest imageRequest = request.getImages();
-
-            // Xóa tất cả ảnh cũ
-            if (category.getImages() != null && !category.getImages().isEmpty()) {
-                categoryImageRepository.deleteAll(category.getImages());
-                category.getImages().clear();
-            }
-
-            // Thêm ảnh mới nếu có URL
-            if (imageRequest.getUrl() != null && !imageRequest.getUrl().trim().isEmpty()) {
-                CategoryImageEntity newImage = CategoryImageEntity.builder()
-                        .url(imageRequest.getUrl().trim())
-                        .isPrimary(true)  // Luôn là primary vì chỉ có 1 ảnh
-                        .category(category)
-                        .build();
-
-                categoryImageRepository.save(newImage);
-                category.setImages(List.of(newImage));
+        if (image != null || !image.isEmpty()) {
+            String imagesUrl=  fileUtil.uploadProductImage(image);
+            if (imagesUrl != null && !imagesUrl.isEmpty()) {
+                category.setImageUrl(imagesUrl);
             }
         }
 
@@ -257,7 +234,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = rootCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -288,7 +265,7 @@ public class CategoryServiceImpl implements CategoryService {
         List<CategoryResponse> children = category.getChildren().stream()
                 .map(this::convertToDTO)
                 .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -353,7 +330,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -368,7 +345,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = laptopCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -383,7 +360,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = componentCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -398,7 +375,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = peripheralCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -413,7 +390,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = desktopCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -428,7 +405,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = storageCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -443,7 +420,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = coolingCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -484,7 +461,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -500,7 +477,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -609,14 +586,8 @@ public class CategoryServiceImpl implements CategoryService {
         String categoryType = determineCategoryType(category);
         builder.categoryType(categoryType);
 
-        if (category.getImages() != null && !category.getImages().isEmpty()) {
-            // Lấy ảnh primary, nếu không có thì lấy ảnh đầu tiên
-            CategoryImageEntity primaryImage = category.getImages().stream()
-                    .filter(img -> img.getIsPrimary() != null && img.getIsPrimary())
-                    .findFirst()
-                    .orElse(category.getImages().get(0));
-
-            builder.imageUrl(primaryImage.getUrl());
+        if (category.getImageUrl() != null && !category.getImageUrl().isEmpty()) {
+            builder.imageUrl(category.getImageUrl());
         }
 
         return builder.build();
@@ -629,7 +600,7 @@ public class CategoryServiceImpl implements CategoryService {
             List<CategoryResponse> children = category.getChildren().stream()
                     .map(this::convertToDTO)
                     .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             // Assuming CategoryResponse has a children field
             // response.setChildren(children);

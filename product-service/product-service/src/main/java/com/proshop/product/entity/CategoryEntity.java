@@ -24,13 +24,12 @@ public class CategoryEntity {
   @Column(unique = true)
   private String slug;
 
+  private String imageUrl;
+
   @ManyToOne
   @JoinColumn(name = "parent_id")
   private CategoryEntity parent;
 
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
   private List<CategoryEntity> children;
-
-  @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<CategoryImageEntity> images;
 }

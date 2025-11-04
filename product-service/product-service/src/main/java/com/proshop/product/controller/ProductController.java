@@ -64,9 +64,13 @@ public class ProductController {
   @PutMapping("/product/{id}")
   public ResponseEntity<GeneralResponse<ProductResponse>> updateProduct(
       @PathVariable("id") UUID id,
-      @RequestPart("product") ProductUpdateRequest request,
+      @RequestPart("product") String productJson,
       @RequestPart(value = "images", required = false) List<MultipartFile> images
-  ) {
+  ) throws JsonProcessingException {
+    // Convert JSON text → Object
+    ObjectMapper mapper = new ObjectMapper();
+    ProductUpdateRequest request = mapper.readValue(productJson, ProductUpdateRequest.class);
+
     GeneralResponse<ProductResponse> response = productService.updateProduct(id, request, images);
     return ResponseEntity.ok(response);
   }

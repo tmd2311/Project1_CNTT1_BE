@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface CategoryService {
 
@@ -17,12 +18,12 @@ public interface CategoryService {
     /**
      * Create a new category
      */
-    GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request);
+    GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request, MultipartFile image);
 
     /**
      * Update an existing category
      */
-    GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request);
+    GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request, MultipartFile image);
 
     /**
      * Delete a category by ID
