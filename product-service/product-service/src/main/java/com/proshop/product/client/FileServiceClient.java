@@ -8,6 +8,8 @@ import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,5 +36,8 @@ public interface FileServiceClient {
   ResponseEntity<GeneralResponse<List<FileUploadResponse>>> uploadMultipleFiles(
       @RequestPart("files") MultipartFile[] files
   );
+
+  @DeleteMapping("/delete/{fileName}")
+  ResponseEntity<GeneralResponse<Void>> deleteFile(@PathVariable("fileName") String fileName);
 }
 

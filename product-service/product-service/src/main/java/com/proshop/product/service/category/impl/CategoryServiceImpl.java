@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -115,7 +114,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // --- Thêm ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest ---
         if (image != null || !image.isEmpty()) {
-            String imagesUrl=  fileUtil.uploadProductImage(image);
+            String imagesUrl=  fileUtil.uploadSingleImage(image);
             if (imagesUrl != null && !imagesUrl.isEmpty()) {
                 category.setImageUrl(imagesUrl);
             }
@@ -179,7 +178,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 🔹 5. Cập nhật ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest
         if (image != null || !image.isEmpty()) {
-            String imagesUrl=  fileUtil.uploadProductImage(image);
+            fileUtil.deleteFileByUrl(category.getImageUrl());
+            String imagesUrl=  fileUtil.uploadSingleImage(image);
             if (imagesUrl != null && !imagesUrl.isEmpty()) {
                 category.setImageUrl(imagesUrl);
             }

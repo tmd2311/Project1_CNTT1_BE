@@ -4,6 +4,7 @@ import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.dto.request.ProductCreateRequest;
 import com.proshop.product.dto.request.ProductImageRequest;
+import com.proshop.product.dto.request.ProductImageUpdateRequest;
 import com.proshop.product.dto.request.ProductUpdateRequest;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.PageResponse;
@@ -132,7 +133,7 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   @Transactional
-  public GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request, List<MultipartFile> images) {
+  public GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request, List<MultipartFile> newImages) {
     ProductEntity product = findProductOrThrow(id);
     validateProductUpdateRequest(request);
 
@@ -140,8 +141,17 @@ public class ProductServiceImpl implements ProductService {
     applyBrandUpdate(product, request);
     applyCategoryUpdate(product, request);
 
-    if (request.getImages() != null) {
-      updateProductImages(product, request.getImages());
+    if (request.getDeleteImageIds() != null && !request.getDeleteImageIds().isEmpty()) {
+      deleteProductImages(product, request.getDeleteImageIds());
+    }
+
+    if (request.getUpdateImages() != null && !request.getUpdateImages().isEmpty()) {
+      replaceProductImages(product, request.getUpdateImages());
+    }
+
+    if (newImages != null && !newImages.isEmpty()) {
+      List<String> uploadedUrls = fileUtil.uploadMultipleImages(newImages);
+      addNewImages(product, uploadedUrls);
     }
 
     product.setUpdatedAt(LocalDateTime.now());
@@ -150,6 +160,47 @@ public class ProductServiceImpl implements ProductService {
     ProductResponse response = convertToDTO(updated);
     return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null);
   }
+
+  private void deleteProductImages(ProductEntity product, List<UUID> imageIds) {
+    List<ProductImageEntity> images = product.getImages();
+    List<ProductImageEntity> toDelete = images.stream()
+        .filter(img -> imageIds.contains(img.getId()))
+        .toList();
+
+    toDelete.forEach(img -> {
+      fileUtil.deleteFileByUrl(img.getUrl());
+      productImageRepository.delete(img);
+    });
+
+    images.removeAll(toDelete);
+  }
+
+  private void replaceProductImages(ProductEntity product, List<ProductImageUpdateRequest> updates) {
+    for (ProductImageUpdateRequest update : updates) {
+      ProductImageEntity image = product.getImages().stream()
+          .filter(i -> i.getId().equals(update.getId()))
+          .findFirst()
+          .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_IMAGE_NOT_FOUND));
+
+      fileUtil.deleteFileByUrl(image.getUrl());
+
+      String newUrl = fileUtil.uploadSingleImage(update.getFile());
+      image.setUrl(newUrl);
+    }
+  }
+
+  private void addNewImages(ProductEntity product, List<String> imageUrls) {
+    List<ProductImageEntity> newImages = imageUrls.stream()
+        .map(url -> ProductImageEntity.builder()
+            .product(product)
+            .url(url)
+            .isPrimary(false)
+            .build())
+        .toList();
+
+    product.getImages().addAll(newImages);
+  }
+
 
   private ProductEntity findProductOrThrow(UUID id) {
     return productRepository.findById(id)
@@ -184,82 +235,7 @@ public class ProductServiceImpl implements ProductService {
     }
   }
 
-  private void updateProductImages(ProductEntity product, List<ProductImageRequest> imageRequests) {
-    List<ProductImageEntity> existingImages = product.getImages();
-    if (existingImages == null) {
-      existingImages = new ArrayList<>();
-    }
 
-    // Xóa ảnh không còn tồn tại
-    List<UUID> newIds = imageRequests.stream()
-        .map(ProductImageRequest::getId)
-        .filter(Objects::nonNull)
-        .toList();
-    existingImages.removeIf(img -> img.getId() != null && !newIds.contains(img.getId()));
-
-    // Thêm hoặc cập nhật ảnh
-    for (ProductImageRequest imgReq : imageRequests) {
-      if (imgReq.getUrl() == null || imgReq.getUrl().trim().isEmpty()) {
-        continue;
-      }
-
-      if (imgReq.getId() != null) {
-        updateExistingImage(existingImages, imgReq);
-      } else {
-        addNewImage(product, existingImages, imgReq);
-      }
-    }
-
-    ensureSinglePrimaryImage(existingImages);
-    updateThumbnailUrl(product, existingImages);
-
-    product.setImages(existingImages);
-  }
-
-  private void updateExistingImage(List<ProductImageEntity> existingImages,
-      ProductImageRequest imgReq) {
-    ProductImageEntity image = existingImages.stream()
-        .filter(i -> i.getId().equals(imgReq.getId()))
-        .findFirst()
-        .orElseThrow(() -> new ResException(ResErrorCode.PRODUCT_IMAGE_NOT_FOUND));
-
-    image.setUrl(imgReq.getUrl().trim());
-    image.setIsPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()));
-  }
-
-  private void addNewImage(ProductEntity product, List<ProductImageEntity> existingImages,
-      ProductImageRequest imgReq) {
-    ProductImageEntity newImage = ProductImageEntity.builder()
-        .url(imgReq.getUrl().trim())
-        .isPrimary(Boolean.TRUE.equals(imgReq.getIsPrimary()))
-        .product(product)
-        .build();
-    existingImages.add(newImage);
-  }
-
-  private void ensureSinglePrimaryImage(List<ProductImageEntity> images) {
-    long count = images.stream()
-        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-        .count();
-    if (count > 1) {
-      throw new ResException(ResErrorCode.PRODUCT_MULTIPLE_PRIMARY_IMAGES);
-    }
-  }
-
-  private void updateThumbnailUrl(ProductEntity product, List<ProductImageEntity> images) {
-    ProductImageEntity primary = images.stream()
-        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-        .findFirst()
-        .orElse(null);
-
-    if (primary != null) {
-      product.setThumbnailUrl(primary.getUrl());
-    } else if (!images.isEmpty()) {
-      product.setThumbnailUrl(images.get(0).getUrl());
-    } else {
-      product.setThumbnailUrl(null);
-    }
-  }
 
 
   private void validateProductUpdateRequest(ProductUpdateRequest request) {

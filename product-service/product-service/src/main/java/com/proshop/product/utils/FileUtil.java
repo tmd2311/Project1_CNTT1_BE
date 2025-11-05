@@ -18,7 +18,7 @@ public class FileUtil {
 
   private final FileServiceClient fileClient;
 
-  public String uploadProductImage(MultipartFile file) {
+  public String uploadSingleImage(MultipartFile file) {
     return Optional.ofNullable(fileClient.uploadFile(file))
         .map(ResponseEntity::getBody)
         .map(GeneralResponse::getData)
@@ -36,5 +36,18 @@ public class FileUtil {
             .map(FileUploadResponse::getUrl)
             .toList())
         .orElseThrow(() -> new ResException(ResErrorCode.FILE_UPLOAD_FAILED));
+  }
+
+  public void deleteFileByUrl(String fileUrl) {
+    if (fileUrl == null || fileUrl.isBlank()) return;
+    try {
+      String fileName = extractFileNameFromUrl(fileUrl);
+      fileClient.deleteFile(fileName);
+    } catch (Exception e) {
+      throw new ResException(ResErrorCode.FILE_DELETE_FAILED);
+    }
+  }
+  private String extractFileNameFromUrl(String fileUrl) {
+    return fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
   }
 }

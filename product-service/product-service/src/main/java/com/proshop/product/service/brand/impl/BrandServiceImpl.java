@@ -64,9 +64,9 @@ public class BrandServiceImpl implements BrandService {
             brand.setName(request.getName().trim());
         }
 
-        if (image.getOriginalFilename() != null && !image.getOriginalFilename().trim().isEmpty()) {
-            String logoUrl = fileUtil.uploadProductImage(image);
-            brand.setLogoUrl(logoUrl);
+        if (image != null && !image.isEmpty()) {
+            fileUtil.deleteFileByUrl(brand.getLogoUrl());
+            brand.setLogoUrl(fileUtil.uploadSingleImage(image));
         }
 
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
@@ -111,7 +111,7 @@ public class BrandServiceImpl implements BrandService {
         // Validate dữ liệu
         validateBrandCreateRequest(request);
 
-        String logUrl =  fileUtil.uploadProductImage(image);
+        String logUrl =  fileUtil.uploadSingleImage(image);
 
         // Tạo entity mới
         BrandEntity brand = BrandEntity.builder()

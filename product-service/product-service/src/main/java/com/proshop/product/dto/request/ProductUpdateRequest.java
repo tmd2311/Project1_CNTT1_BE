@@ -13,6 +13,8 @@ public class ProductUpdateRequest {
     private UUID brandId;
     private UUID categoryId;
     private Map<String, Object> specs;
-    private List<ProductImageRequest> images;
-}
 
+    private List<UUID> deleteImageIds;
+    private List<ProductImageUpdateRequest> updateImages;
+
+}
