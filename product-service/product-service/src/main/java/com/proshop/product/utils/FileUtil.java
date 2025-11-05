@@ -26,6 +26,7 @@ public class FileUtil {
         .orElseThrow(() -> new ResException(ResErrorCode.FILE_UPLOAD_FAILED));
   }
 
+
   public List<String> uploadMultipleImages(List<MultipartFile> files) {
     MultipartFile[] fileArray = files.toArray(new MultipartFile[0]);
 
