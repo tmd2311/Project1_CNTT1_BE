@@ -16,6 +16,7 @@ public interface OrderService {
     GeneralResponse<OrderResponse> getOrderByIdAndUserId(UUID orderId, Long userId);
     GeneralResponse<OrderDetailResponse> getOrderDetailByIdAndUserId(UUID orderId, Long userId); // ← NEW
     GeneralResponse<OrderResponse> cancelOrder(UUID orderId, Long userId);
+    List<BestSellerResponse> getTopSellingProducts();
 
     // ADMIN METHODS
     GeneralResponse<List<OrderResponse>> getAllOrders(HttpServletRequest httpRequest);
@@ -24,4 +25,5 @@ public interface OrderService {
     GeneralResponse<List<OrderResponse>> getOrdersByUserIdAdmin(HttpServletRequest httpRequest, Long userId);
     GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request);
     GeneralResponse<OrderDeleteResponse> deleteOrder(HttpServletRequest httpRequest, UUID orderId);
+
 }
