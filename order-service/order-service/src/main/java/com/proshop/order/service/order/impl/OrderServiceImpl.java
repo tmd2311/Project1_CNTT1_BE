@@ -183,6 +183,12 @@ public class OrderServiceImpl implements OrderService {
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
 
+    @Override
+    public List<BestSellerResponse> getTopSellingProducts() {
+        List<BestSellerResponse> all = orderItemRepository.findTopSellingProducts();
+        return all.stream().limit(10).toList();
+    }
+
     // ============================================
     // ADMIN METHODS
     // ============================================

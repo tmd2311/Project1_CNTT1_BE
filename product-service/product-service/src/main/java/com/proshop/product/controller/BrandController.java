@@ -1,5 +1,7 @@
 package com.proshop.product.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proshop.product.dto.request.BrandCreateRequest;
 import com.proshop.product.dto.request.BrandUpdateRequest;
 import com.proshop.product.dto.response.BrandDeleteResponse;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/brand")
@@ -24,18 +27,28 @@ public class BrandController {
 
     @PostMapping
     public ResponseEntity<GeneralResponse<BrandResponse>> createBrand(
-        @Valid @RequestBody BrandCreateRequest request) {
+        @RequestPart("brand") String brandJson,
+        @RequestPart("image") MultipartFile image) throws JsonProcessingException {
 
-        GeneralResponse<BrandResponse> response = brandService.createBrand(request);
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        BrandCreateRequest request = mapper.readValue(brandJson, BrandCreateRequest.class);
+
+        GeneralResponse<BrandResponse> response = brandService.createBrand(request, image);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<GeneralResponse<BrandResponse>> updateBrand(
         @PathVariable("id") UUID id,
-        @Valid @RequestBody BrandUpdateRequest request) {
+        @RequestPart("brand") String brandJson,
+        @RequestPart("image") MultipartFile image) throws JsonProcessingException {
 
-        GeneralResponse<BrandResponse> response = brandService.updateBrand(id, request);
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        BrandUpdateRequest request = mapper.readValue(brandJson, BrandUpdateRequest.class);
+
+        GeneralResponse<BrandResponse> response = brandService.updateBrand(id, request, image);
 
         if ("404".equals(response.getStatus().getCode())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);

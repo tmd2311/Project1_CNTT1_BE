@@ -3,6 +3,7 @@ package com.proshop.order.controller;
 import com.proshop.auth_lib.utils.JwtUtil;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
+import com.proshop.order.dto.response.BestSellerResponse;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
 import com.proshop.order.dto.response.OrderDetailResponse;
@@ -162,5 +163,11 @@ public class OrderController {
             HttpServletRequest request) {
         log.info("Admin getting order detail: {}", orderId);
         return orderService.getOrderDetailById(request, orderId);
+    }
+
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<BestSellerResponse>> getBestSellers() {
+        List<BestSellerResponse> list = orderService.getTopSellingProducts();
+        return ResponseEntity.ok(list);
     }
 }

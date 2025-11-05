@@ -10,16 +10,16 @@ spring:
       optional:consul:
   cloud:
     consul:
-      host: ${SPRING_CLOUD_CONSUL_HOST}
-      port: ${SPRING_CLOUD_CONSUL_PORT}
+      host: localhost
+      port: 8500
       discovery:
         register: true   # đăng ký service lên Consul
         enabled: true
         prefer-ip-address: true  # dùng IP thay vì hostname (nên dùng khi trong Docker hoặc mạng LAN)
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/proshop_product
+    username: postgres
+    password: 123456
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

@@ -1,5 +1,7 @@
 package com.proshop.product.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proshop.product.dto.request.CategoryCreateRequest;
 import com.proshop.product.dto.request.CategoryUpdateRequest;
 import com.proshop.product.dto.response.CategoryDeleteResponse;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -40,9 +43,14 @@ public class CategoryController {
     @PutMapping("/category/{id}")
     public ResponseEntity<GeneralResponse<CategoryResponse>> updateCategory(
         @PathVariable("id") UUID id,
-        @Valid @RequestBody CategoryUpdateRequest request) {
+        @RequestPart("category") String categoryJson,
+        @RequestPart("image") MultipartFile image) throws JsonProcessingException {
 
-        GeneralResponse<CategoryResponse> response = categoryService.updateCategory(id, request);
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        CategoryUpdateRequest request = mapper.readValue(categoryJson, CategoryUpdateRequest.class);
+
+        GeneralResponse<CategoryResponse> response = categoryService.updateCategory(id, request, image);
         return ResponseEntity.ok(response);
     }
 
@@ -122,9 +130,14 @@ public class CategoryController {
 
     @PostMapping("/category")
     public ResponseEntity<GeneralResponse<CategoryResponse>> createCategory(
-        @Valid @RequestBody CategoryCreateRequest request) {
+        @RequestPart("category") String categoryJson,
+        @RequestPart("image") MultipartFile image) throws JsonProcessingException {
 
-        GeneralResponse<CategoryResponse> response = categoryService.createCategory(request);
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        CategoryCreateRequest request = mapper.readValue(categoryJson, CategoryCreateRequest.class);
+
+        GeneralResponse<CategoryResponse> response = categoryService.createCategory(request, image);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
