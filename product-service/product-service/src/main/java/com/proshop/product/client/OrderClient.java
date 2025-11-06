@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(
     name = "oder-service",
-    url = "http://oder-serice:8083",
+    url = "http://order-serice:8083",
     configuration = {FeignConfig.class, FeignAuthConfig.class}
 )
 public interface OrderClient {
