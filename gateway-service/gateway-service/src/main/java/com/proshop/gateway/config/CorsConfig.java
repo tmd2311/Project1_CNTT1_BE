@@ -6,16 +6,18 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
 @Configuration
 public class CorsConfig {
 
   @Bean
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("http://localhost:3000"); // FE
-    config.addAllowedMethod("*"); // tất cả method
-    config.addAllowedHeader("*"); // tất cả headers
-    config.setAllowCredentials(true);
+    // Sử dụng pattern thay vì addAllowedOrigin("*")
+    config.setAllowedOriginPatterns(List.of("*"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("*"));
+    config.setAllowCredentials(true); // Cho phép gửi cookie/token
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
