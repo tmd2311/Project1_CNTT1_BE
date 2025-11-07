@@ -12,7 +12,7 @@ public class CorsConfig {
   @Bean
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("http://localhost:3000"); // FE
+    config.addAllowedOrigin("*"); // FE
     config.addAllowedMethod("*"); // tất cả method
     config.addAllowedHeader("*"); // tất cả headers
     config.setAllowCredentials(true);
