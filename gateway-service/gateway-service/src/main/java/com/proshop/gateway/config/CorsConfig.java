@@ -12,7 +12,7 @@ public class CorsConfig {
   @Bean
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("http://103.90.225.90:4000");
+    config.addAllowedOrigin("*");
 
     config.addAllowedMethod("*");
     config.addAllowedHeader("*");
