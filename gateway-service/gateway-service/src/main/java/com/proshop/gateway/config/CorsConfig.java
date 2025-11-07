@@ -12,9 +12,10 @@ public class CorsConfig {
   @Bean
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("*"); // FE
-    config.addAllowedMethod("*"); // tất cả method
-    config.addAllowedHeader("*"); // tất cả headers
+    config.addAllowedOrigin("http://103.90.225.90:4000");
+
+    config.addAllowedMethod("*");
+    config.addAllowedHeader("*");
     config.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
