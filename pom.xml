@@ -15,6 +15,7 @@
     <module>gateway-service/gateway-service</module>
     <module>order-service/order-service</module>
     <module>product-service/product-service</module>
+    <module>flyway-migration-service</module>
   </modules>
 
   <parent>

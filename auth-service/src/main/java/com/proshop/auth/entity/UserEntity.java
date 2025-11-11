@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +47,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
   private LocalDateTime lastLogin;
   @Column(name = "status", length = 20)
   private String status = UserStatus.ACTIVE.name();
+  @Column(name = "birthday")
+  private LocalDate birthday;
 
   @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY)
   private List<UserRoleEntity> userRoles = new ArrayList<>();
@@ -57,9 +60,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
     for (UserRoleEntity userRole : userRoles) {
       RoleEntity role = userRole.getRoleEntity();
       authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
-      role.getPermissions().forEach(permission ->
-          authorities.add(new SimpleGrantedAuthority(permission.getCode()))
-      );
     }
     return authorities;
   }

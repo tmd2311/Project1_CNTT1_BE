@@ -10,7 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class TokenEntity {
   private  String token;
-  List<SystemPolicy> systemPolicies;
+  private List<String> roles;
   private String status;
   private boolean deleted;
 

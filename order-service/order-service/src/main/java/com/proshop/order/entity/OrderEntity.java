@@ -31,6 +31,9 @@ public class OrderEntity {
     @Column(name = "total_amount", nullable = false, precision = 100, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(name = "shipping_address", columnDefinition = "TEXT")
+    private String shippingAddress;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OrderStatus status;

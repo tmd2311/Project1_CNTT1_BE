@@ -57,8 +57,6 @@ class AuthServiceTest {
     @Mock
     private JwtAuthService jwtAuthService;
 
-    @Mock
-    private DomainRepository domainRepository;
 
     @Mock
     private LoginMapper loginMapper;
