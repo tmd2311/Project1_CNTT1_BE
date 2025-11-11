@@ -1,0 +1,46 @@
+server:
+  port: 8086   # cổng riêng cho review-service
+
+spring:
+  application:
+    name: review-service   # tên service đăng ký trên Consul, gateway sẽ gọi theo tên này
+
+  config:
+    import:
+      optional:consul:
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
+      discovery:
+        register: true
+        enabled: true
+        prefer-ip-address: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/proshop_review}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+#  file:
+#    name: logs/review-service.log
+
+jwt:
+  public-key-path: classpath:key/public.pem
+  expiration: 3600000
