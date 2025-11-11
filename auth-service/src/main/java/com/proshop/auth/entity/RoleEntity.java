@@ -30,17 +30,6 @@ public class RoleEntity extends BaseEntity {
   @Column(name = "status", length = 20)
   private String status;
 
-  @ManyToOne
-  @JoinColumn(name = "domain_id")
-  private DomainEntity domainEntity;
-
-  @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(
-      name = "permission_role",
-      joinColumns = @JoinColumn(name = "role_id"),
-      inverseJoinColumns = @JoinColumn(name = "permission_id")
-  )
-  private Set<PermissionEntity> permissions = new HashSet<>();
 }
 
 

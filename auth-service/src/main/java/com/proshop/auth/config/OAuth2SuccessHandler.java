@@ -2,12 +2,10 @@ package com.proshop.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proshop.auth.dto.response.LoginResponse;
-import com.proshop.auth.entity.DomainEntity;
 import com.proshop.auth.entity.RoleEntity;
 import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.mapper.LoginMapper;
-import com.proshop.auth.repository.DomainRepository;
 import com.proshop.auth.repository.SocialProviderRepository;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
@@ -42,7 +40,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
   private final UserRepository userRepository;
   private final SocialProviderRepository providerRepository;
   private final JwtAuthService jwtAuthService;
-  private final DomainRepository domainRepository;
   private final LoginMapper loginMapper;
 
   @Override
