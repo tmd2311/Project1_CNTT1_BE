@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class DatabaseInitializer {
 
-  private static final String DB_URL = "jdbc:postgresql://localhost:5432/";
+  private static final String DB_URL = "jdbc:postgresql://103.90.225.90:5432/";
   private static final String USER = "postgres";
   private static final String PASSWORD = "123456";
 

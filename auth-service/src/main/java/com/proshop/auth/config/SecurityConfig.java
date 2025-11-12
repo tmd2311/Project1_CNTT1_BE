@@ -42,6 +42,7 @@ public class SecurityConfig {
       "/*/*.js",
       "/api/auth/**",
       "/actuator/health"
+
   };
 
   private static final String ALL_ORIGINS = "*";
