@@ -23,9 +23,6 @@ public class UserRoleEntity extends BaseEntity {
   @JoinColumn(name = "role_id")
   private RoleEntity roleEntity;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "domain_id")
-  private DomainEntity domainEntity;
 
   @Column(name = "context_data", columnDefinition = "jsonb")
   @JdbcTypeCode(SqlTypes.JSON)
