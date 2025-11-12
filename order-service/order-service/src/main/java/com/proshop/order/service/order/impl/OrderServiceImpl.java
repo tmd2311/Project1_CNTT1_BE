@@ -17,7 +17,6 @@ import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +62,10 @@ public class OrderServiceImpl implements OrderService {
             throw new ResException(ResErrorCode.ORDER_INVALID_TOTAL);
         }
 
+        if (request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
+            throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
+        }
+
         // Create order entity
         try {
             OrderEntity order = OrderEntity.builder()
@@ -70,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
                     .totalAmount(totalAmount)
                     .status(OrderStatus.PENDING)
                     .createdAt(LocalDateTime.now())
+                    .shippingAddress(request.getShippingAddress())
                     .build();
 
             // Save order first to get orderId
@@ -79,15 +83,16 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItemEntity> orderItems = createOrderItems(order, request, products);
             orderItemRepository.saveAll(orderItems);
 
-            log.info("Created order {} for user {} with {} items and total amount {}",
-                    order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount);
+            log.info("Created order {} for user {} with {} items and total amount {}, address: {}",
+                    order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount, request.getShippingAddress());
 
             OrderResponse data = new OrderResponse(
                     order.getOrderId(),
                     order.getUserId(),
                     order.getTotalAmount(),
                     order.getStatus().name(),
-                    order.getCreatedAt()
+                    order.getCreatedAt(),
+                    order.getShippingAddress()
             );
 
             return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
@@ -111,7 +116,8 @@ public class OrderServiceImpl implements OrderService {
                         o.getUserId(),
                         o.getTotalAmount(),
                         o.getStatus().name(),
-                        o.getCreatedAt()
+                        o.getCreatedAt(),
+                        o.getShippingAddress()
                 ))
                 .toList();
 
@@ -139,7 +145,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getUserId(),
                 order.getTotalAmount(),
                 order.getStatus().name(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getShippingAddress()
         );
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
@@ -177,7 +184,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getUserId(),
                 order.getTotalAmount(),
                 order.getStatus().name(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getShippingAddress()
         );
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
@@ -204,7 +212,8 @@ public class OrderServiceImpl implements OrderService {
                         o.getUserId(),
                         o.getTotalAmount(),
                         o.getStatus().name(),
-                        o.getCreatedAt()
+                        o.getCreatedAt(),
+                        o.getShippingAddress()
                 ))
                 .toList();
 
@@ -226,7 +235,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getUserId(),
                 order.getTotalAmount(),
                 order.getStatus().name(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getShippingAddress()
         );
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
@@ -245,7 +255,8 @@ public class OrderServiceImpl implements OrderService {
                         o.getUserId(),
                         o.getTotalAmount(),
                         o.getStatus().name(),
-                        o.getCreatedAt()
+                        o.getCreatedAt(),
+                        o.getShippingAddress()
                 ))
                 .toList();
 
@@ -270,6 +281,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(request.getTotalAmount());
         order.setStatus(OrderStatus.PENDING);
+        order.setShippingAddress(request.getShippingAddress() == null ? null : request.getShippingAddress());
         orderRepository.save(order);
 
         log.info("Updated order {} with new total amount {} (admin)", orderId, request.getTotalAmount());
@@ -279,7 +291,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getUserId(),
                 order.getTotalAmount(),
                 order.getStatus().name(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getShippingAddress()
         );
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
@@ -509,6 +522,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
+                .shippingAddress(order.getShippingAddress())
                 .items(itemDetails)
                 .build();
     }
