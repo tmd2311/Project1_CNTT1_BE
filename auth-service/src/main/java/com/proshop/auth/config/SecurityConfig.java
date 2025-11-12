@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,7 +42,8 @@ public class SecurityConfig {
       "/*/*.css",
       "/*/*.js",
       "/api/auth/**",
-      "/actuator/health"
+      "/actuator/health",
+          "/api/v1"
   };
 
   private static final String ALL_ORIGINS = "*";
@@ -66,6 +68,7 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/**").permitAll()
             .requestMatchers(PUBLIC_URLS).permitAll()
             .requestMatchers("/api/v1/user/**").hasRole("ADMIN")
             .anyRequest().authenticated())

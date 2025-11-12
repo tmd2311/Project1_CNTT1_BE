@@ -4,6 +4,7 @@ import com.proshop.auth_lib.utils.JwtUtil;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.client.ProductClient;
+import com.proshop.order.client.UserClient;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.response.*;
@@ -33,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
+    private final UserClient userClient;
     private final JwtUtil jwtUtil;
     private final OrderItemRepository orderItemRepository;
 
@@ -62,8 +64,12 @@ public class OrderServiceImpl implements OrderService {
             throw new ResException(ResErrorCode.ORDER_INVALID_TOTAL);
         }
 
-        if (request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
-            throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
+
+        if(request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
+            UserInfoResponse user=userClient.getUserById(request.getUserId()).getData();
+            if (user.getCurrentAddress() == null || user.getCurrentAddress().isEmpty()) {
+                throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
+            }
         }
 
         // Create order entity
@@ -73,9 +79,18 @@ public class OrderServiceImpl implements OrderService {
                     .totalAmount(totalAmount)
                     .status(OrderStatus.PENDING)
                     .createdAt(LocalDateTime.now())
-                    .shippingAddress(request.getShippingAddress())
                     .build();
-
+            String address;
+            if(request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
+                UserInfoResponse user=userClient.getUserById(request.getUserId()).getData();
+                if (user.getCurrentAddress() == null || user.getCurrentAddress().isEmpty()) {
+                    throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
+                }
+                address=user.getCurrentAddress();
+            }else{
+                address=request.getShippingAddress();
+            }
+            order.setShippingAddress(address);
             // Save order first to get orderId
             order = orderRepository.save(order);
 
