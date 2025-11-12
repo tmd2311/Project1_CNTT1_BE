@@ -21,6 +21,7 @@ public class OrderDetailResponse {
     private String status;
     private LocalDateTime createdAt;
     private List<OrderItemDetail> items;
+    private String shippingAddress;
 
     @Data
     @Builder
