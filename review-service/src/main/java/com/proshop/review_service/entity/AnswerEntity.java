@@ -47,22 +47,22 @@ public class AnswerEntity {
     // ============================================
     // TƯƠNG TÁC
     // ============================================
-    @Column(nullable = false)
-    private Integer likeCount = 0; // Thích (12)
+    @Column(name = "dislike_count", nullable = false)
+    private Integer dislikeCount = 0;
 
-    @Column(nullable = false)
-    private Integer dislikeCount = 0; // Không thích
+    @Column(name = "like_count", nullable = false)
+    private Integer likeCount = 0;
 
     // ============================================
     // ĐÁNH DẤU ĐẶC BIỆT
     // ============================================
-    @Column(nullable = false)
+    @Column(name = "is_best_answer", nullable = false)
     private Boolean isBestAnswer = false; // Câu trả lời được chọn
 
-    @Column(nullable = false)
+    @Column(name = "is_from_shop", nullable = false)
     private Boolean isVerified = false; // Từ chuyên gia
 
-    @Column(nullable = false)
+    @Column(name = "is_verified", nullable = false)
     private Boolean isFromShop = false; // Phản hồi từ shop
 
     // ============================================

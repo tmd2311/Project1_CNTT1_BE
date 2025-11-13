@@ -68,7 +68,7 @@ public class ReviewEntity {
 
     private String productName; // Tên sản phẩm (cache)
 
-    @Column(precision = 2, scale = 1)
+
     private Double rating; // Số sao: 1.0 - 5.0 (null nếu là Q&A)
 
     // Ảnh thực tế sản phẩm (Product Review only)
@@ -91,7 +91,7 @@ public class ReviewEntity {
     @Column(nullable = false)
     private Integer viewCount = 0; // Số lượt xem (245 lượt xem)
 
-    @Column(nullable = false)
+    @Column(name = "answer_count", nullable = true)
     private Integer answerCount = 0; // Số câu trả lời (2)
 
     // ============================================
@@ -108,11 +108,17 @@ public class ReviewEntity {
     @Column(nullable = false)
     private ReviewStatus status = ReviewStatus.PENDING; // PENDING, APPROVED, REJECTED
 
-    @Column(nullable = false)
-    private Boolean isVerified = false; // Review đã xác thực (mua hàng)
+    @Builder.Default
+    @Column(name = "is_verified", nullable = false)
+    private Boolean isVerified = false;
 
-    @Column(nullable = false)
-    private Boolean isFeatured = false; // Review nổi bật
+
+    @Builder.Default
+    @Column(name = "is_featured", nullable = false)
+    private Boolean isFeatured = false;
+
+    @Column(length = 500)
+    private String rejectionReason;// Review nổi bật
 
     // ============================================
     // TIMESTAMPS

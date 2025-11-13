@@ -5,10 +5,13 @@ spring:
   application:
     name: review-service   # tên service đăng ký trên Consul, gateway sẽ gọi theo tên này
 
-  config:
-    import:
-      optional:consul:
+  # ✅ Tắt Config Server (vì đang dùng Consul)
   cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: ${SPRING_CLOUD_CONSUL_PORT:8500}
@@ -16,12 +19,19 @@ spring:
         register: true
         enabled: true
         prefer-ip-address: true
+        instance-id: ${spring.application.name}:${random.value}
+        health-check-interval: 10s
+        health-check-path: /actuator/health
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/proshop_review}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
 
   jpa:
     hibernate:
@@ -31,6 +41,20 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+# ✅ Actuator cho health check của Consul
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    consul:
+      enabled: true
 
 logging:
   level:
@@ -38,8 +62,7 @@ logging:
     org.springframework: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-#  file:
-#    name: logs/review-service.log
+    com.proshop.review: DEBUG
 
 jwt:
   public-key-path: classpath:key/public.pem
