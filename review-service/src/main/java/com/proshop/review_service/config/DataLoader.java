@@ -141,6 +141,7 @@ public class DataLoader {
                     .likeCount(12)
                     .dislikeCount(0)
                     .isBestAnswer(true)
+                    .isVerified(true)
                     .createdAt(LocalDateTime.now().minusDays(2))
                     .build();
             answerRepository.save(ans1_1);
@@ -154,6 +155,7 @@ public class DataLoader {
                             "mình nghĩ AMD sẽ tiết kiệm điện hơn. Nên chọn phiên bản có SSD để máy chạy nhanh hơn.")
                     .likeCount(8)
                     .dislikeCount(1)
+                    .isVerified(true)
                     .createdAt(LocalDateTime.now().minusDays(1))
                     .build();
             answerRepository.save(ans1_2);
