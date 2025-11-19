@@ -5,7 +5,6 @@ spring:
   application:
     name: review-service   # tên service đăng ký trên Consul, gateway sẽ gọi theo tên này
 
-  # ✅ Tắt Config Server (vì đang dùng Consul)
   cloud:
     config:
       enabled: false

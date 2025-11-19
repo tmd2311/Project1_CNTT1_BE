@@ -127,6 +127,30 @@ services:
       - ./file-storage:/uploads/images
 
   # ===========================
+  # Review Service
+  # ===========================
+  review-service:
+    build:
+      context: .
+      dockerfile: ./review-service/Dockerfile
+    container_name: review-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_review
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+    depends_on:
+      - consul
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
   # 🌐 Gateway Service
   # ===========================
   gateway-service:
@@ -143,6 +167,7 @@ services:
       - auth-service
       - redis
       - file-service
+      - review-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONSUL_HOST=consul
