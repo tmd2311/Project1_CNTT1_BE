@@ -94,6 +94,7 @@ public class DataLoader {
                     .totalAmount(new BigDecimal("25000000")) // 20M laptop + 5M GPU
                     .status(OrderStatus.PENDING)
                     .createdAt(LocalDateTime.now())
+                    .shippingAddress("HaNoi")
                     .build();
             orderRepository.save(order1);
 
@@ -128,6 +129,7 @@ public class DataLoader {
                     .totalAmount(new BigDecimal("9000000")) // 6M CPU + 3M RAM
                     .status(OrderStatus.COMPLETED)
                     .createdAt(LocalDateTime.now().minusDays(1))
+                    .shippingAddress("HaiPhong")
                     .build();
             orderRepository.save(order2);
 
@@ -162,6 +164,7 @@ public class DataLoader {
                     .totalAmount(new BigDecimal("35500000"))
                     .status(OrderStatus.COMPLETED)
                     .createdAt(LocalDateTime.now().minusDays(3))
+                    .shippingAddress("NinhBinh")
                     .build();
             orderRepository.save(order3);
 

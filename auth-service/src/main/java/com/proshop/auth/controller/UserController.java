@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
