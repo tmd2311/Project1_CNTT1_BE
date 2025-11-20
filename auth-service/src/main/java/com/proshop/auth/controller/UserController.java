@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
@@ -34,22 +34,30 @@ public class UserController {
   private final ObjectMapper objectMapper;
 
   @GetMapping("/{id}")
-  public ResponseEntity<GeneralResponse<UserInfoResponse>> getUser(@PathVariable("id") Long id) {
-    log.info("Fetching user with id: {}", id);
+  public ResponseEntity<GeneralResponse<UserInfoResponse>> getUser1(@PathVariable("id") Long id) {
     GeneralResponse<UserInfoResponse> response = userService.getUserById(id);
     return ResponseEntity.status(
         response.getStatus().getCode().equals(ResponseStatus.SUCCESS_CODE) ? 200 : 500)
         .body(response);
   }
 
-  @GetMapping("/getAllUser")
+  @GetMapping("/user/{id}")
+  public ResponseEntity<GeneralResponse<UserInfoResponse>> getUser(@PathVariable("id") Long id) {
+    log.info("Fetching user with id: {}", id);
+    GeneralResponse<UserInfoResponse> response = userService.getUserById(id);
+    return ResponseEntity.status(
+            response.getStatus().getCode().equals(ResponseStatus.SUCCESS_CODE) ? 200 : 500)
+        .body(response);
+  }
+
+  @GetMapping("/user/getAllUser")
   public ResponseEntity<GeneralResponse<PageResponse<UserInfoResponse>>> getAllUsers(
       Pageable pageable) {
     GeneralResponse<PageResponse<UserInfoResponse>> users = userService.getAllUsers(pageable);
     return ResponseEntity.ok(users);
   }
 
-  @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PutMapping(value = "/user/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GeneralResponse<UserInfoResponse>> updateUser(
       @AuthenticationPrincipal UserEntity currentUser,
       @RequestPart("user") String userJson,
@@ -62,28 +70,28 @@ public class UserController {
     return ResponseEntity.ok(response);
   }
 
-  @PutMapping("/{id}/deactivate")
+  @PutMapping("/user/{id}/deactivate")
   public ResponseEntity<GeneralResponse<Void>> deactivateUser(@PathVariable("id") Long id) {
     userService.deactivateUser(id);
     GeneralResponse<Void> response = getVoidGeneralResponse("User deactivated successfully");
     return ResponseEntity.ok(response);
   }
 
-  @PutMapping("/{id}/activate")
+  @PutMapping("/user/{id}/activate")
   public ResponseEntity<GeneralResponse<Void>> activateUser(@PathVariable("id") Long id) {
     userService.activateUser(id);
     GeneralResponse<Void> response = getVoidGeneralResponse("User activated successfully");
     return ResponseEntity.ok(response);
   }
 
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/user/{id}")
   public ResponseEntity<GeneralResponse<Void>> deleteUser(@PathVariable("id") Long id) {
     userService.deleteUser(id);
     GeneralResponse<Void> response = getVoidGeneralResponse("User deleted successfully");
     return ResponseEntity.ok(response);
   }
 
-  @DeleteMapping("/{id}/soft")
+  @DeleteMapping("/user/{id}/soft")
   public ResponseEntity<GeneralResponse<Void>> softDeleteUser(@PathVariable("id") Long id) {
     userService.softDeleteUser(id);
     GeneralResponse<Void> response = getVoidGeneralResponse("User deleted successfully");

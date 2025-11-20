@@ -1,8 +1,6 @@
 package com.proshop.auth.config;
 
 import com.proshop.auth.filter.JwtAuthenticationFilter;
-import com.proshop.auth.repository.UserRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,15 +12,10 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -43,20 +36,8 @@ public class SecurityConfig {
       "/*/*.js",
       "/api/auth/**",
       "/actuator/health",
-          "/api/v1"
+      "/api/v1"
   };
-
-  private static final String ALL_ORIGINS = "*";
-
-  private static final String ALL_PATTERNS = "/**";
-
-  private static final List<String> ALLOWED_METHODS = List.of(
-      "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-
-  private static final List<String> ALLOWED_HEADERS = List.of(
-      "authorization", "content-type");
-
-  private final UserRepository userRepository;
 
   private final JwtAuthenticationFilter tokenAuthenticationFilter;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -68,7 +49,7 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.GET, "/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/**").permitAll()
             .requestMatchers(PUBLIC_URLS).permitAll()
             .requestMatchers("/api/v1/user/**").hasRole("ADMIN")
             .anyRequest().authenticated())
@@ -78,23 +59,6 @@ public class SecurityConfig {
 
     logger.debug("Security filter chain configuration completed");
     return http.build();
-  }
-
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    logger.debug("Configuring cors configuration source");
-
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-    configuration.setAllowedMethods(ALLOWED_METHODS);
-    configuration.setAllowedHeaders(ALLOWED_HEADERS);
-    configuration.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration(ALL_PATTERNS, configuration);
-
-    logger.debug("Configuring cors configuration source completed");
-    return source;
   }
 
   @Bean
