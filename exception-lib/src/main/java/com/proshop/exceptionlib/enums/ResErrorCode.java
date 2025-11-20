@@ -149,6 +149,7 @@ public enum ResErrorCode {
     ORDER_CALCULATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD08", "Lỗi khi tính tổng tiền", "Error calculating order total"),
     ORDER_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD09", "Lỗi khi tạo đơn hàng", "Error creating order"),
     ORDER_INVALID_STATUS_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "ORDER_015", "Trạng thái đơn hàng không hợp lệ để thanh toán", "Invalid order status for payment"),
+    ORDER_SHIPPINGADDRESS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD016", "Địa chỉ giao hàng là bắt buộc", "Shipping address is required"),
     // ===== CART =====
     CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found"),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART02", "Không tìm thấy sản phẩm trong giỏ", "Cart item not found"),
