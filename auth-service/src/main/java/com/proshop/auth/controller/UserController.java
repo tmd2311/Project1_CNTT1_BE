@@ -7,12 +7,14 @@ import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.PageResponse;
 import com.proshop.auth.dto.response.ResponseStatus;
 import com.proshop.auth.dto.response.UserInfoResponse;
+import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +38,7 @@ public class UserController {
     log.info("Fetching user with id: {}", id);
     GeneralResponse<UserInfoResponse> response = userService.getUserById(id);
     return ResponseEntity.status(
-            response.getStatus().getCode().equals(ResponseStatus.SUCCESS_CODE) ? 200 : 500)
+        response.getStatus().getCode().equals(ResponseStatus.SUCCESS_CODE) ? 200 : 500)
         .body(response);
   }
 
@@ -47,15 +49,16 @@ public class UserController {
     return ResponseEntity.ok(users);
   }
 
-  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<GeneralResponse<UserInfoResponse>> updateUser(
-      @PathVariable("id") Long id,
+      @AuthenticationPrincipal UserEntity currentUser,
       @RequestPart("user") String userJson,
       @RequestPart(value = "avatar", required = false) MultipartFile avatar)
       throws JsonProcessingException {
-    log.info("Updating user with id: {}", id);
+    Long userId = currentUser.getId();
+    log.info("Updating user with id: {}", userId);
     UpdateUserRequest request = objectMapper.readValue(userJson, UpdateUserRequest.class);
-    GeneralResponse<UserInfoResponse> response = userService.updateUser(id, request, avatar);
+    GeneralResponse<UserInfoResponse> response = userService.updateUser(userId, request, avatar);
     return ResponseEntity.ok(response);
   }
 
