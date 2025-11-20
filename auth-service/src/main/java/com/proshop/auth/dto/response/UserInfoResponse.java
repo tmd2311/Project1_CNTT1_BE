@@ -1,5 +1,6 @@
 package com.proshop.auth.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -14,6 +15,7 @@ public class UserInfoResponse {
   private String phone;
   private String avatarUrl;
   private String currentAddress;
+  private LocalDate birthday;
   private LocalDateTime lastLogin;
   private String status;
 }

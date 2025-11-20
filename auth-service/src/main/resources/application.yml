@@ -41,7 +41,7 @@ spring:
         prefer-ip-address: true
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/authen_user}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://103.90.225.90:5432/authen_user}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
