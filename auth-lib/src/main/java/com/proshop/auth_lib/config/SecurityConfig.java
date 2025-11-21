@@ -52,12 +52,67 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
+            // ============================================
+            // PUBLIC ENDPOINTS (no token required)
+            // ============================================
             .requestMatchers(PUBLIC_URLS).permitAll()
-            .requestMatchers(HttpMethod.GET, "/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PATCH, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
+
+            // Product, Brand, Category - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/brand/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+
+            // Statistics - public for users to view
+            .requestMatchers(HttpMethod.GET, "/api/products/statistics/**").permitAll()
+
+            // Reviews - GET and search are public
+            .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/reviews/search").permitAll()
+
+            // Order - best sellers is public
+            .requestMatchers(HttpMethod.GET, "/api/order/best-sellers").permitAll()
+
+            // ============================================
+            // ADMIN ENDPOINTS (admin role required)
+            // ============================================
+            // Product, Brand, Category - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/delete").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/brand/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/brand/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/brand/**").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/category/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/category/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/category/**").hasRole("ADMIN")
+
+            // Cart Admin endpoints
+            .requestMatchers("/api/cart/admin/**").hasRole("ADMIN")
+
+            // Order Admin endpoints
+            .requestMatchers("/api/order/admin/**").hasRole("ADMIN")
+
+            // Review Admin endpoints
+            .requestMatchers(HttpMethod.PUT, "/api/reviews/{id}/status").hasRole("ADMIN")
+
+            // ============================================
+            // AUTHENTICATED ENDPOINTS (token required)
+            // ============================================
+            // Cart - user endpoints require authentication
+            .requestMatchers("/api/cart/**").authenticated()
+
+            // Order - user endpoints require authentication
+            .requestMatchers("/api/order/**").authenticated()
+
+            // Reviews - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+
             .anyRequest().authenticated()
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

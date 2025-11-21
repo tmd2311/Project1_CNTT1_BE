@@ -49,9 +49,21 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.GET, "/**").permitAll()
+            // Public URLs (static resources, auth endpoints)
             .requestMatchers(PUBLIC_URLS).permitAll()
-            .requestMatchers("/api/v1/user/**").hasRole("ADMIN")
+
+            // User profile endpoint - authenticated users only
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/profile").authenticated()
+
+            // Admin-only endpoints for user management
+            .requestMatchers("/api/v1/user/getAllUser").hasRole("ADMIN")
+            .requestMatchers("/api/v1/user/{id}/activate").hasRole("ADMIN")
+            .requestMatchers("/api/v1/user/{id}/deactivate").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
+
+            // Allow authenticated users or admins to view user info
+            .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
+
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2SuccessHandler))
