@@ -1,4 +1,6 @@
 package  com.proshop.review_service.controller;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.review_service.client.AuthClient;
 import com.proshop.review_service.dto.request.ReviewCreateRequest;
 import com.proshop.review_service.dto.request.ReviewSearchRequest;
@@ -45,7 +47,7 @@ public class ReviewController {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or invalid Authorization header");
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new ResException(ResErrorCode.UNAUTHORIZED);
         }
 
         String token = authHeader.substring(7).trim();
@@ -57,7 +59,7 @@ public class ReviewController {
             return userId;
         } catch (Exception e) {
             log.error("❌ Failed to extract userId from token: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid token: " + e.getMessage());
+            throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
 
@@ -68,7 +70,6 @@ public class ReviewController {
         }
 
         try {
-            String token = authHeader.substring(7).trim();
             return authClient.getUserById(getUserIdFromToken(request)).getData().getUsername();
         } catch (Exception e) {
             log.warn("Failed to extract username from token: {}", e.getMessage());

@@ -1,6 +1,8 @@
 package com.proshop.review_service.controller;
 
 import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.review_service.client.AuthClient;
 import com.proshop.review_service.dto.request.AnswerCreateRequest;
 import com.proshop.review_service.dto.request.AnswerUpdateRequest;
@@ -31,19 +33,18 @@ public class AnswerController {
     private Long getUserIdFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new ResException(ResErrorCode.UNAUTHORIZED);
         }
         String token = authHeader.substring(7).trim();
         try {
             return jwtUtil.getUserIDFromToken(token);
         } catch (Exception e) {
-            throw new RuntimeException("Invalid token: " + e.getMessage());
+            throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
 
     private String getUserNameFromToken(HttpServletRequest request) {
         try {
-            String token = request.getHeader("Authorization").substring(7).trim();
             return authClient.getUserById(getUserIdFromToken(request)).getData().getUsername();
         } catch (Exception e) {
             return "Anonymous";

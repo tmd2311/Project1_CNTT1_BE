@@ -1,6 +1,8 @@
 package com.proshop.review_service.service.impl;
 
 
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.review_service.dto.request.*;
 import com.proshop.review_service.dto.response.AnswerResponse;
 import com.proshop.review_service.dto.response.PageResponse;
@@ -109,7 +111,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Check ownership
         if (!review.getUserId().equals(userId)) {
-            throw new RuntimeException("You don't have permission to update this review");
+            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền cập nhật review này");
         }
 
         mapper.updateEntity(review, request);
@@ -148,10 +150,10 @@ public class ReviewServiceImpl implements ReviewService {
 
     public void deleteReview(Long id, Long userId) {
         ReviewEntity review = reviewRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new ResException(ResErrorCode.ENTITY_NOT_EXISTS, "Không tìm thấy review"));
 
         if (!review.getUserId().equals(userId)) {
-            throw new RuntimeException("You don't have permission to delete this review");
+            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền xóa review này");
         }
 
         // Decrement tag usage
@@ -250,10 +252,10 @@ public class ReviewServiceImpl implements ReviewService {
 
     public AnswerResponse updateAnswer(Long id, AnswerUpdateRequest request, Long userId) {
         AnswerEntity answer = answerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new ResException(ResErrorCode.ENTITY_NOT_EXISTS, "Không tìm thấy câu trả lời"));
 
         if (!answer.getUserId().equals(userId)) {
-            throw new RuntimeException("You don't have permission to update this answer");
+            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền cập nhật câu trả lời này");
         }
 
         mapper.updateAnswerEntity(answer, request);
@@ -264,10 +266,10 @@ public class ReviewServiceImpl implements ReviewService {
 
     public void deleteAnswer(Long id, Long userId) {
         AnswerEntity answer = answerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Answer not found"));
+                .orElseThrow(() -> new ResException(ResErrorCode.ENTITY_NOT_EXISTS, "Không tìm thấy câu trả lời"));
 
         if (!answer.getUserId().equals(userId)) {
-            throw new RuntimeException("You don't have permission to delete this answer");
+            throw new ResException(ResErrorCode.PERMISSION_DENIED, "Bạn không có quyền xóa câu trả lời này");
         }
 
         Long reviewId = answer.getReview().getId();
@@ -353,7 +355,7 @@ public class ReviewServiceImpl implements ReviewService {
         // Kiểm tra trạng thái hiện tại có giống trạng thái mới không
         if (currentStatus == newStatus) {
             log.warn("Review {} is already in status {}", reviewId, newStatus);
-            throw new RuntimeException("Review is already in status: " + newStatus);
+            throw new ResException(ResErrorCode.BAD_REQUEST, "Review đã ở trạng thái: " + newStatus);
         }
 
         // Validate business rules cho từng trạng thái
@@ -365,7 +367,7 @@ public class ReviewServiceImpl implements ReviewService {
         // Xử lý rejection reason
         if (newStatus == ReviewStatus.REJECTED) {
             if (request.getRejectionReason() == null || request.getRejectionReason().trim().isEmpty()) {
-                throw new RuntimeException("Rejection reason is required when status is REJECTED");
+                throw new ResException(ResErrorCode.FIELD_REQUIRED, "Lý do từ chối là bắt buộc khi từ chối review");
             }
             review.setRejectionReason(request.getRejectionReason().trim());
             log.info("Review {} rejected with reason: {}", reviewId, request.getRejectionReason());
@@ -389,12 +391,12 @@ public class ReviewServiceImpl implements ReviewService {
     private void validateStatusTransition(ReviewStatus from, ReviewStatus to) {
         // Không cho phép chuyển từ CLOSED sang bất kỳ trạng thái nào
         if (from == ReviewStatus.CLOSED) {
-            throw new RuntimeException("Cannot change status of a CLOSED review");
+            throw new ResException(ResErrorCode.BAD_REQUEST, "Không thể thay đổi trạng thái của review đã đóng");
         }
 
         // Không cho phép chuyển từ REJECTED sang CLOSED
         if (from == ReviewStatus.REJECTED && to == ReviewStatus.CLOSED) {
-            throw new RuntimeException("Cannot close a REJECTED review. Please approve it first.");
+            throw new ResException(ResErrorCode.BAD_REQUEST, "Không thể đóng review đã bị từ chối. Vui lòng phê duyệt trước");
         }
 
         // Có thể thêm các rule khác tùy theo business logic
