@@ -1,6 +1,7 @@
 package com.proshop.auth.config;
 
 import com.proshop.auth.filter.JwtAuthenticationFilter;
+import com.proshop.exceptionlib.utils.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,22 +53,35 @@ public class SecurityConfig {
             // Public URLs (static resources, auth endpoints)
             .requestMatchers(PUBLIC_URLS).permitAll()
 
+            // ============================================
+            // ADMIN ENDPOINTS (must be before general rules)
+            // ============================================
+            .requestMatchers(HttpMethod.GET, "/api/v1/user/getAllUser").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/{id}/activate").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/{id}/deactivate").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
+
+            // ============================================
+            // AUTHENTICATED USER ENDPOINTS
+            // ============================================
             // User profile endpoint - authenticated users only
             .requestMatchers(HttpMethod.PUT, "/api/v1/user/profile").authenticated()
 
-            // Admin-only endpoints for user management
-            .requestMatchers("/api/v1/user/getAllUser").hasRole("ADMIN")
-            .requestMatchers("/api/v1/user/{id}/activate").hasRole("ADMIN")
-            .requestMatchers("/api/v1/user/{id}/deactivate").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
-
-            // Allow authenticated users or admins to view user info
+            // Allow authenticated users to view user info (including their own)
             .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
 
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2SuccessHandler))
-        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) -> {
+              SecurityExceptionHandler.handleAuthenticationException(request, response, authException);
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+              SecurityExceptionHandler.handleAccessDeniedException(request, response, accessDeniedException);
+            })
+        );
 
     logger.debug("Security filter chain configuration completed");
     return http.build();

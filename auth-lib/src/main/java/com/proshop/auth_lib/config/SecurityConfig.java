@@ -1,9 +1,8 @@
 package com.proshop.auth_lib.config;
 
-import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.auth_lib.filter.JwtAuthenticationFilter;
 import com.proshop.auth_lib.utils.JwtUtil;
-import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.utils.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,10 +117,10 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint((request, response, authException) -> {
-              throw new ResException(ResErrorCode.UNAUTHORIZED);
+              SecurityExceptionHandler.handleAuthenticationException(request, response, authException);
             })
             .accessDeniedHandler((request, response, accessDeniedException) -> {
-              throw new ResException(ResErrorCode.PERMISSION_DENIED);
+              SecurityExceptionHandler.handleAccessDeniedException(request, response, accessDeniedException);
             })
         );
 

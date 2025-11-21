@@ -1,6 +1,8 @@
 package com.proshop.order.controller;
 
 import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.CartRequest;
 import com.proshop.order.dto.response.CartResponse;
 import com.proshop.order.dto.response.GeneralResponse;
@@ -31,7 +33,7 @@ public class CartController {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or invalid Authorization header");
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new ResException(ResErrorCode.UNAUTHORIZED);
         }
 
         String token = authHeader.substring(7).trim();
@@ -43,7 +45,7 @@ public class CartController {
             return userId;
         } catch (Exception e) {
             log.error("❌ Failed to extract userId from token: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid token: " + e.getMessage());
+            throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
 
