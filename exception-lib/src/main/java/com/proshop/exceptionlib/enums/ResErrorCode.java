@@ -172,9 +172,28 @@ public enum ResErrorCode {
     // ===== FILE ERRORS =====
     FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE01", "File trống — vui lòng chọn file để upload", "Empty File"),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE02", "Không thể upload file, vui lòng thử lại", "Upload Failed"),
-    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE03", "Không thể xóa file", "Delete Failed");
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE03", "Không thể xóa file", "Delete Failed"),
+    SALE_NOT_FOUND(HttpStatus.NOT_FOUND, "SAL01", "Sale không tồn tại", "Sale not found"),
+    SALE_CODE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SAL02", "Sale code đã tồn tại", "Sale code already exists"),
+    SALE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "SAL03", "Không thể cập nhật sale đã bị xóa", "Cannot update deleted sale"),
+    SALE_INVALID_DATE(HttpStatus.BAD_REQUEST, "SAL04", "End date phải sau start date", "End date must be after start date"),
+    SALE_INVALID_OR_EXPIRED(HttpStatus.BAD_REQUEST, "SAL05", "Sale không hợp lệ hoặc đã hết hạn", "Sale is invalid or expired"),
+    SALE_DELETED_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "SAL06", "Không thể thay đổi trạng thái sale đã bị xóa", "Cannot change status of deleted sale"),
 
+    // General Error Codes
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SYS01", "Lỗi hệ thống", "Internal Server Error"),
 
+    // ========== VOUCHER ERROR CODES ==========
+    VOUCHER_NOT_FOUND(HttpStatus.NOT_FOUND, "VOU01", "Voucher không tồn tại", "Voucher not found"),
+    VOUCHER_CODE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "VOU02", "Mã voucher đã tồn tại", "Voucher code already exists"),
+    VOUCHER_INVALID_OR_EXPIRED(HttpStatus.BAD_REQUEST, "VOU03", "Voucher không hợp lệ hoặc đã hết hạn", "Voucher invalid or expired"),
+    VOUCHER_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "VOU04", "Voucher đã hết số lượng", "Voucher out of stock"),
+    VOUCHER_USER_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "VOU05", "User không đủ điều kiện sử dụng voucher", "User not eligible for voucher"),
+    VOUCHER_USAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "VOU06", "Đã sử dụng hết số lần cho phép", "Voucher usage limit exceeded"),
+    VOUCHER_ORDER_VALUE_TOO_LOW(HttpStatus.BAD_REQUEST, "VOU07", "Đơn hàng chưa đủ giá trị tối thiểu", "Order value too low"),
+    VOUCHER_ALREADY_APPLIED(HttpStatus.BAD_REQUEST, "VOU08", "Đơn hàng đã sử dụng voucher", "Voucher already applied to order"),
+    VOUCHER_INVALID_DATE(HttpStatus.BAD_REQUEST, "VOU09", "Thời gian voucher không hợp lệ", "Invalid voucher date range"),
+    VOUCHER_INVALID_OPERATION(HttpStatus.BAD_REQUEST, "VOU10", "Thao tác không hợp lệ với voucher này", "Invalid voucher operation");
 
     private final HttpStatus status;
     private final String code;
