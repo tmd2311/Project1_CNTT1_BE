@@ -3,6 +3,7 @@ package com.proshop.sale_service.dto.request;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class AddProductsToSaleRequest {
@@ -15,7 +16,7 @@ public class AddProductsToSaleRequest {
     /**
      * Danh sách SKU IDs (nếu chỉ apply cho SKU cụ thể)
      */
-    private List<Long> skuIds;
+    private List<UUID> skuIds;
 
     /**
      * Danh sách Category IDs (nếu apply theo category)

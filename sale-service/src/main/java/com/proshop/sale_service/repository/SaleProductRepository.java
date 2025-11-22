@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface SaleProductRepository extends JpaRepository<SaleProductEntity, Long> {
@@ -23,16 +23,16 @@ public interface SaleProductRepository extends JpaRepository<SaleProductEntity, 
 
     // Tìm sale đang apply cho SKU cụ thể
     @Query("SELECT sp FROM SaleProductEntity sp WHERE sp.skuId = :skuId AND sp.isApplied = true")
-    List<SaleProductEntity> findAppliedSalesBySkuId(@Param("skuId") Long skuId);
+    List<SaleProductEntity> findAppliedSalesBySkuId(@Param("skuId") UUID skuId);
 
     // Tìm sale đang apply cho Product cụ thể
     @Query("SELECT sp FROM SaleProductEntity sp WHERE sp.productId = :productId AND sp.isApplied = true")
     List<SaleProductEntity> findAppliedSalesByProductId(@Param("productId") Long productId);
 
     // Check xem SKU đã có sale chưa
-    boolean existsBySkuIdAndIsAppliedTrue(Long skuId);
+    boolean existsBySkuIdAndIsAppliedTrue(UUID skuId);
 
     // Xóa sản phẩm khỏi sale
     void deleteBySaleIdAndProductId(Long saleId, Long productId);
-    void deleteBySaleIdAndSkuId(Long saleId, Long skuId);
+    void deleteBySaleIdAndSkuId(Long saleId, UUID skuId);
 }

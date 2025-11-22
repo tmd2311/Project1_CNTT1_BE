@@ -24,6 +24,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -177,7 +178,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add SKUs
         if (request.getSkuIds() != null) {
-            for (Long skuId : request.getSkuIds()) {
+            for (UUID skuId : request.getSkuIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setSkuId(skuId);
@@ -219,7 +220,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional
-    public void removeSKUFromSale(Long saleId, Long skuId) {
+    public void removeSKUFromSale(Long saleId, UUID skuId) {
         log.info("Removing SKU {} from sale {}", skuId, saleId);
         saleProductRepository.deleteBySaleIdAndSkuId(saleId, skuId);
     }

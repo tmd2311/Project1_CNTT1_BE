@@ -6,6 +6,7 @@ import com.proshop.sale_service.dto.response.SaleProductResponse;
 import com.proshop.sale_service.dto.response.SaleResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Service quản lý Sale (Chương trình giảm giá sản phẩm)
@@ -60,7 +61,7 @@ public interface SaleService {
     /**
      * Xóa SKU khỏi sale
      */
-    void removeSKUFromSale(Long saleId, Long skuId);
+    void removeSKUFromSale(Long saleId, UUID skuId);
 
     /**
      * Lấy danh sách sản phẩm trong sale

@@ -4,6 +4,8 @@ import com.proshop.sale_service.dto.response.GeneralResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 /**
  * Feign Client để gọi Product Service
  */
@@ -13,29 +15,29 @@ public interface ProductClient {
     /**
      * Lấy thông tin SKU
      */
-    @GetMapping("/api/v1/skus/{id}")
-    GeneralResponse<SKUResponse> getSKU(@PathVariable("id") Long id);
+    @GetMapping("/api/sku/{id}")
+    GeneralResponse<SKUResponse> getSKU(@PathVariable("id") UUID id);
 
     /**
      * Cập nhật giá sale cho SKU
      */
-    @PutMapping("/api/v1/skus/{id}/sale-price")
+    @PutMapping("/api/sku/{id}/sale-price")
     GeneralResponse<Void> updateSKUSalePrice(
-        @PathVariable("id") Long skuId,
+        @PathVariable("id") UUID skuId,
         @RequestBody UpdateSKUSalePriceRequest request
     );
 
     /**
      * Revert giá SKU về giá gốc
      */
-    @PutMapping("/api/v1/skus/{id}/revert-price")
-    GeneralResponse<Void> revertSKUPrice(@PathVariable("id") Long skuId);
+    @PutMapping("/api/sku/{id}/revert-price")
+    GeneralResponse<Void> revertSKUPrice(@PathVariable("id") UUID skuId);
 
     /**
      * DTO cho SKU Response
      */
     class SKUResponse {
-        private Long id;
+        private UUID id;
         private Long productId;
         private String skuCode;
         private Double price;
@@ -44,8 +46,8 @@ public interface ProductClient {
         private Integer stockQuantity;
 
         // Getters & Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
+        public UUID getId() { return id; }
+        public void setId(UUID id) { this.id = id; }
 
         public Long getProductId() { return productId; }
         public void setProductId(Long productId) { this.productId = productId; }

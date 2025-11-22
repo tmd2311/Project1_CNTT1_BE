@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Entity lưu danh sách sản phẩm tham gia Sale
@@ -50,7 +51,7 @@ public class SaleProductEntity {
      * ID của SKU cụ thể (nếu chỉ apply cho 1 SKU)
      */
     @Column(name = "sku_id")
-    private Long skuId;
+    private UUID skuId;
 
     /**
      * ID của category (nếu apply theo category)

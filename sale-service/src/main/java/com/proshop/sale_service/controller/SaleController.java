@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Controller quản lý Sale (Chương trình giảm giá sản phẩm)
@@ -160,7 +161,7 @@ public class SaleController {
     @DeleteMapping("/{id}/skus/{skuId}")
     public ResponseEntity<GeneralResponse<Void>> removeSKUFromSale(
         @PathVariable Long id,
-        @PathVariable Long skuId
+        @PathVariable UUID skuId
     ) {
         log.info("Removing SKU {} from sale {}", skuId, id);
         saleService.removeSKUFromSale(id, skuId);

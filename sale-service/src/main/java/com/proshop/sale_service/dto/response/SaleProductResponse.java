@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class SaleProductResponse {
@@ -12,7 +13,7 @@ public class SaleProductResponse {
     private Long saleId;
 
     private Long productId;
-    private Long skuId;
+    private UUID skuId;
     private Long categoryId;
     private Long brandId;
 

@@ -148,7 +148,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public UserInfoResponse changePassword(ChangePasswordRequest req, String userCode) {
     UserEntity userEntity = userRepository.findByCode(userCode).orElseThrow(() -> new ResException(
-        ResErrorCode.valueOf("")));
+        ResErrorCode.USER_NOT_FOUND));
     String oldPassword = req.getOldPassword() != null ? req.getOldPassword().trim() : "";
     String newPassword = req.getNewPassword() != null ? req.getNewPassword().trim() : "";
     if (!passwordEncoder.matches(oldPassword, userEntity.getPassword())) {
