@@ -130,6 +130,16 @@ public class ReviewController {
     // READ & SEARCH
     // ============================================
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<ReviewSummaryResponse>>> getAllReviews(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        log.info("Getting all reviews - page: {}, size: {}", page, size);
+        PageResponse<ReviewSummaryResponse> response = reviewService.getAllReviews(page, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ReviewResponse>> getReviewById(@PathVariable Long id) {
         log.info("Getting review: {}", id);

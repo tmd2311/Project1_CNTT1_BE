@@ -220,6 +220,23 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Transactional
+    public PageResponse<ReviewSummaryResponse> getAllReviews(Integer page, Integer size) {
+        log.info("Getting all reviews - page: {}, size: {}", page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<ReviewEntity> reviewPage = reviewRepository.findAll(pageable);
+
+        return PageResponse.<ReviewSummaryResponse>builder()
+                .content(mapper.toSummaryResponseList(reviewPage.getContent()))
+                .page(reviewPage.getNumber())
+                .size(reviewPage.getSize())
+                .totalElements(reviewPage.getTotalElements())
+                .totalPages(reviewPage.getTotalPages())
+                .last(reviewPage.isLast())
+                .first(reviewPage.isFirst())
+                .build();
+    }
+
+    @Transactional
     public List<ReviewSummaryResponse> getHotReviews(String type, Integer limit) {
         ReviewType reviewType = ReviewType.valueOf(type);
         Pageable pageable = PageRequest.of(0, limit);
