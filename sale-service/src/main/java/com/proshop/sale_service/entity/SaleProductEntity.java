@@ -45,7 +45,7 @@ public class SaleProductEntity {
      * ID của product (nếu apply cho cả product)
      */
     @Column(name = "product_id")
-    private Long productId;
+    private UUID productId;
 
     /**
      * ID của SKU cụ thể (nếu chỉ apply cho 1 SKU)
