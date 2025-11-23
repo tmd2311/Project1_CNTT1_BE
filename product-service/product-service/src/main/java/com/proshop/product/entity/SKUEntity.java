@@ -38,6 +38,11 @@ public class SKUEntity {
 
   private Double price;
   private Double discountPrice;
+
+  // Sale-related fields
+  private Double salePrice;
+  private Long saleId;
+
   private Integer stock;
   private String barcode;
   private Boolean isActive = true;

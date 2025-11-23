@@ -3,6 +3,7 @@ package com.proshop.product.service.sku;
 
 import com.proshop.product.dto.request.SKURequest;
 import com.proshop.product.dto.request.SKUstockRequest;
+import com.proshop.product.dto.request.UpdateSKUSalePriceRequest;
 import com.proshop.product.dto.response.SKUResponse;
 
 import java.util.List;
@@ -15,4 +16,8 @@ public interface SKUService {
     SKUResponse getById(UUID id);
     List<SKUResponse> getAll();
     SKUResponse updateStockSKU(UUID id, SKUstockRequest request);
+
+    // Sale-related methods
+    void updateSalePrice(Long id, UpdateSKUSalePriceRequest request);
+    void revertPrice(Long id);
 }

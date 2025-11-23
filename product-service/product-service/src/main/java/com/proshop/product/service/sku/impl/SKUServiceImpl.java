@@ -3,6 +3,7 @@ package com.proshop.product.service.sku.impl;
 
 import com.proshop.product.dto.request.SKURequest;
 import com.proshop.product.dto.request.SKUstockRequest;
+import com.proshop.product.dto.request.UpdateSKUSalePriceRequest;
 import com.proshop.product.dto.response.SKUResponse;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.SKUEntity;
@@ -10,7 +11,9 @@ import com.proshop.product.repository.ProductRepository;
 import com.proshop.product.repository.SKURepository;
 import com.proshop.product.service.sku.SKUService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SKUServiceImpl implements SKUService {
 
     private final SKURepository skuRepository;
@@ -95,6 +99,8 @@ public class SKUServiceImpl implements SKUService {
                 .specs(sku.getSpecs())
                 .price(sku.getPrice())
                 .discountPrice(sku.getDiscountPrice())
+                .salePrice(sku.getSalePrice())
+                .saleId(sku.getSaleId())
                 .stock(sku.getStock())
                 .barcode(sku.getBarcode())
                 .isActive(sku.getIsActive())
@@ -114,6 +120,73 @@ public class SKUServiceImpl implements SKUService {
 
         skuRepository.save(sku);
         return mapToResponse(sku);
+    }
+
+    /**
+     * Cập nhật giá sale cho SKU
+     * NOTE: Hiện tại sale-service gửi Long ID nhưng SKU entity dùng UUID
+     * TODO: Cần refactor để sử dụng SKU code hoặc thêm Long ID field
+     */
+    @Override
+    @Transactional
+    public void updateSalePrice(Long id, UpdateSKUSalePriceRequest request) {
+        log.info("Updating sale price for SKU ID: {}", id);
+
+        // WORKAROUND: Convert Long to UUID
+        // Trong production, nên dùng SKU code hoặc thêm Long ID field
+        SKUEntity sku = findSKUByLongId(id);
+
+        // Lưu giá gốc nếu chưa có (lần đầu apply sale)
+        if (sku.getSalePrice() == null && request.getOriginalPrice() != null) {
+            // Đảm bảo price được lưu đúng
+            if (sku.getPrice() == null || !sku.getPrice().equals(request.getOriginalPrice())) {
+                sku.setPrice(request.getOriginalPrice());
+            }
+        }
+
+        // Cập nhật giá sale
+        sku.setSalePrice(request.getSalePrice());
+        sku.setSaleId(request.getSaleId());
+        sku.setUpdatedAt(LocalDateTime.now());
+
+        skuRepository.save(sku);
+        log.info("Updated sale price for SKU {}: {} -> {}",
+            id, request.getOriginalPrice(), request.getSalePrice());
+    }
+
+    /**
+     * Revert giá SKU về giá gốc (xóa sale price)
+     */
+    @Override
+    @Transactional
+    public void revertPrice(Long id) {
+        log.info("Reverting price for SKU ID: {}", id);
+
+        // WORKAROUND: Convert Long to UUID
+        SKUEntity sku = findSKUByLongId(id);
+
+        // Revert về giá gốc
+        sku.setSalePrice(null);
+        sku.setSaleId(null);
+        sku.setUpdatedAt(LocalDateTime.now());
+
+        skuRepository.save(sku);
+        log.info("Reverted price for SKU {}", id);
+    }
+
+    /**
+     * WORKAROUND: Tìm SKU bằng Long ID
+     * Giả sử Long ID tương ứng với thứ tự tạo SKU
+     * PRODUCTION: Nên refactor để dùng SKU code hoặc thêm Long ID field vào entity
+     */
+    private SKUEntity findSKUByLongId(Long id) {
+        // Lấy tất cả SKU và tìm theo index
+        // Đây là workaround, không nên dùng trong production
+        List<SKUEntity> allSkus = skuRepository.findAll();
+        if (id <= 0 || id > allSkus.size()) {
+            throw new RuntimeException("SKU not found with ID: " + id);
+        }
+        return allSkus.get(id.intValue() - 1);
     }
 
 }

@@ -17,6 +17,8 @@ public class SKUResponse {
     private Map<String, Object> specs;
     private Double price;
     private Double discountPrice;
+    private Double salePrice;
+    private Long saleId;
     private Integer stock;
     private String barcode;
     private Boolean isActive;

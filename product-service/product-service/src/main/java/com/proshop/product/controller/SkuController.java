@@ -2,6 +2,7 @@ package com.proshop.product.controller;
 
 import com.proshop.product.dto.request.SKURequest;
 import com.proshop.product.dto.request.SKUstockRequest;
+import com.proshop.product.dto.request.UpdateSKUSalePriceRequest;
 import com.proshop.product.dto.response.GeneralResponse;
 import com.proshop.product.dto.response.ResponseStatus;
 import com.proshop.product.dto.response.SKUResponse;
@@ -60,5 +61,25 @@ public class SkuController {
         @RequestBody SKUstockRequest request) {
         SKUResponse response = skuService.updateStockSKU(id, request);
         return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
+    }
+
+    /**
+     * Cập nhật giá sale cho SKU (được gọi từ Sale Service)
+     */
+    @PutMapping("/{id}/sale-price")
+    public ResponseEntity<GeneralResponse<Void>> updateSKUSalePrice(
+        @PathVariable("id") Long id,
+        @RequestBody UpdateSKUSalePriceRequest request) {
+        skuService.updateSalePrice(id, request);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
+    }
+
+    /**
+     * Revert giá SKU về giá gốc (được gọi từ Sale Service)
+     */
+    @PutMapping("/{id}/revert-price")
+    public ResponseEntity<GeneralResponse<Void>> revertSKUPrice(@PathVariable("id") Long id) {
+        skuService.revertPrice(id);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
     }
 }
