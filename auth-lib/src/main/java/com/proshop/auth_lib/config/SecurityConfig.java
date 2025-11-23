@@ -56,6 +56,8 @@ public class SecurityConfig {
             // ============================================
             .requestMatchers(PUBLIC_URLS).permitAll()
 
+            .requestMatchers("/actuator/**").permitAll()
+
             // Product, Brand, Category - GET requests are public
             .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/brand/**").permitAll()
