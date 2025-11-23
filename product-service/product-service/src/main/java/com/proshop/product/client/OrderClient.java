@@ -8,8 +8,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(
-    name = "oder-service",
-    url = "http://order-service:8083",
+    name = "order-service",
+    url = "${order.service.url:http://localhost:8083}",
     configuration = {FeignConfig.class, FeignAuthConfig.class}
 )
 public interface OrderClient {

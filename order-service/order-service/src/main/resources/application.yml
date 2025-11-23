@@ -41,3 +41,12 @@ logging:
 jwt:
   public-key-path: classpath:key/public.pem
   expiration: 3600000
+
+# Feign Client URLs
+user:
+  service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8082}

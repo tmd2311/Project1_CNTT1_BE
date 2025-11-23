@@ -63,3 +63,8 @@ jwt:
   private-key-path: classpath:key/private.pem
   public-key-path: classpath:key/public.pem
   expiration: 3600000
+
+# Feign Client URLs
+file:
+  service:
+    url: ${FILE_SERVICE_URL:http://localhost:8084}

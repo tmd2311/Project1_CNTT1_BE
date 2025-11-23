@@ -46,9 +46,11 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - FILE_SERVICE_URL=http://file-service:8084
     depends_on:
       - consul
       - redis
+      - file-service
     networks:
       - proshop-net
     volumes:
@@ -71,6 +73,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
+      - ORDER_SERVICE_URL=http://order-service:8083
+      - FILE_SERVICE_URL=http://file-service:8084
     depends_on:
       - consul
     networks:
@@ -95,8 +99,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
+      - USER_SERVICE_URL=http://auth-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
     depends_on:
       - consul
+      - auth-service
+      - product-service
     networks:
       - proshop-net
     volumes:
@@ -143,8 +151,38 @@ services:
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
+      - USER_SERVICE_URL=http://auth-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
     depends_on:
       - consul
+      - auth-service
+      - product-service
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # Sale Service
+  # ===========================
+  sale-service:
+    build:
+      context: .
+      dockerfile: ./sale-service/Dockerfile
+    container_name: sale-service
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_sale
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    depends_on:
+      - consul
+      - product-service
     networks:
       - proshop-net
     volumes:
@@ -168,6 +206,7 @@ services:
       - redis
       - file-service
       - review-service
+      - sale-service
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONSUL_HOST=consul

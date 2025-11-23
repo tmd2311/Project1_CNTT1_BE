@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-@FeignClient(name = "file-service", url = "http://103.90.225.90:8084", configuration = {
+@FeignClient(name = "file-service", url = "${file.service.url:http://localhost:8084}", configuration = {
     FeignConfig.class,
     FeignAuthConfig.class})
 public interface FileServiceClient {
