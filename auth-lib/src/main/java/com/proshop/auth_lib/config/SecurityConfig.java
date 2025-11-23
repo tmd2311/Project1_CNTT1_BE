@@ -33,7 +33,7 @@ public class SecurityConfig {
       "/*/*.html",
       "/*/*.css",
       "/*/*.js",
-      "/api/auth/**"   // auth-service endpoints
+      "/api/auth/**"
   };
 
   @Bean
