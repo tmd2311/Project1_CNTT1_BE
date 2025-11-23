@@ -74,6 +74,14 @@ public class SecurityConfig {
             // Order - best sellers is public
             .requestMatchers(HttpMethod.GET, "/api/order/best-sellers").permitAll()
 
+            // Sales - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/v1/sales/**").permitAll()
+
+            // Vouchers - GET requests for public vouchers
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/active").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/code/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/{id}").permitAll()
+
             // ============================================
             // ADMIN ENDPOINTS (admin role required)
             // ============================================
@@ -100,6 +108,17 @@ public class SecurityConfig {
             // Review Admin endpoints
             .requestMatchers(HttpMethod.PUT, "/api/reviews/{id}/status").hasRole("ADMIN")
 
+            // Sales Admin endpoints - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/v1/sales/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/sales/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/sales/**").hasRole("ADMIN")
+
+            // Vouchers Admin endpoints - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/{id}/users").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/vouchers/{id}/users/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers").hasRole("ADMIN")
+
             // ============================================
             // AUTHENTICATED ENDPOINTS (token required)
             // ============================================
@@ -113,6 +132,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+
+            // Vouchers - User endpoints require authentication
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/validate").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/apply").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/cancel/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/user/**").authenticated()
 
             .anyRequest().authenticated()
         )
