@@ -168,7 +168,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add products
         if (request.getProductIds() != null) {
-            for (Long productId : request.getProductIds()) {
+            for (UUID productId : request.getProductIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setProductId(productId);

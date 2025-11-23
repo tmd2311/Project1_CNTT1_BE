@@ -18,6 +18,6 @@ public interface SKUService {
     SKUResponse updateStockSKU(UUID id, SKUstockRequest request);
 
     // Sale-related methods
-    void updateSalePrice(Long id, UpdateSKUSalePriceRequest request);
-    void revertPrice(Long id);
+    void updateSalePrice(UUID id, UpdateSKUSalePriceRequest request);
+    void revertPrice(UUID id);
 }

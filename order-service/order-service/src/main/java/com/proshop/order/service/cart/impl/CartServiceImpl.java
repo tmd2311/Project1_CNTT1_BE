@@ -41,8 +41,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public GeneralResponse<?> addToCart(long userId, UUID productId, int quantity) {
-        log.info("Adding to cart: userId={}, productId={}, quantity={}", userId, productId, quantity);
+    public GeneralResponse<?> addToCart(long userId, UUID productId, UUID skuId, int quantity) {
+        log.info("Adding to cart: userId={}, productId={}, skuId={}, quantity={}", userId, productId, skuId, quantity);
 
         // Validate quantity
         if (quantity <= 0) {
@@ -65,7 +65,7 @@ public class CartServiceImpl implements CartService {
                 });
 
         // Find existing cart item
-        Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductId(userId, productId);
+        Optional<CartItemEntity> cartItemOpt = cartItemRepository.findByUserIdAndProductIdAndSkuId(userId, productId, skuId);
 
         CartItemEntity cartItem;
         if (cartItemOpt.isPresent()) {
@@ -80,6 +80,7 @@ public class CartServiceImpl implements CartService {
             cartItem = new CartItemEntity();
             cartItem.setCart(cart);
             cartItem.setProductId(productId);
+            cartItem.setSkuId(skuId);
             cartItem.setQuantity(quantity);
             cartItem.setCreatedAt(LocalDateTime.now());
             cartItem.setUpdatedAt(LocalDateTime.now());
@@ -105,10 +106,10 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public GeneralResponse<?> removeFromCart(long userId, UUID productId) {
-        log.info("Removing from cart: userId={}, productId={}", userId, productId);
+    public GeneralResponse<?> removeFromCart(long userId, UUID productId, UUID skuId) {
+        log.info("Removing from cart: userId={}, productId={}, skuId={}", userId, productId, skuId);
 
-        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductId(userId, productId)
+        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductIdAndSkuId(userId, productId, skuId)
                 .orElseThrow(() -> new ResException(ResErrorCode.CART_ITEM_NOT_FOUND));
 
         cartItemRepository.delete(cartItem);
@@ -144,13 +145,13 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public GeneralResponse<?> updateQuantity(long userId, UUID productId, int quantity) {
-        log.info("Updating quantity: userId={}, productId={}, quantity={}", userId, productId, quantity);
+    public GeneralResponse<?> updateQuantity(long userId, UUID productId, UUID skuId, int quantity) {
+        log.info("Updating quantity: userId={}, productId={}, skuId={}, quantity={}", userId, productId, skuId, quantity);
 
         // Validate product exists
         ProductResponse product = validateAndGetProduct(productId);
 
-        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductId(userId, productId)
+        CartItemEntity cartItem = cartItemRepository.findByUserIdAndProductIdAndSkuId(userId, productId, skuId)
                 .orElseThrow(() -> new ResException(ResErrorCode.CART_ITEM_NOT_FOUND));
 
         if (quantity <= 0) {
@@ -271,6 +272,7 @@ public class CartServiceImpl implements CartService {
         return CartItemResponse.builder()
                 .id(entity.getId())
                 .productId(entity.getProductId())
+                .skuId(entity.getSkuId())
                 .quantity(entity.getQuantity())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

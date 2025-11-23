@@ -13,6 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AddToCartRequest {
     private UUID productId;
+    private UUID skuId;
     private int quantity;
 }
 

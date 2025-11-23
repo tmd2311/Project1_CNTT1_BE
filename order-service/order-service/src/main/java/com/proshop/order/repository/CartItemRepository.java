@@ -14,9 +14,10 @@ import java.util.UUID;
 public interface CartItemRepository extends JpaRepository<CartItemEntity, UUID> {
 
     @Query("SELECT ci FROM CartItemEntity ci " +
-            "WHERE ci.cart.userId = :userId AND ci.productId = :productId")
-    Optional<CartItemEntity> findByUserIdAndProductId(@Param("userId") long userId,
-                                                      @Param("productId") UUID productId);
+            "WHERE ci.cart.userId = :userId AND ci.productId = :productId AND ci.skuId = :skuId")
+    Optional<CartItemEntity> findByUserIdAndProductIdAndSkuId(@Param("userId") long userId,
+                                                               @Param("productId") UUID productId,
+                                                               @Param("skuId") UUID skuId);
 
     @Query("SELECT ci FROM CartItemEntity ci WHERE ci.cart.userId = :userId")
     List<CartItemEntity> findByUserId(@Param("userId") long userId);

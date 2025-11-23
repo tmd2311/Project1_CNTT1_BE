@@ -52,6 +52,7 @@ public class CartMapper {
         return CartItemResponse.builder()
                 .id(entity.getId())
                 .productId(entity.getProductId())
+                .skuId(entity.getSkuId())
                 .quantity(entity.getQuantity())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

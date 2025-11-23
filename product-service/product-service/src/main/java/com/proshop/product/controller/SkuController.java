@@ -68,7 +68,7 @@ public class SkuController {
      */
     @PutMapping("/{id}/sale-price")
     public ResponseEntity<GeneralResponse<Void>> updateSKUSalePrice(
-        @PathVariable("id") Long id,
+        @PathVariable("id") UUID id,
         @RequestBody UpdateSKUSalePriceRequest request) {
         skuService.updateSalePrice(id, request);
         return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
@@ -78,7 +78,7 @@ public class SkuController {
      * Revert giá SKU về giá gốc (được gọi từ Sale Service)
      */
     @PutMapping("/{id}/revert-price")
-    public ResponseEntity<GeneralResponse<Void>> revertSKUPrice(@PathVariable("id") Long id) {
+    public ResponseEntity<GeneralResponse<Void>> revertSKUPrice(@PathVariable("id") UUID id) {
         skuService.revertPrice(id);
         return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
     }

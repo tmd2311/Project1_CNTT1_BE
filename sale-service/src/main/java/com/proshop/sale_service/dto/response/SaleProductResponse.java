@@ -12,7 +12,7 @@ public class SaleProductResponse {
     private Long id;
     private Long saleId;
 
-    private Long productId;
+    private UUID productId;
     private UUID skuId;
     private Long categoryId;
     private Long brandId;
