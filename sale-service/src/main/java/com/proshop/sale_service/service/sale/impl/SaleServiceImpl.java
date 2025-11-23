@@ -12,7 +12,6 @@ import com.proshop.sale_service.entity.SaleProductEntity;
 import com.proshop.sale_service.repository.SaleProductRepository;
 import com.proshop.sale_service.repository.SaleRepository;
 import com.proshop.sale_service.service.sale.SaleService;
-import com.proshop.sale_service.util.enums.PromotionStatus;
 import com.proshop.sale_service.util.enums.SaleType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +67,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SaleResponse getSaleById(Long id) {
         SaleEntity sale = saleRepository.findById(id)
             .orElseThrow(() -> new ResException(ResErrorCode.SALE_NOT_FOUND));
@@ -75,6 +75,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SaleResponse getSaleByCode(String code) {
         SaleEntity sale = saleRepository.findByCodeAndIsDeleteFalse(code)
             .orElseThrow(() -> new ResException(ResErrorCode.SALE_NOT_FOUND));
@@ -82,6 +83,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SaleResponse> getAllSales() {
         return saleRepository.findAllByIsDeleteFalse().stream()
             .map(this::mapToResponse)
@@ -89,6 +91,7 @@ public class SaleServiceImpl implements SaleService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SaleResponse> getActiveSales() {
         return saleRepository.findActiveSales(LocalDateTime.now()).stream()
             .map(this::mapToResponse)
@@ -107,33 +110,46 @@ public class SaleServiceImpl implements SaleService {
             throw new ResException(ResErrorCode.SALE_ALREADY_DELETED);
         }
 
-        // Check code nếu thay đổi
-        if (!sale.getCode().equals(request.getCode()) &&
-            saleRepository.existsByCodeAndIsDeleteFalse(request.getCode())) {
+        // Validate dates
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new ResException(ResErrorCode.SALE_INVALID_DATE);
+        }
+
+        // Check code trùng lặp (exclude ID hiện tại)
+        if (saleRepository.existsByCodeAndIdNotAndIsDeleteFalse(request.getCode(), id)) {
             throw new ResException(ResErrorCode.SALE_CODE_ALREADY_EXISTS);
         }
 
-        // Update fields
-        sale.setCode(request.getCode());
-        sale.setName(request.getName());
-        sale.setDescription(request.getDescription());
-        sale.setSaleType(request.getSaleType());
-        sale.setSaleValue(request.getSaleValue());
-        sale.setApplyScope(request.getApplyScope());
-        sale.setMinPurchaseQuantity(request.getMinPurchaseQuantity());
-        sale.setMaxDiscountAmount(request.getMaxDiscountAmount());
-        sale.setQuantity(request.getQuantity());
-        sale.setMinOrderValue(request.getMinOrderValue());
-        sale.setStartDate(request.getStartDate());
-        sale.setEndDate(request.getEndDate());
-        sale.setPriority(request.getPriority());
-        sale.setBannerImageUrl(request.getBannerImageUrl());
-        sale.setThumbnailImageUrl(request.getThumbnailImageUrl());
+        try {
+            // Update fields
+            sale.setCode(request.getCode());
+            sale.setName(request.getName());
+            sale.setDescription(request.getDescription());
+            sale.setSaleType(request.getSaleType());
+            sale.setSaleValue(request.getSaleValue());
+            sale.setApplyScope(request.getApplyScope());
+            sale.setMinPurchaseQuantity(request.getMinPurchaseQuantity());
+            sale.setMaxDiscountAmount(request.getMaxDiscountAmount());
+            sale.setQuantity(request.getQuantity());
+            sale.setMinOrderValue(request.getMinOrderValue());
+            sale.setStartDate(request.getStartDate());
+            sale.setEndDate(request.getEndDate());
+            sale.setPriority(request.getPriority());
+            sale.setBannerImageUrl(request.getBannerImageUrl());
+            sale.setThumbnailImageUrl(request.getThumbnailImageUrl());
 
-        SaleEntity updatedSale = saleRepository.save(sale);
+            SaleEntity updatedSale = saleRepository.save(sale);
 
-        log.info("Sale updated successfully: {}", updatedSale.getId());
-        return mapToResponse(updatedSale);
+            log.info("Sale updated successfully: {}", updatedSale.getId());
+            return mapToResponse(updatedSale);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.error("Data integrity violation when updating sale: {}", e.getMessage());
+            // Catch duplicate key constraint violation
+            if (e.getMessage() != null && e.getMessage().contains("uk4j8ofden1k7wcurqkrimot5xo")) {
+                throw new ResException(ResErrorCode.SALE_CODE_ALREADY_EXISTS);
+            }
+            throw e;
+        }
     }
 
     @Override

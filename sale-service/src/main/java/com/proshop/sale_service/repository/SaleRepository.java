@@ -50,6 +50,9 @@ public interface SaleRepository extends JpaRepository<SaleEntity, Long> {
     // Kiểm tra code đã tồn tại chưa
     boolean existsByCodeAndIsDeleteFalse(String code);
 
+    // Kiểm tra code đã tồn tại (loại trừ ID hiện tại)
+    boolean existsByCodeAndIdNotAndIsDeleteFalse(String code, Long id);
+
     // Tìm sale sắp hết hạn
     @Query("SELECT s FROM SaleEntity s WHERE s.isActive = true AND s.isDelete = false " +
             "AND s.endDate BETWEEN :startDate AND :endDate")
