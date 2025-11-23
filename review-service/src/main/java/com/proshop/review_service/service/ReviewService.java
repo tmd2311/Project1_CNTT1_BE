@@ -17,6 +17,7 @@ public interface ReviewService {
     void deleteReview(Long id, Long userId);
     PageResponse<ReviewSummaryResponse> searchReviews(ReviewSearchRequest request);
     PageResponse<ReviewSummaryResponse> getReviewsByProduct(Long productId, Integer page, Integer size);
+    PageResponse<ReviewSummaryResponse> getAllReviews(Integer page, Integer size);
     List<ReviewSummaryResponse> getHotReviews(String type, Integer limit);
     AnswerResponse createAnswer(AnswerCreateRequest request, Long userId, String userName, String userAvatar);
     AnswerResponse updateAnswer(Long id, AnswerUpdateRequest request, Long userId);
