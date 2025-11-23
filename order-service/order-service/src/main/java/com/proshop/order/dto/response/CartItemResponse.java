@@ -15,6 +15,7 @@ import java.util.UUID;
 public class CartItemResponse {
     private UUID id;
     private UUID productId;
+    private UUID skuId;
     private String productName;  // Optional: from Product Service
     private Double productPrice; // Optional: from Product Service
     private Integer quantity;

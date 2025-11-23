@@ -58,17 +58,24 @@ public class SecurityConfig {
 
             .requestMatchers("/actuator/**").permitAll()
 
-            // Product, Brand, Category - GET requests are public
+            // Product, Brand, Category, SKU - GET requests are public
             .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/brand/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/sku/**").permitAll()
+
+            // SKU sale-price operations - permitAll for internal service calls (sale-service scheduler)
+            .requestMatchers(HttpMethod.PUT, "/api/sku/*/sale-price").permitAll()
+            .requestMatchers(HttpMethod.PUT, "/api/sku/*/revert-price").permitAll()
+            .requestMatchers(HttpMethod.PUT, "/api/sku/stock/*").permitAll() // for order-service
 
             // Statistics - public for users to view
             .requestMatchers(HttpMethod.GET, "/api/products/statistics/**").permitAll()
 
             // Reviews - GET and search are public
             .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/answers/**").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/reviews/search").permitAll()
 
             // Order - best sellers is public
@@ -85,7 +92,7 @@ public class SecurityConfig {
             // ============================================
             // ADMIN ENDPOINTS (admin role required)
             // ============================================
-            // Product, Brand, Category - Create, Update, Delete require ADMIN
+            // Product, Brand, Category, SKU - Create, Update, Delete require ADMIN
             .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole("ADMIN")
@@ -98,6 +105,10 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/category/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/api/category/**").hasRole("ADMIN")
             .requestMatchers(HttpMethod.DELETE, "/api/category/**").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/sku/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/sku/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/sku/**").hasRole("ADMIN")
 
             // Cart Admin endpoints
             .requestMatchers("/api/cart/admin/**").hasRole("ADMIN")

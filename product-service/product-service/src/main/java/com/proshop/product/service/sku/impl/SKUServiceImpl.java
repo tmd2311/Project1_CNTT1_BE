@@ -129,12 +129,10 @@ public class SKUServiceImpl implements SKUService {
      */
     @Override
     @Transactional
-    public void updateSalePrice(Long id, UpdateSKUSalePriceRequest request) {
+    public void updateSalePrice(UUID id, UpdateSKUSalePriceRequest request) {
         log.info("Updating sale price for SKU ID: {}", id);
 
-        // WORKAROUND: Convert Long to UUID
-        // Trong production, nên dùng SKU code hoặc thêm Long ID field
-        SKUEntity sku = findSKUByLongId(id);
+        SKUEntity sku = findSKUById(id);
 
         // Lưu giá gốc nếu chưa có (lần đầu apply sale)
         if (sku.getSalePrice() == null && request.getOriginalPrice() != null) {
@@ -159,11 +157,11 @@ public class SKUServiceImpl implements SKUService {
      */
     @Override
     @Transactional
-    public void revertPrice(Long id) {
+    public void revertPrice(UUID id) {
         log.info("Reverting price for SKU ID: {}", id);
 
         // WORKAROUND: Convert Long to UUID
-        SKUEntity sku = findSKUByLongId(id);
+        SKUEntity sku = findSKUById(id);
 
         // Revert về giá gốc
         sku.setSalePrice(null);
@@ -174,19 +172,8 @@ public class SKUServiceImpl implements SKUService {
         log.info("Reverted price for SKU {}", id);
     }
 
-    /**
-     * WORKAROUND: Tìm SKU bằng Long ID
-     * Giả sử Long ID tương ứng với thứ tự tạo SKU
-     * PRODUCTION: Nên refactor để dùng SKU code hoặc thêm Long ID field vào entity
-     */
-    private SKUEntity findSKUByLongId(Long id) {
-        // Lấy tất cả SKU và tìm theo index
-        // Đây là workaround, không nên dùng trong production
-        List<SKUEntity> allSkus = skuRepository.findAll();
-        if (id <= 0 || id > allSkus.size()) {
-            throw new RuntimeException("SKU not found with ID: " + id);
-        }
-        return allSkus.get(id.intValue() - 1);
+    private SKUEntity findSKUById(UUID id) {
+        return skuRepository.findById(id).orElseThrow(() -> new RuntimeException("SKU not found"));
     }
 
 }

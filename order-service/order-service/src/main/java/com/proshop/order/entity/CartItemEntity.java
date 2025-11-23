@@ -26,6 +26,9 @@ public class CartItemEntity {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "sku_id", nullable = false)
+    private UUID skuId;
+
     @Column(nullable = false)
     private Integer quantity;
 

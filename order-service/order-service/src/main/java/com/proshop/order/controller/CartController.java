@@ -58,12 +58,13 @@ public class CartController {
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Adding to cart for user: {} - Product: {} - Quantity: {}",
-                userId, request.getProductId(), request.getQuantity());
+        log.info("Adding to cart for user: {} - Product: {} - SKU: {} - Quantity: {}",
+                userId, request.getProductId(), request.getSkuId(), request.getQuantity());
 
         GeneralResponse<?> response = cartService.addToCart(
                 userId,
                 request.getProductId(),
+                request.getSkuId(),
                 request.getQuantity()
         );
 
@@ -91,12 +92,13 @@ public class CartController {
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Updating cart for user: {} - Product: {} - Quantity: {}",
-                userId, request.getProductId(), request.getQuantity());
+        log.info("Updating cart for user: {} - Product: {} - SKU: {} - Quantity: {}",
+                userId, request.getProductId(), request.getSkuId(), request.getQuantity());
 
         GeneralResponse<?> response = cartService.updateQuantity(
                 userId,
                 request.getProductId(),
+                request.getSkuId(),
                 request.getQuantity()
         );
 
@@ -106,15 +108,16 @@ public class CartController {
     /**
      * Remove product from cart (userId from token)
      */
-    @DeleteMapping("/remove/{productId}")
+    @DeleteMapping("/remove/{productId}/{skuId}")
     public ResponseEntity<GeneralResponse<?>> removeFromCart(
             @PathVariable UUID productId,
+            @PathVariable UUID skuId,
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Removing product {} from cart for user: {}", productId, userId);
+        log.info("Removing product {} (SKU: {}) from cart for user: {}", productId, skuId, userId);
 
-        GeneralResponse<?> response = cartService.removeFromCart(userId, productId);
+        GeneralResponse<?> response = cartService.removeFromCart(userId, productId, skuId);
         return ResponseEntity.ok(response);
     }
 

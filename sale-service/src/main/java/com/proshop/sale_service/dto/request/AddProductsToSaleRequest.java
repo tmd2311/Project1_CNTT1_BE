@@ -11,7 +11,7 @@ public class AddProductsToSaleRequest {
     /**
      * Danh sách Product IDs (nếu apply cho toàn bộ product)
      */
-    private List<Long> productIds;
+    private List<UUID> productIds;
 
     /**
      * Danh sách SKU IDs (nếu chỉ apply cho SKU cụ thể)

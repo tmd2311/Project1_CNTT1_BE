@@ -38,7 +38,7 @@ public interface ProductClient {
      */
     class SKUResponse {
         private UUID id;
-        private Long productId;
+        private UUID productId;
         private String skuCode;
         private Double price;
         private Double salePrice;
@@ -49,8 +49,8 @@ public interface ProductClient {
         public UUID getId() { return id; }
         public void setId(UUID id) { this.id = id; }
 
-        public Long getProductId() { return productId; }
-        public void setProductId(Long productId) { this.productId = productId; }
+        public UUID getProductId() { return productId; }
+        public void setProductId(UUID productId) { this.productId = productId; }
 
         public String getSkuCode() { return skuCode; }
         public void setSkuCode(String skuCode) { this.skuCode = skuCode; }

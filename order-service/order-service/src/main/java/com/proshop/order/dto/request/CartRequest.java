@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class CartRequest {
     private UUID productId;
+    private UUID skuId;
     private int quantity;
 }
 
