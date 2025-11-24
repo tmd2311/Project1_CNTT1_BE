@@ -12,11 +12,13 @@ import com.proshop.sale_service.entity.SaleProductEntity;
 import com.proshop.sale_service.repository.SaleProductRepository;
 import com.proshop.sale_service.repository.SaleRepository;
 import com.proshop.sale_service.service.sale.SaleService;
+import com.proshop.sale_service.util.FileUtil;
 import com.proshop.sale_service.util.enums.SaleType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,10 +36,11 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepository;
     private final SaleProductRepository saleProductRepository;
     private final ProductClient productClient;
+    private final FileUtil fileUtil;
 
     @Override
     @Transactional
-    public SaleResponse createSale(SaleCreateRequest request) {
+    public SaleResponse createSale(SaleCreateRequest request, MultipartFile bannerImage, MultipartFile thumbnailImage) {
         log.info("Creating sale with code: {}", request.getCode());
 
         // Check code đã tồn tại chưa
@@ -50,7 +53,25 @@ public class SaleServiceImpl implements SaleService {
             throw new ResException(ResErrorCode.SALE_INVALID_DATE);
         }
 
+        // Upload images if provided
+        String bannerImageUrl = null;
+        String thumbnailImageUrl = null;
+
+        if (bannerImage != null && !bannerImage.isEmpty()) {
+            bannerImageUrl = fileUtil.uploadSingleImage(bannerImage);
+            log.info("Uploaded banner image: {}", bannerImageUrl);
+        }
+
+        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+            thumbnailImageUrl = fileUtil.uploadSingleImage(thumbnailImage);
+            log.info("Uploaded thumbnail image: {}", thumbnailImageUrl);
+        }
+
         SaleEntity sale = mapToEntity(request);
+
+        // Set image URLs
+        sale.setBannerImageUrl(bannerImageUrl);
+        sale.setThumbnailImageUrl(thumbnailImageUrl);
 
         // Auto set status based on dates
         LocalDateTime now = LocalDateTime.now();
@@ -100,7 +121,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional
-    public SaleResponse updateSale(Long id, SaleCreateRequest request) {
+    public SaleResponse updateSale(Long id, SaleCreateRequest request, MultipartFile bannerImage, MultipartFile thumbnailImage) {
         log.info("Updating sale with id: {}", id);
 
         SaleEntity sale = saleRepository.findById(id)
@@ -135,8 +156,38 @@ public class SaleServiceImpl implements SaleService {
             sale.setStartDate(request.getStartDate());
             sale.setEndDate(request.getEndDate());
             sale.setPriority(request.getPriority());
-            sale.setBannerImageUrl(request.getBannerImageUrl());
-            sale.setThumbnailImageUrl(request.getThumbnailImageUrl());
+
+            // Handle banner image upload
+            if (bannerImage != null && !bannerImage.isEmpty()) {
+                // Delete old banner image if exists
+                if (sale.getBannerImageUrl() != null) {
+                    try {
+                        fileUtil.deleteFileByUrl(sale.getBannerImageUrl());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete old banner image: {}", e.getMessage());
+                    }
+                }
+                // Upload new banner image
+                String newBannerUrl = fileUtil.uploadSingleImage(bannerImage);
+                sale.setBannerImageUrl(newBannerUrl);
+                log.info("Updated banner image: {}", newBannerUrl);
+            }
+
+            // Handle thumbnail image upload
+            if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+                // Delete old thumbnail image if exists
+                if (sale.getThumbnailImageUrl() != null) {
+                    try {
+                        fileUtil.deleteFileByUrl(sale.getThumbnailImageUrl());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete old thumbnail image: {}", e.getMessage());
+                    }
+                }
+                // Upload new thumbnail image
+                String newThumbnailUrl = fileUtil.uploadSingleImage(thumbnailImage);
+                sale.setThumbnailImageUrl(newThumbnailUrl);
+                log.info("Updated thumbnail image: {}", newThumbnailUrl);
+            }
 
             SaleEntity updatedSale = saleRepository.save(sale);
 
