@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,6 +49,7 @@ public class VoucherController {
      * GET /api/v1/vouchers
      */
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<GeneralResponse<List<VoucherResponse>>> getAllVouchers() {
         log.info("Getting all vouchers");
         List<VoucherResponse> response = voucherService.getAllVouchers();
@@ -59,6 +61,7 @@ public class VoucherController {
      * GET /api/v1/vouchers/{id}
      */
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<GeneralResponse<VoucherResponse>> getVoucherById(@PathVariable Long id) {
         log.info("Getting voucher by id: {}", id);
         VoucherResponse response = voucherService.getVoucherById(id);
@@ -70,6 +73,7 @@ public class VoucherController {
      * GET /api/v1/vouchers/code/{code}
      */
     @GetMapping("/code/{code}")
+    @Transactional(readOnly = true)
     public ResponseEntity<GeneralResponse<VoucherResponse>> getVoucherByCode(
         @PathVariable String code
     ) {
@@ -83,6 +87,7 @@ public class VoucherController {
      * GET /api/v1/vouchers/active
      */
     @GetMapping("/active")
+    @Transactional(readOnly = true)
     public ResponseEntity<GeneralResponse<List<VoucherResponse>>> getActiveVouchers() {
         log.info("Getting active vouchers");
         List<VoucherResponse> response = voucherService.getActiveVouchers();
