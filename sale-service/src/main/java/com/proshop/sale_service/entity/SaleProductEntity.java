@@ -57,13 +57,13 @@ public class SaleProductEntity {
      * ID của category (nếu apply theo category)
      */
     @Column(name = "category_id")
-    private Long categoryId;
+    private UUID categoryId;
 
     /**
      * ID của brand (nếu apply theo brand)
      */
     @Column(name = "brand_id")
-    private Long brandId;
+    private UUID brandId;
 
     // ============ GIÁ (Snapshot khi apply) ============
 

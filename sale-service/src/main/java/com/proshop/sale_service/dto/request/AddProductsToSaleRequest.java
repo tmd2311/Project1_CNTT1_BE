@@ -21,10 +21,10 @@ public class AddProductsToSaleRequest {
     /**
      * Danh sách Category IDs (nếu apply theo category)
      */
-    private List<Long> categoryIds;
+    private List<UUID> categoryIds;
 
     /**
      * Danh sách Brand IDs (nếu apply theo brand)
      */
-    private List<Long> brandIds;
+    private List<UUID> brandIds;
 }

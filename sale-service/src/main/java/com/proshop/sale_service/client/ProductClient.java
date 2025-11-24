@@ -34,6 +34,24 @@ public interface ProductClient {
     GeneralResponse<Void> revertSKUPrice(@PathVariable("id") UUID skuId);
 
     /**
+     * Lấy tất cả SKU của một product
+     */
+    @GetMapping("/api/sku/by-product/{productId}")
+    GeneralResponse<java.util.List<SKUResponse>> getSKUsByProductId(@PathVariable("productId") UUID productId);
+
+    /**
+     * Lấy tất cả SKU trong một category
+     */
+    @GetMapping("/api/sku/by-category/{categoryId}")
+    GeneralResponse<java.util.List<SKUResponse>> getSKUsByCategoryId(@PathVariable("categoryId") UUID categoryId);
+
+    /**
+     * Lấy tất cả SKU của một brand
+     */
+    @GetMapping("/api/sku/by-brand/{brandId}")
+    GeneralResponse<java.util.List<SKUResponse>> getSKUsByBrandId(@PathVariable("brandId")UUID brandId);
+
+    /**
      * DTO cho SKU Response
      */
     class SKUResponse {

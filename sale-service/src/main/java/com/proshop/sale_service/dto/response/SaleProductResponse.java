@@ -14,8 +14,8 @@ public class SaleProductResponse {
 
     private UUID productId;
     private UUID skuId;
-    private Long categoryId;
-    private Long brandId;
+    private UUID categoryId;
+    private UUID brandId;
 
     private BigDecimal originalPrice;
     private BigDecimal salePrice;

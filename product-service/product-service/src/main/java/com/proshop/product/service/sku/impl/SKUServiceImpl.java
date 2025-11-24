@@ -176,4 +176,40 @@ public class SKUServiceImpl implements SKUService {
         return skuRepository.findById(id).orElseThrow(() -> new RuntimeException("SKU not found"));
     }
 
+    /**
+     * Lấy tất cả SKU của một product
+     */
+    @Override
+    public List<SKUResponse> getSKUsByProductId(UUID productId) {
+        log.info("Getting all SKUs for product ID: {}", productId);
+        List<SKUEntity> skus = skuRepository.findByProductId(productId);
+        return skus.stream()
+            .map(this::mapToResponse)
+            .toList();
+    }
+
+    /**
+     * Lấy tất cả SKU trong một category
+     */
+    @Override
+    public List<SKUResponse> getSKUsByCategoryId(UUID categoryId) {
+        log.info("Getting all SKUs for category ID: {}", categoryId);
+        List<SKUEntity> skus = skuRepository.findByProductCategoryId(categoryId);
+        return skus.stream()
+            .map(this::mapToResponse)
+            .toList();
+    }
+
+    /**
+     * Lấy tất cả SKU của một brand
+     */
+    @Override
+    public List<SKUResponse> getSKUsByBrandId(UUID brandId) {
+        log.info("Getting all SKUs for brand ID: {}", brandId);
+        List<SKUEntity> skus = skuRepository.findByProductBrandId(brandId);
+        return skus.stream()
+            .map(this::mapToResponse)
+            .toList();
+    }
+
 }

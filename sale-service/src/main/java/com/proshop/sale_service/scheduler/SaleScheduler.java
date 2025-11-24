@@ -142,16 +142,177 @@ public class SaleScheduler {
                     // Apply cho SKU cụ thể
                     applySaleToSKU(sale, sp);
                     successCount++;
+                } else if (sp.getProductId() != null) {
+                    // Apply cho tất cả SKU của product
+                    int count = applySaleToProduct(sale, sp);
+                    successCount += count;
+                } else if (sp.getCategoryId() != null) {
+                    // Apply cho tất cả SKU trong category
+                    int count = applySaleToCategory(sale, sp);
+                    successCount += count;
+                } else if (sp.getBrandId() != null) {
+                    // Apply cho tất cả SKU của brand
+                    int count = applySaleToBrand(sale, sp);
+                    successCount += count;
                 }
-                // TODO: Handle product, category, brand
             } catch (Exception e) {
                 failCount++;
-                log.error("Failed to apply sale to SKU {}", sp.getSkuId(), e);
+                log.error("Failed to apply sale to product/SKU/category/brand", e);
             }
         }
 
         log.info("Applied sale {} to products: {} success, {} failed",
             sale.getCode(), successCount, failCount);
+    }
+
+    /**
+     * Apply sale to all SKUs of a product
+     * @return number of SKUs successfully applied
+     */
+    private int applySaleToProduct(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of product {}", sale.getCode(), saleProduct.getProductId());
+
+            // Lấy tất cả SKU của product
+            java.util.List<com.proshop.sale_service.client.ProductClient.SKUResponse> skus =
+                productClient.getSKUsByProductId(saleProduct.getProductId()).getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for product {}", saleProduct.getProductId());
+                return 0;
+            }
+
+            int successCount = 0;
+            // Apply sale cho từng SKU
+            for (com.proshop.sale_service.client.ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                    successCount++;
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of product {}",
+                        sku.getId(), saleProduct.getProductId(), e);
+                }
+            }
+
+            log.info("Applied sale to {}/{} SKUs of product {}",
+                successCount, skus.size(), saleProduct.getProductId());
+            return successCount;
+        } catch (Exception e) {
+            log.error("Failed to apply sale to product {}", saleProduct.getProductId(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs in a category
+     * @return number of SKUs successfully applied
+     */
+    private int applySaleToCategory(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs in category {}", sale.getCode(), saleProduct.getCategoryId());
+
+            // Lấy tất cả SKU trong category
+            java.util.List<com.proshop.sale_service.client.ProductClient.SKUResponse> skus =
+                productClient.getSKUsByCategoryId(saleProduct.getCategoryId()).getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for category {}", saleProduct.getCategoryId());
+                return 0;
+            }
+
+            int successCount = 0;
+            // Apply sale cho từng SKU
+            for (com.proshop.sale_service.client.ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                    successCount++;
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of category {}",
+                        sku.getId(), saleProduct.getCategoryId(), e);
+                }
+            }
+
+            log.info("Applied sale to {}/{} SKUs in category {}",
+                successCount, skus.size(), saleProduct.getCategoryId());
+            return successCount;
+        } catch (Exception e) {
+            log.error("Failed to apply sale to category {}", saleProduct.getCategoryId(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs of a brand
+     * @return number of SKUs successfully applied
+     */
+    private int applySaleToBrand(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of brand {}", sale.getCode(), saleProduct.getBrandId());
+
+            // Lấy tất cả SKU của brand
+            java.util.List<com.proshop.sale_service.client.ProductClient.SKUResponse> skus =
+                productClient.getSKUsByBrandId(saleProduct.getBrandId()).getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for brand {}", saleProduct.getBrandId());
+                return 0;
+            }
+
+            int successCount = 0;
+            // Apply sale cho từng SKU
+            for (com.proshop.sale_service.client.ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                    successCount++;
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of brand {}",
+                        sku.getId(), saleProduct.getBrandId(), e);
+                }
+            }
+
+            log.info("Applied sale to {}/{} SKUs of brand {}",
+                successCount, skus.size(), saleProduct.getBrandId());
+            return successCount;
+        } catch (Exception e) {
+            log.error("Failed to apply sale to brand {}", saleProduct.getBrandId(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Apply sale to a single SKU (helper method for product/category/brand)
+     */
+    private void applySaleToSingleSKU(SaleEntity sale, SaleProductEntity saleProduct,
+                                      com.proshop.sale_service.client.ProductClient.SKUResponse sku) {
+        try {
+            // Tính giá sale
+            java.math.BigDecimal originalPrice = java.math.BigDecimal.valueOf(sku.getPrice());
+            java.math.BigDecimal salePrice = calculateSalePrice(originalPrice, sale);
+            java.math.BigDecimal discountAmount = originalPrice.subtract(salePrice);
+
+            // Cập nhật SaleProduct entity
+            saleProduct.setOriginalPrice(originalPrice);
+            saleProduct.setSalePrice(salePrice);
+            saleProduct.setDiscountAmount(discountAmount);
+            saleProduct.setIsApplied(true);
+            saleProduct.setAppliedAt(LocalDateTime.now());
+            saleProductRepository.save(saleProduct);
+
+            // Gọi Product Service để update giá SKU
+            com.proshop.sale_service.client.ProductClient.UpdateSKUSalePriceRequest request =
+                new com.proshop.sale_service.client.ProductClient.UpdateSKUSalePriceRequest(
+                    originalPrice.doubleValue(),
+                    salePrice.doubleValue(),
+                    sale.getId()
+                );
+
+            productClient.updateSKUSalePrice(sku.getId(), request);
+
+            log.debug("Applied sale to SKU {}: {} -> {}", sku.getId(), originalPrice, salePrice);
+        } catch (Exception e) {
+            log.error("Failed to apply sale to SKU {}", sku.getId(), e);
+            throw e;
+        }
     }
 
     /**
