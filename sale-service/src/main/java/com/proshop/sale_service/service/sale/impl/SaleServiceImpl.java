@@ -204,7 +204,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add categories
         if (request.getCategoryIds() != null) {
-            for (Long categoryId : request.getCategoryIds()) {
+            for (UUID categoryId : request.getCategoryIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setCategoryId(categoryId);
@@ -214,7 +214,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add brands
         if (request.getBrandIds() != null) {
-            for (Long brandId : request.getBrandIds()) {
+            for (UUID brandId : request.getBrandIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setBrandId(brandId);
@@ -301,10 +301,18 @@ public class SaleServiceImpl implements SaleService {
                 if (sp.getSkuId() != null) {
                     // Apply cho SKU cụ thể
                     applySaleToSKU(sale, sp);
+                } else if (sp.getProductId() != null) {
+                    // Apply cho tất cả SKU của product
+                    applySaleToProduct(sale, sp);
+                } else if (sp.getCategoryId() != null) {
+                    // Apply cho tất cả SKU trong category
+                    applySaleToCategory(sale, sp);
+                } else if (sp.getBrandId() != null) {
+                    // Apply cho tất cả SKU của brand
+                    applySaleToBrand(sale, sp);
                 }
-                // TODO: Handle product, category, brand
             } catch (Exception e) {
-                log.error("Failed to apply sale to SKU {}", sp.getSkuId(), e);
+                log.error("Failed to apply sale to product/SKU/category/brand", e);
             }
         }
 
@@ -341,6 +349,140 @@ public class SaleServiceImpl implements SaleService {
     }
 
     // ========== HELPER METHODS ==========
+
+    /**
+     * Apply sale to all SKUs of a product
+     */
+    private void applySaleToProduct(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of product {}", sale.getId(), saleProduct.getProductId());
+
+            // Lấy tất cả SKU của product
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByProductId(saleProduct.getProductId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for product {}", saleProduct.getProductId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of product {}",
+                        sku.getId(), saleProduct.getProductId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs of product {}", skus.size(), saleProduct.getProductId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to product {}", saleProduct.getProductId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs in a category
+     */
+    private void applySaleToCategory(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs in category {}", sale.getId(), saleProduct.getCategoryId());
+
+            // Lấy tất cả SKU trong category
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByCategoryId(saleProduct.getCategoryId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for category {}", saleProduct.getCategoryId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of category {}",
+                        sku.getId(), saleProduct.getCategoryId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs in category {}", skus.size(), saleProduct.getCategoryId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to category {}", saleProduct.getCategoryId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs of a brand
+     */
+    private void applySaleToBrand(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of brand {}", sale.getId(), saleProduct.getBrandId());
+
+            // Lấy tất cả SKU của brand
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByBrandId(saleProduct.getBrandId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for brand {}", saleProduct.getBrandId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of brand {}",
+                        sku.getId(), saleProduct.getBrandId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs of brand {}", skus.size(), saleProduct.getBrandId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to brand {}", saleProduct.getBrandId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to a single SKU (helper method for product/category/brand)
+     */
+    private void applySaleToSingleSKU(SaleEntity sale, SaleProductEntity saleProduct, ProductClient.SKUResponse sku) {
+        try {
+            // Calculate sale price
+            BigDecimal originalPrice = BigDecimal.valueOf(sku.getPrice());
+            BigDecimal salePrice = calculateSalePrice(originalPrice, sale);
+            BigDecimal discountAmount = originalPrice.subtract(salePrice);
+
+            // Update SaleProduct entity
+            saleProduct.setOriginalPrice(originalPrice);
+            saleProduct.setSalePrice(salePrice);
+            saleProduct.setDiscountAmount(discountAmount);
+            saleProduct.setIsApplied(true);
+            saleProduct.setAppliedAt(LocalDateTime.now());
+            saleProductRepository.save(saleProduct);
+
+            // Call Product Service to update SKU price
+            ProductClient.UpdateSKUSalePriceRequest request =
+                new ProductClient.UpdateSKUSalePriceRequest(
+                    originalPrice.doubleValue(),
+                    salePrice.doubleValue(),
+                    sale.getId()
+                );
+
+            productClient.updateSKUSalePrice(sku.getId(), request);
+
+            log.debug("Applied sale to SKU {}: {} -> {}", sku.getId(), originalPrice, salePrice);
+        } catch (Exception e) {
+            log.error("Failed to apply sale to SKU {}", sku.getId(), e);
+            throw e;
+        }
+    }
 
     /**
      * Apply sale to specific SKU

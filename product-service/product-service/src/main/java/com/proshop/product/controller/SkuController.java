@@ -82,4 +82,34 @@ public class SkuController {
         skuService.revertPrice(id);
         return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, null, null));
     }
+
+    /**
+     * Lấy tất cả SKU của một product (được gọi từ Sale Service)
+     */
+    @GetMapping("/by-product/{productId}")
+    public ResponseEntity<GeneralResponse<List<SKUResponse>>> getSKUsByProductId(
+        @PathVariable("productId") UUID productId) {
+        List<SKUResponse> skus = skuService.getSKUsByProductId(productId);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, skus, null));
+    }
+
+    /**
+     * Lấy tất cả SKU trong một category (được gọi từ Sale Service)
+     */
+    @GetMapping("/by-category/{categoryId}")
+    public ResponseEntity<GeneralResponse<List<SKUResponse>>> getSKUsByCategoryId(
+        @PathVariable("categoryId") UUID categoryId) {
+        List<SKUResponse> skus = skuService.getSKUsByCategoryId(categoryId);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, skus, null));
+    }
+
+    /**
+     * Lấy tất cả SKU của một brand (được gọi từ Sale Service)
+     */
+    @GetMapping("/by-brand/{brandId}")
+    public ResponseEntity<GeneralResponse<List<SKUResponse>>> getSKUsByBrandId(
+        @PathVariable("brandId") UUID brandId) {
+        List<SKUResponse> skus = skuService.getSKUsByBrandId(brandId);
+        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, skus, null));
+    }
 }
