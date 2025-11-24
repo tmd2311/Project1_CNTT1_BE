@@ -1,5 +1,8 @@
 package com.proshop.sale_service.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.proshop.exceptionlib.dto.response.ResponseStatus;
 import com.proshop.sale_service.dto.request.AddProductsToSaleRequest;
 import com.proshop.sale_service.dto.request.SaleCreateRequest;
@@ -7,12 +10,13 @@ import com.proshop.sale_service.dto.response.GeneralResponse;
 import com.proshop.sale_service.dto.response.SaleProductResponse;
 import com.proshop.sale_service.dto.response.SaleResponse;
 import com.proshop.sale_service.service.sale.SaleService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,15 +35,34 @@ public class SaleController {
     /**
      * Tạo sale mới
      * POST /api/v1/sales
+     * Form-data format:
+     * - sale: JSON string
+     * - bannerImage: file (optional)
+     * - thumbnailImage: file (optional)
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GeneralResponse<SaleResponse>> createSale(
-        @Valid @RequestBody SaleCreateRequest request
-    ) {
-        log.info("Creating sale: {}", request.getCode());
-        SaleResponse response = saleService.createSale(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
+        @RequestPart("sale") String saleJson,
+        @RequestPart(value = "bannerImage", required = false) MultipartFile bannerImage,
+        @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
+    ) throws JsonProcessingException {
+        log.debug("Received sale JSON: {}", saleJson);
+
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule()); // Support LocalDateTime
+
+        try {
+            SaleCreateRequest request = mapper.readValue(saleJson, SaleCreateRequest.class);
+
+            log.info("Creating sale: {}", request.getCode());
+            SaleResponse response = saleService.createSale(request, bannerImage, thumbnailImage);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse sale JSON. Received: {}", saleJson, e);
+            throw e;
+        }
     }
 
     /**
@@ -89,15 +112,34 @@ public class SaleController {
     /**
      * Cập nhật sale
      * PUT /api/v1/sales/{id}
+     * Form-data format:
+     * - sale: JSON string
+     * - bannerImage: file (optional)
+     * - thumbnailImage: file (optional)
      */
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GeneralResponse<SaleResponse>> updateSale(
         @PathVariable Long id,
-        @Valid @RequestBody SaleCreateRequest request
-    ) {
-        log.info("Updating sale: {}", id);
-        SaleResponse response = saleService.updateSale(id, request);
-        return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
+        @RequestPart("sale") String saleJson,
+        @RequestPart(value = "bannerImage", required = false) MultipartFile bannerImage,
+        @RequestPart(value = "thumbnailImage", required = false) MultipartFile thumbnailImage
+    ) throws JsonProcessingException {
+        log.debug("Received sale JSON for update: {}", saleJson);
+
+        // Convert JSON text → Object
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule()); // Support LocalDateTime
+
+        try {
+            SaleCreateRequest request = mapper.readValue(saleJson, SaleCreateRequest.class);
+
+            log.info("Updating sale: {}", id);
+            SaleResponse response = saleService.updateSale(id, request, bannerImage, thumbnailImage);
+            return ResponseEntity.ok(new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, response, null));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse sale JSON. Received: {}", saleJson, e);
+            throw e;
+        }
     }
 
     /**
