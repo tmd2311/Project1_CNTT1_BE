@@ -7,13 +7,14 @@ import com.proshop.review_service.dto.response.ReviewResponse;
 import com.proshop.review_service.dto.response.ReviewSummaryResponse;
 import com.proshop.review_service.util.enums.ReactionTargetType;
 import com.proshop.review_service.util.enums.ReactionType;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface ReviewService {
-    ReviewResponse createReview(ReviewCreateRequest request, Long userId, String userName, String userAvatar);
+    ReviewResponse createReview(ReviewCreateRequest request, Long userId, String userName, String userAvatar, List<MultipartFile> images);
     ReviewResponse getReviewById(Long id);
-    ReviewResponse updateReview(Long id, ReviewUpdateRequest request, Long userId);
+    ReviewResponse updateReview(Long id, ReviewUpdateRequest request, Long userId, List<MultipartFile> images);
     void deleteReview(Long id, Long userId);
     PageResponse<ReviewSummaryResponse> searchReviews(ReviewSearchRequest request);
     PageResponse<ReviewSummaryResponse> getReviewsByProduct(Long productId, Integer page, Integer size);

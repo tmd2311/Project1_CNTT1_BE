@@ -16,6 +16,7 @@ import com.proshop.review_service.util.enums.ReactionTargetType;
 import com.proshop.review_service.util.enums.ReactionType;
 import com.proshop.review_service.util.enums.ReviewStatus;
 import com.proshop.review_service.util.enums.ReviewType;
+import com.proshop.review_service.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +43,13 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewImageRepository imageRepository;
     private final ReviewReactionRepository reactionRepository;
     private final ReviewMapper mapper;
+    private final FileUtil fileUtil;
 
     // ============================================
     // REVIEW CRUD
     // ============================================
 
-    public ReviewResponse createReview(ReviewCreateRequest request, Long userId, String userName, String userAvatar) {
+    public ReviewResponse createReview(ReviewCreateRequest request, Long userId, String userName, String userAvatar, List<MultipartFile> images) {
         log.info("Creating review for user: {}", userId);
 
         // Convert to entity
@@ -66,9 +69,26 @@ public class ReviewServiceImpl implements ReviewService {
         // Save review
         review = reviewRepository.save(review);
 
-        // Add images
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+        // Upload images if provided
+        List<String> uploadedImageUrls = new ArrayList<>();
+        if (images != null && !images.isEmpty()) {
+            log.info("Uploading {} images for review", images.size());
+            uploadedImageUrls = fileUtil.uploadMultipleImages(images);
+            log.info("Successfully uploaded {} images", uploadedImageUrls.size());
+        }
+
+        // Add images from upload
+        if (!uploadedImageUrls.isEmpty()) {
             int order = 0;
+            for (String imageUrl : uploadedImageUrls) {
+                ReviewImageEntity image = mapper.toImageEntity(imageUrl, review, order++);
+                imageRepository.save(image);
+            }
+        }
+
+        // Add images from request (if any - for backward compatibility)
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            int order = uploadedImageUrls.size();
             for (String imageUrl : request.getImageUrls()) {
                 ReviewImageEntity image = mapper.toImageEntity(imageUrl, review, order++);
                 imageRepository.save(image);
@@ -84,6 +104,16 @@ public class ReviewServiceImpl implements ReviewService {
             // Increment tag usage
             tags.forEach(tag -> tagRepository.incrementUsageCount(tag.getId()));
         }
+
+        // Load images explicitly (since images are lazy loaded)
+        // IMPORTANT: Don't use setImages() because it has orphanRemoval=true
+        // We must clear and addAll to the existing collection
+        List<ReviewImageEntity> savedImages = imageRepository.findByReview_Id(review.getId());
+        if (review.getImages() == null) {
+            review.setImages(new ArrayList<>());
+        }
+        review.getImages().clear();
+        review.getImages().addAll(savedImages);
 
         return mapper.toResponse(review);
     }
@@ -105,7 +135,7 @@ public class ReviewServiceImpl implements ReviewService {
         return response;
     }
 
-    public ReviewResponse updateReview(Long id, ReviewUpdateRequest request, Long userId) {
+    public ReviewResponse updateReview(Long id, ReviewUpdateRequest request, Long userId, List<MultipartFile> images) {
         ReviewEntity review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 
@@ -123,9 +153,48 @@ public class ReviewServiceImpl implements ReviewService {
             review.setCategory(category);
         }
 
-        // Update images
-        if (request.getImageUrls() != null) {
+        // Handle image updates
+        // Only update images if new images are provided (images != null and not empty)
+        if (images != null && !images.isEmpty()) {
+            // Delete old images (both from DB and file service)
+            List<ReviewImageEntity> oldImages = imageRepository.findByReview_Id(id);
+            for (ReviewImageEntity oldImage : oldImages) {
+                try {
+                    fileUtil.deleteFileByUrl(oldImage.getImageUrl());
+                } catch (Exception e) {
+                    log.warn("Failed to delete old image: {}", e.getMessage());
+                }
+            }
             imageRepository.deleteByReview_Id(id);
+
+            // Upload new images
+            log.info("Uploading {} new images for review", images.size());
+            List<String> uploadedImageUrls = fileUtil.uploadMultipleImages(images);
+            log.info("Successfully uploaded {} images", uploadedImageUrls.size());
+
+            // Add new images
+            int order = 0;
+            for (String imageUrl : uploadedImageUrls) {
+                ReviewImageEntity image = mapper.toImageEntity(imageUrl, review, order++);
+                imageRepository.save(image);
+            }
+        }
+
+        // Update images from imageUrls in request (if provided - for backward compatibility)
+        // This will replace existing images
+        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
+            // Delete old images if updating via URLs
+            List<ReviewImageEntity> oldImages = imageRepository.findByReview_Id(id);
+            for (ReviewImageEntity oldImage : oldImages) {
+                try {
+                    fileUtil.deleteFileByUrl(oldImage.getImageUrl());
+                } catch (Exception e) {
+                    log.warn("Failed to delete old image: {}", e.getMessage());
+                }
+            }
+            imageRepository.deleteByReview_Id(id);
+
+            // Add new images from URLs
             int order = 0;
             for (String imageUrl : request.getImageUrls()) {
                 ReviewImageEntity image = mapper.toImageEntity(imageUrl, review, order++);
@@ -145,6 +214,17 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         review = reviewRepository.save(review);
+
+        // Load images explicitly (since images are lazy loaded)
+        // IMPORTANT: Don't use setImages() because it has orphanRemoval=true
+        // We must clear and addAll to the existing collection
+        List<ReviewImageEntity> savedImages = imageRepository.findByReview_Id(review.getId());
+        if (review.getImages() == null) {
+            review.setImages(new ArrayList<>());
+        }
+        review.getImages().clear();
+        review.getImages().addAll(savedImages);
+
         return mapper.toResponse(review);
     }
 

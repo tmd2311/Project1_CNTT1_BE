@@ -1,4 +1,6 @@
 package  com.proshop.review_service.controller;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.review_service.client.AuthClient;
@@ -18,10 +20,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 
 // ============================================
@@ -88,8 +93,13 @@ public class ReviewController {
     // CREATE & UPDATE
     // ============================================
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
+    /**
+     * Tạo review mới với JSON (không có ảnh)
+     * POST /api/reviews
+     * Content-Type: application/json
+     */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<ReviewResponse>> createReviewJson(
             @Valid @RequestBody ReviewCreateRequest request,
             HttpServletRequest httpRequest) {
 
@@ -97,21 +107,99 @@ public class ReviewController {
         String userName = getUserNameFromToken(httpRequest);
         String userAvatar = getUserAvatarFromToken(httpRequest);
 
-        log.info("Creating review for user: {} ({})", userName, userId);
-        ReviewResponse response = reviewService.createReview(request, userId, userName, userAvatar);
+        log.info("Creating review (JSON) for user: {} ({})", userName, userId);
+
+        ReviewResponse response = reviewService.createReview(request, userId, userName, userAvatar, List.of());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Review created successfully", response));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
+    /**
+     * Tạo review mới với ảnh (multipart)
+     * POST /api/reviews
+     * Content-Type: multipart/form-data
+     * Form-data format:
+     * - review: JSON string (required)
+     * - images: file[] (optional)
+     */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ReviewResponse>> createReviewWithImages(
+            @RequestPart("review") String reviewJson,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            HttpServletRequest httpRequest) throws JsonProcessingException {
+
+        log.debug("Received review JSON: {}", reviewJson);
+        if (images != null) {
+            log.debug("Received {} images", images.length);
+        }
+
+        // Parse JSON to object
+        ObjectMapper mapper = new ObjectMapper();
+        ReviewCreateRequest request = mapper.readValue(reviewJson, ReviewCreateRequest.class);
+
+        Long userId = getUserIdFromToken(httpRequest);
+        String userName = getUserNameFromToken(httpRequest);
+        String userAvatar = getUserAvatarFromToken(httpRequest);
+
+        log.info("Creating review (multipart) for user: {} ({})", userName, userId);
+
+        // Convert MultipartFile[] to List
+        List<MultipartFile> imageList = images != null ? Arrays.asList(images) : List.of();
+
+        ReviewResponse response = reviewService.createReview(request, userId, userName, userAvatar, imageList);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Review created successfully", response));
+    }
+
+    /**
+     * Cập nhật review với JSON (không có ảnh)
+     * PUT /api/reviews/{id}
+     * Content-Type: application/json
+     */
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<ReviewResponse>> updateReviewJson(
             @PathVariable Long id,
             @Valid @RequestBody ReviewUpdateRequest request,
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Updating review {} by user: {}", id, userId);
-        ReviewResponse response = reviewService.updateReview(id, request, userId);
+        log.info("Updating review (JSON) {} by user: {}", id, userId);
+
+        ReviewResponse response = reviewService.updateReview(id, request, userId, List.of());
+        return ResponseEntity.ok(ApiResponse.success("Review updated successfully", response));
+    }
+
+    /**
+     * Cập nhật review với ảnh (multipart)
+     * PUT /api/reviews/{id}
+     * Content-Type: multipart/form-data
+     * Form-data format:
+     * - review: JSON string (required)
+     * - images: file[] (optional)
+     */
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ReviewResponse>> updateReviewWithImages(
+            @PathVariable Long id,
+            @RequestPart("review") String reviewJson,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            HttpServletRequest httpRequest) throws JsonProcessingException {
+
+        log.debug("Received review JSON for update: {}", reviewJson);
+        if (images != null) {
+            log.debug("Received {} images for update", images.length);
+        }
+
+        // Parse JSON to object
+        ObjectMapper mapper = new ObjectMapper();
+        ReviewUpdateRequest request = mapper.readValue(reviewJson, ReviewUpdateRequest.class);
+
+        Long userId = getUserIdFromToken(httpRequest);
+        log.info("Updating review (multipart) {} by user: {}", id, userId);
+
+        // Convert MultipartFile[] to List
+        List<MultipartFile> imageList = images != null ? Arrays.asList(images) : List.of();
+
+        ReviewResponse response = reviewService.updateReview(id, request, userId, imageList);
         return ResponseEntity.ok(ApiResponse.success("Review updated successfully", response));
     }
 
