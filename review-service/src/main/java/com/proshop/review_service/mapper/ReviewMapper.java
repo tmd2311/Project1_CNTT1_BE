@@ -1,113 +1,34 @@
 package com.proshop.review_service.mapper;
 
-
-import com.proshop.review_service.dto.request.*;
-import com.proshop.review_service.dto.response.*;
-import com.proshop.review_service.entity.*;
-import com.proshop.review_service.util.enums.ReviewType;
+import com.proshop.review_service.dto.request.AnswerCreateRequest;
+import com.proshop.review_service.dto.request.AnswerUpdateRequest;
+import com.proshop.review_service.dto.request.CategoryRequest;
+import com.proshop.review_service.dto.response.AnswerResponse;
+import com.proshop.review_service.dto.response.CategoryResponse;
+import com.proshop.review_service.dto.response.TagResponse;
+import com.proshop.review_service.entity.AnswerEntity;
+import com.proshop.review_service.entity.QuestionEntity;
+import com.proshop.review_service.entity.ReviewCategoryEntity;
+import com.proshop.review_service.entity.TagEntity;
 import org.springframework.stereotype.Component;
-
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-
+/**
+ * Mapper cho Answer (câu trả lời cho Question)
+ * Note: ReviewMapper được giữ lại để map Answer, Category, Tag - không còn map Review nữa
+ */
 @Component
 public class ReviewMapper {
 
     // ============================================
-    // REVIEW MAPPINGS
+    // ANSWER MAPPINGS (for Question)
     // ============================================
 
-    public ReviewEntity toEntity(ReviewCreateRequest request, Long userId, String userName, String userAvatar) {
-        ReviewEntity review = ReviewEntity.builder()
-                .type(ReviewType.valueOf(request.getType()))
-                .title(request.getTitle())
-                .content(request.getContent())
-                .userId(userId)
-                .userName(userName)
-                .userAvatar(userAvatar)
-                .productId(request.getProductId() != null ? request.getProductId() : 0L)
-                .rating(request.getRating())
-                .build();
-
-        return review;
-    }
-
-    public ReviewResponse toResponse(ReviewEntity review) {
-        return ReviewResponse.builder()
-                .id(review.getId())
-                .type(review.getType().name())
-                .title(review.getTitle())
-                .content(review.getContent())
-                .userId(review.getUserId())
-                .userName(review.getUserName())
-                .userAvatar(review.getUserAvatar())
-                .productId(review.getProductId())
-                .productName(review.getProductName())
-                .rating(review.getRating())
-                .images(review.getImages() != null ?
-                        review.getImages().stream().map(this::toImageResponse).collect(Collectors.toList()) : null)
-                .category(review.getCategory() != null ? toCategoryResponse(review.getCategory()) : null)
-                .likeCount(review.getLikeCount())
-                .viewCount(review.getViewCount())
-                .answerCount(review.getAnswerCount())
-                .status(review.getStatus().name())
-                .isVerified(review.getIsVerified())
-                .isFeatured(review.getIsFeatured())
-                .createdAt(review.getCreatedAt())
-                .updatedAt(review.getUpdatedAt())
-                .tags(review.getTags() != null ?
-                        review.getTags().stream().map(this::toTagResponse).collect(Collectors.toList()) : null)
-                .build();
-    }
-
-    public ReviewSummaryResponse toSummaryResponse(ReviewEntity review) {
-        String truncatedContent = review.getContent();
-        if (truncatedContent != null && truncatedContent.length() > 200) {
-            truncatedContent = truncatedContent.substring(0, 197) + "...";
-        }
-
-        return ReviewSummaryResponse.builder()
-                .id(review.getId())
-                .type(review.getType().name())
-                .title(review.getTitle())
-                .content(truncatedContent)
-                .userId(review.getUserId())
-                .userName(review.getUserName())
-                .userAvatar(review.getUserAvatar())
-                .productId(review.getProductId())
-                .productName(review.getProductName())
-                .rating(review.getRating())
-                .category(review.getCategory() != null ? toCategoryResponse(review.getCategory()) : null)
-                .likeCount(review.getLikeCount())
-                .viewCount(review.getViewCount())
-                .answerCount(review.getAnswerCount())
-                .createdAt(review.getCreatedAt())
-                .tags(review.getTags() != null ?
-                        review.getTags().stream().map(this::toTagResponse).collect(Collectors.toList()) : null)
-                .build();
-    }
-
-    public void updateEntity(ReviewEntity review, ReviewUpdateRequest request) {
-        if (request.getTitle() != null) {
-            review.setTitle(request.getTitle());
-        }
-        if (request.getContent() != null) {
-            review.setContent(request.getContent());
-        }
-        if (request.getRating() != null) {
-            review.setRating(request.getRating());
-        }
-    }
-
-    // ============================================
-    // ANSWER MAPPINGS
-    // ============================================
-
-    public AnswerEntity toEntity(AnswerCreateRequest request, ReviewEntity review, Long userId, String userName, String userAvatar) {
+    public AnswerEntity toEntity(AnswerCreateRequest request, QuestionEntity question, Long userId, String userName, String userAvatar) {
         return AnswerEntity.builder()
-                .review(review)
+                .question(question)
                 .content(request.getContent())
                 .userId(userId)
                 .userName(userName)
@@ -118,7 +39,7 @@ public class ReviewMapper {
     public AnswerResponse toAnswerResponse(AnswerEntity answer) {
         return AnswerResponse.builder()
                 .id(answer.getId())
-                .reviewId(answer.getReview().getId())
+                .reviewId(answer.getQuestion().getId()) // questionId mapped to reviewId for backward compatibility
                 .userId(answer.getUserId())
                 .userName(answer.getUserName())
                 .userAvatar(answer.getUserAvatar())
@@ -137,6 +58,12 @@ public class ReviewMapper {
         if (request.getContent() != null) {
             answer.setContent(request.getContent());
         }
+    }
+
+    public List<AnswerResponse> toAnswerResponseList(List<AnswerEntity> answers) {
+        return answers.stream()
+                .map(this::toAnswerResponse)
+                .collect(Collectors.toList());
     }
 
     // ============================================
@@ -184,6 +111,12 @@ public class ReviewMapper {
         }
     }
 
+    public List<CategoryResponse> toCategoryResponseList(List<ReviewCategoryEntity> categories) {
+        return categories.stream()
+                .map(this::toCategoryResponse)
+                .collect(Collectors.toList());
+    }
+
     // ============================================
     // TAG MAPPINGS
     // ============================================
@@ -203,54 +136,6 @@ public class ReviewMapper {
                 .slug(tag.getSlug())
                 .usageCount(tag.getUsageCount())
                 .build();
-    }
-
-    // ============================================
-    // IMAGE MAPPINGS
-    // ============================================
-
-    public ReviewImageEntity toImageEntity(String imageUrl, ReviewEntity review, int order) {
-        return ReviewImageEntity.builder()
-                .imageUrl(imageUrl)
-                .review(review)
-                .displayOrder(order)
-                .build();
-    }
-
-    public ReviewImageResponse toImageResponse(ReviewImageEntity image) {
-        return ReviewImageResponse.builder()
-                .id(image.getId())
-                .imageUrl(image.getImageUrl())
-                .displayOrder(image.getDisplayOrder())
-                .build();
-    }
-
-    // ============================================
-    // LIST MAPPINGS
-    // ============================================
-
-    public List<ReviewResponse> toResponseList(List<ReviewEntity> reviews) {
-        return reviews.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    public List<ReviewSummaryResponse> toSummaryResponseList(List<ReviewEntity> reviews) {
-        return reviews.stream()
-                .map(this::toSummaryResponse)
-                .collect(Collectors.toList());
-    }
-
-    public List<AnswerResponse> toAnswerResponseList(List<AnswerEntity> answers) {
-        return answers.stream()
-                .map(this::toAnswerResponse)
-                .collect(Collectors.toList());
-    }
-
-    public List<CategoryResponse> toCategoryResponseList(List<ReviewCategoryEntity> categories) {
-        return categories.stream()
-                .map(this::toCategoryResponse)
-                .collect(Collectors.toList());
     }
 
     public List<TagResponse> toTagResponseList(List<TagEntity> tags) {

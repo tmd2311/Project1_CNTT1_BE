@@ -3,44 +3,34 @@ package com.proshop.review_service.dto.request;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.*;
 import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-// ============================================
-// REVIEW DTOs
-// ============================================
-
-// Request DTO - Tạo Review mới
+/**
+ * Request DTO - Tạo đánh giá sản phẩm mới
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReviewCreateRequest {
+public class ProductReviewCreateRequest {
 
-    @NotNull(message = "Review type is required")
-    private String type; // "QA" hoặc "PRODUCT_REVIEW"
-
-    // Cho Q&A
-    @Size(max = 500, message = "Title must be less than 500 characters")
-    private String title;
+    @NotNull(message = "Product ID is required")
+    private UUID productId; // ID sản phẩm
 
     @NotBlank(message = "Content is required")
     @Size(min = 10, max = 5000, message = "Content must be between 10 and 5000 characters")
-    private String content;
+    private String content; // Nội dung đánh giá
 
-    // Cho Product Review
-    private Long productId;
-
+    @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
-    private Double rating;
+    private Double rating; // Số sao (1-5)
 
     private List<String> imageUrls = new ArrayList<>(); // URLs ảnh upload
 
-    // Category (cho Q&A)
-    private Long categoryId;
-
-    // Tags
-    private List<String> tags = new ArrayList<>();
+    private List<String> tags = new ArrayList<>(); // Tags
 }

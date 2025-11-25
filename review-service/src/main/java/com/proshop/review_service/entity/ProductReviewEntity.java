@@ -1,7 +1,6 @@
 package com.proshop.review_service.entity;
 
 import com.proshop.review_service.util.enums.ReviewStatus;
-import com.proshop.review_service.util.enums.ReviewType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,34 +9,30 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-// ============================================
-// 1. REVIEW ENTITY (Hỗ trợ cả Q&A và Product Review)
-// ============================================
+/**
+ * Entity cho đánh giá sản phẩm (Product Review)
+ * Liên quan đến sản phẩm cụ thể
+ */
 @Entity
-@Table(name = "reviews", indexes = {
-        @Index(name = "idx_product_id", columnList = "productId"),
-        @Index(name = "idx_user_id", columnList = "userId"),
-        @Index(name = "idx_type", columnList = "type"),
-        @Index(name = "idx_status", columnList = "status")
+@Table(name = "product_reviews", indexes = {
+        @Index(name = "idx_product_review_product_id", columnList = "productId"),
+        @Index(name = "idx_product_review_user_id", columnList = "userId"),
+        @Index(name = "idx_product_review_status", columnList = "status"),
+        @Index(name = "idx_product_review_rating", columnList = "rating"),
+        @Index(name = "idx_product_review_created_at", columnList = "createdAt")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewEntity {
+public class ProductReviewEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // ============================================
-    // PHÂN LOẠI: Q&A hay Product Review
-    // ============================================
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ReviewType type; // QA hoặc PRODUCT_REVIEW
 
     // ============================================
     // THÔNG TIN NGƯỜI DÙNG
@@ -52,35 +47,29 @@ public class ReviewEntity {
     private String userAvatar; // URL avatar
 
     // ============================================
-    // NỘI DUNG REVIEW
+    // NỘI DUNG ĐÁNH GIÁ
     // ============================================
-    @Column(length = 500)
-    private String title; // Tiêu đề (cho Q&A) - "Laptop nào phù hợp học tập?"
-
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String content; // Nội dung chi tiết
+    private String content; // Nội dung đánh giá
 
     // ============================================
-    // ĐÁNH GIÁ SẢN PHẨM (Product Review only)
+    // THÔNG TIN SẢN PHẨM
     // ============================================
-    @Column(nullable = false)
-    private Long productId = 0L; // ID sản phẩm (0 nếu là Q&A)
+    @Column(nullable = false, columnDefinition = "UUID")
+    private UUID productId; // ID sản phẩm
 
+    @Column(length = 255)
     private String productName; // Tên sản phẩm (cache)
 
-
-    private Double rating; // Số sao: 1.0 - 5.0 (null nếu là Q&A)
-
-    // Ảnh thực tế sản phẩm (Product Review only)
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewImageEntity> images = new ArrayList<>();
+    @Column(nullable = false)
+    private Double rating; // Số sao: 1.0 - 5.0
 
     // ============================================
-    // DANH MỤC (cho Q&A)
+    // ẢNH THỰC TẾ SẢN PHẨM
     // ============================================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private ReviewCategoryEntity category; // Laptop, Gaming, PC...
+    @OneToMany(mappedBy = "productReview", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<ProductReviewImageEntity> images = new ArrayList<>();
 
     // ============================================
     // TƯƠNG TÁC
@@ -89,17 +78,7 @@ public class ReviewEntity {
     private Integer likeCount = 0; // Số like
 
     @Column(nullable = false)
-    private Integer viewCount = 0; // Số lượt xem (245 lượt xem)
-
-    @Column(name = "answer_count", nullable = true)
-    private Integer answerCount = 0; // Số câu trả lời (2)
-
-    // ============================================
-    // CÁC CÂU TRẢ LỜI
-    // ============================================
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("createdAt ASC")
-    private List<AnswerEntity> answers = new ArrayList<>();
+    private Integer viewCount = 0; // Số lượt xem
 
     // ============================================
     // TRẠNG THÁI
@@ -110,33 +89,32 @@ public class ReviewEntity {
 
     @Builder.Default
     @Column(name = "is_verified", nullable = false)
-    private Boolean isVerified = false;
-
+    private Boolean isVerified = false; // Đánh giá được xác minh (đã mua hàng)
 
     @Builder.Default
     @Column(name = "is_featured", nullable = false)
-    private Boolean isFeatured = false;
+    private Boolean isFeatured = false; // Đánh giá nổi bật
 
     @Column(length = 500)
-    private String rejectionReason;// Review nổi bật
+    private String rejectionReason; // Lý do từ chối
 
     // ============================================
     // TIMESTAMPS
     // ============================================
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 2024-01-15
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     // ============================================
-    // TAGS (optional)
+    // TAGS
     // ============================================
     @ManyToMany
     @JoinTable(
-            name = "review_tags",
-            joinColumns = @JoinColumn(name = "review_id"),
+            name = "product_review_tags",
+            joinColumns = @JoinColumn(name = "product_review_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private List<TagEntity> tags = new ArrayList<>();

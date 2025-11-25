@@ -1,0 +1,30 @@
+-- -- Migration: Change product_id from BIGINT to UUID in sale_products table
+-- -- Author: System
+-- -- Date: 2025-11-23
+--
+-- -- Step 1: Add a new temporary UUID column
+-- ALTER TABLE sale_products
+-- ADD COLUMN product_id_uuid UUID;
+--
+-- -- Step 2: Migrate existing data (if needed)
+-- -- Note: If there's existing data, you'll need to map old BIGINT IDs to new UUIDs
+-- -- This might require a mapping table or manual data migration
+-- -- UPDATE sale_products SET product_id_uuid = <mapping_logic>;
+--
+-- -- Step 3: Drop old product_id column
+-- ALTER TABLE sale_products
+-- DROP COLUMN product_id;
+--
+-- -- Step 4: Rename new column to product_id
+-- ALTER TABLE sale_products
+-- RENAME COLUMN product_id_uuid TO product_id;
+--
+-- -- Step 5: Update index (if exists)
+-- -- Drop old index if exists
+-- DROP INDEX IF EXISTS idx_sale_products_product_id;
+--
+-- -- Create new index on UUID column
+-- CREATE INDEX idx_sale_products_product_id ON sale_products(product_id);
+--
+-- -- Add comment
+-- COMMENT ON COLUMN sale_products.product_id IS 'UUID of the product (applies to entire product)';

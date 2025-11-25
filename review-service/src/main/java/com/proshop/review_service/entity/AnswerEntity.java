@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "answers", indexes = {
-        @Index(name = "idx_review_id", columnList = "review_id")
+        @Index(name = "idx_question_id", columnList = "question_id")
 })
 @Getter
 @Setter
@@ -23,8 +23,8 @@ public class AnswerEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "review_id", nullable = false)
-    private ReviewEntity review; // Câu hỏi/Review gốc
+    @JoinColumn(name = "question_id", nullable = false)
+    private QuestionEntity question; // Câu hỏi gốc
 
     // ============================================
     // THÔNG TIN NGƯỜI TRẢ LỜI

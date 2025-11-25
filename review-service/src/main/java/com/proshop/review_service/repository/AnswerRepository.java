@@ -15,22 +15,22 @@ import java.util.Optional;
 @Repository
 public interface AnswerRepository extends JpaRepository<AnswerEntity, Long> {
 
-    // Tìm theo review
-    List<AnswerEntity> findByReview_IdOrderByCreatedAtAsc(Long reviewId);
-    Page<AnswerEntity> findByReview_Id(Long reviewId, Pageable pageable);
+    // Tìm theo question
+    List<AnswerEntity> findByQuestion_IdOrderByCreatedAtAsc(Long questionId);
+    Page<AnswerEntity> findByQuestion_Id(Long questionId, Pageable pageable);
 
     // Tìm theo user
     Page<AnswerEntity> findByUserId(Long userId, Pageable pageable);
     List<AnswerEntity> findByUserId(Long userId);
 
-    // Đếm số answer của review
-    Long countByReview_Id(Long reviewId);
+    // Đếm số answer của question
+    Long countByQuestion_Id(Long questionId);
 
     // Tìm best answer
-    Optional<AnswerEntity> findByReview_IdAndIsBestAnswerTrue(Long reviewId);
+    Optional<AnswerEntity> findByQuestion_IdAndIsBestAnswerTrue(Long questionId);
 
     // Tìm verified answers
-    List<AnswerEntity> findByReview_IdAndIsVerifiedTrue(Long reviewId);
+    List<AnswerEntity> findByQuestion_IdAndIsVerifiedTrue(Long questionId);
 
     // Update like count
     @Modifying

@@ -4,32 +4,28 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
+/**
+ * Request DTO - Cập nhật đánh giá sản phẩm
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReviewUpdateRequest {
+public class ProductReviewUpdateRequest {
 
-    @Size(max = 500)
-    private String title;
-
-    @Size(min = 10, max = 5000)
+    @Size(min = 10, max = 5000, message = "Content must be between 10 and 5000 characters")
     private String content;
 
-    @Min(1) @Max(5)
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
     private Double rating;
 
     private List<String> imageUrls;
-
-    private Long categoryId;
 
     private List<String> tags;
 }
