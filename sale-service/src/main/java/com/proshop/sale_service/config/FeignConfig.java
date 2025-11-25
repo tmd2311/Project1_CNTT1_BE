@@ -14,7 +14,6 @@ import org.springframework.cloud.openfeign.support.SpringEncoder;
  * Configuration cho Feign Client
  */
 @Configuration
-@EnableFeignClients(basePackages = "com.proshop.sale_service.client")
 public class FeignConfig {
     private final ObjectFactory<HttpMessageConverters> messageConverters;
 
