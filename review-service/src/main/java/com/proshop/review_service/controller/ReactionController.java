@@ -5,7 +5,7 @@ import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.review_service.dto.request.ReactionRequest;
 import com.proshop.review_service.dto.response.ApiResponse;
-import com.proshop.review_service.service.ReviewService;
+import com.proshop.review_service.service.ReactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class ReactionController {
 
-    private final ReviewService reviewService;
+    private final ReactionService reactionService;
     private final JwtUtil jwtUtil;
 
     private Long getUserIdFromToken(HttpServletRequest request) {
@@ -43,7 +43,7 @@ public class ReactionController {
 
         Long userId = getUserIdFromToken(httpRequest);
         log.info("User {} reacting to {} {}", userId, request.getTargetType(), request.getTargetId());
-        reviewService.addReaction(request, userId);
+        reactionService.addReaction(request, userId);
         return ResponseEntity.ok(ApiResponse.success("Reaction added successfully", null));
     }
 }

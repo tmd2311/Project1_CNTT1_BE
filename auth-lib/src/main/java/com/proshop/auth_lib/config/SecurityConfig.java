@@ -73,10 +73,22 @@ public class SecurityConfig {
             // Statistics - public for users to view
             .requestMatchers(HttpMethod.GET, "/api/products/statistics/**").permitAll()
 
-            // Reviews - GET and search are public
-            .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+            // Questions (Q&A) - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/questions").permitAll()
+
+            // Product Reviews - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/product-reviews/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/product-reviews").permitAll()
+
+            // Answers - GET requests are public
             .requestMatchers(HttpMethod.GET, "/api/answers/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/reviews/search").permitAll()
+
+            // Categories - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/review-categories/**").permitAll()
+
+            // Tags - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/tags/**").permitAll()
 
             // Order - best sellers is public
             .requestMatchers(HttpMethod.GET, "/api/order/best-sellers").permitAll()
@@ -116,8 +128,11 @@ public class SecurityConfig {
             // Order Admin endpoints
             .requestMatchers("/api/order/admin/**").hasRole("ADMIN")
 
-            // Review Admin endpoints
-            .requestMatchers(HttpMethod.PUT, "/api/reviews/{id}/status").hasRole("ADMIN")
+            // Question Admin endpoints - Status management requires ADMIN
+            .requestMatchers(HttpMethod.PUT, "/api/questions/*/status").hasRole("ADMIN")
+
+            // Product Review Admin endpoints - Status management requires ADMIN
+            .requestMatchers(HttpMethod.PUT, "/api/product-reviews/*/status").hasRole("ADMIN")
 
             // Sales Admin endpoints - Create, Update, Delete require ADMIN
             .requestMatchers(HttpMethod.POST, "/api/v1/sales/**").hasRole("ADMIN")
@@ -139,10 +154,23 @@ public class SecurityConfig {
             // Order - user endpoints require authentication
             .requestMatchers("/api/order/**").authenticated()
 
-            // Reviews - Create, Update, Delete require authentication
-            .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
-            .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
-            .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+            // Questions - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/questions/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/questions/**").authenticated()
+
+            // Product Reviews - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/product-reviews").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/product-reviews/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/product-reviews/**").authenticated()
+
+            // Answers - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/answers").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/answers/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/answers/**").authenticated()
+
+            // Reactions - Add/Remove reactions require authentication
+            .requestMatchers(HttpMethod.POST, "/api/reactions").authenticated()
 
             // Vouchers - User endpoints require authentication
             .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/validate").authenticated()

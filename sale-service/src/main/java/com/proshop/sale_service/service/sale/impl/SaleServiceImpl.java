@@ -12,11 +12,13 @@ import com.proshop.sale_service.entity.SaleProductEntity;
 import com.proshop.sale_service.repository.SaleProductRepository;
 import com.proshop.sale_service.repository.SaleRepository;
 import com.proshop.sale_service.service.sale.SaleService;
+import com.proshop.sale_service.util.FileUtil;
 import com.proshop.sale_service.util.enums.SaleType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,10 +36,11 @@ public class SaleServiceImpl implements SaleService {
     private final SaleRepository saleRepository;
     private final SaleProductRepository saleProductRepository;
     private final ProductClient productClient;
+    private final FileUtil fileUtil;
 
     @Override
     @Transactional
-    public SaleResponse createSale(SaleCreateRequest request) {
+    public SaleResponse createSale(SaleCreateRequest request, MultipartFile bannerImage, MultipartFile thumbnailImage) {
         log.info("Creating sale with code: {}", request.getCode());
 
         // Check code đã tồn tại chưa
@@ -50,7 +53,25 @@ public class SaleServiceImpl implements SaleService {
             throw new ResException(ResErrorCode.SALE_INVALID_DATE);
         }
 
+        // Upload images if provided
+        String bannerImageUrl = null;
+        String thumbnailImageUrl = null;
+
+        if (bannerImage != null && !bannerImage.isEmpty()) {
+            bannerImageUrl = fileUtil.uploadSingleImage(bannerImage);
+            log.info("Uploaded banner image: {}", bannerImageUrl);
+        }
+
+        if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+            thumbnailImageUrl = fileUtil.uploadSingleImage(thumbnailImage);
+            log.info("Uploaded thumbnail image: {}", thumbnailImageUrl);
+        }
+
         SaleEntity sale = mapToEntity(request);
+
+        // Set image URLs
+        sale.setBannerImageUrl(bannerImageUrl);
+        sale.setThumbnailImageUrl(thumbnailImageUrl);
 
         // Auto set status based on dates
         LocalDateTime now = LocalDateTime.now();
@@ -100,7 +121,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     @Transactional
-    public SaleResponse updateSale(Long id, SaleCreateRequest request) {
+    public SaleResponse updateSale(Long id, SaleCreateRequest request, MultipartFile bannerImage, MultipartFile thumbnailImage) {
         log.info("Updating sale with id: {}", id);
 
         SaleEntity sale = saleRepository.findById(id)
@@ -135,8 +156,38 @@ public class SaleServiceImpl implements SaleService {
             sale.setStartDate(request.getStartDate());
             sale.setEndDate(request.getEndDate());
             sale.setPriority(request.getPriority());
-            sale.setBannerImageUrl(request.getBannerImageUrl());
-            sale.setThumbnailImageUrl(request.getThumbnailImageUrl());
+
+            // Handle banner image upload
+            if (bannerImage != null && !bannerImage.isEmpty()) {
+                // Delete old banner image if exists
+                if (sale.getBannerImageUrl() != null) {
+                    try {
+                        fileUtil.deleteFileByUrl(sale.getBannerImageUrl());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete old banner image: {}", e.getMessage());
+                    }
+                }
+                // Upload new banner image
+                String newBannerUrl = fileUtil.uploadSingleImage(bannerImage);
+                sale.setBannerImageUrl(newBannerUrl);
+                log.info("Updated banner image: {}", newBannerUrl);
+            }
+
+            // Handle thumbnail image upload
+            if (thumbnailImage != null && !thumbnailImage.isEmpty()) {
+                // Delete old thumbnail image if exists
+                if (sale.getThumbnailImageUrl() != null) {
+                    try {
+                        fileUtil.deleteFileByUrl(sale.getThumbnailImageUrl());
+                    } catch (Exception e) {
+                        log.warn("Failed to delete old thumbnail image: {}", e.getMessage());
+                    }
+                }
+                // Upload new thumbnail image
+                String newThumbnailUrl = fileUtil.uploadSingleImage(thumbnailImage);
+                sale.setThumbnailImageUrl(newThumbnailUrl);
+                log.info("Updated thumbnail image: {}", newThumbnailUrl);
+            }
 
             SaleEntity updatedSale = saleRepository.save(sale);
 
@@ -204,7 +255,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add categories
         if (request.getCategoryIds() != null) {
-            for (Long categoryId : request.getCategoryIds()) {
+            for (UUID categoryId : request.getCategoryIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setCategoryId(categoryId);
@@ -214,7 +265,7 @@ public class SaleServiceImpl implements SaleService {
 
         // Add brands
         if (request.getBrandIds() != null) {
-            for (Long brandId : request.getBrandIds()) {
+            for (UUID brandId : request.getBrandIds()) {
                 SaleProductEntity sp = new SaleProductEntity();
                 sp.setSaleId(saleId);
                 sp.setBrandId(brandId);
@@ -301,10 +352,18 @@ public class SaleServiceImpl implements SaleService {
                 if (sp.getSkuId() != null) {
                     // Apply cho SKU cụ thể
                     applySaleToSKU(sale, sp);
+                } else if (sp.getProductId() != null) {
+                    // Apply cho tất cả SKU của product
+                    applySaleToProduct(sale, sp);
+                } else if (sp.getCategoryId() != null) {
+                    // Apply cho tất cả SKU trong category
+                    applySaleToCategory(sale, sp);
+                } else if (sp.getBrandId() != null) {
+                    // Apply cho tất cả SKU của brand
+                    applySaleToBrand(sale, sp);
                 }
-                // TODO: Handle product, category, brand
             } catch (Exception e) {
-                log.error("Failed to apply sale to SKU {}", sp.getSkuId(), e);
+                log.error("Failed to apply sale to product/SKU/category/brand", e);
             }
         }
 
@@ -341,6 +400,140 @@ public class SaleServiceImpl implements SaleService {
     }
 
     // ========== HELPER METHODS ==========
+
+    /**
+     * Apply sale to all SKUs of a product
+     */
+    private void applySaleToProduct(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of product {}", sale.getId(), saleProduct.getProductId());
+
+            // Lấy tất cả SKU của product
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByProductId(saleProduct.getProductId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for product {}", saleProduct.getProductId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of product {}",
+                        sku.getId(), saleProduct.getProductId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs of product {}", skus.size(), saleProduct.getProductId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to product {}", saleProduct.getProductId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs in a category
+     */
+    private void applySaleToCategory(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs in category {}", sale.getId(), saleProduct.getCategoryId());
+
+            // Lấy tất cả SKU trong category
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByCategoryId(saleProduct.getCategoryId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for category {}", saleProduct.getCategoryId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of category {}",
+                        sku.getId(), saleProduct.getCategoryId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs in category {}", skus.size(), saleProduct.getCategoryId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to category {}", saleProduct.getCategoryId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to all SKUs of a brand
+     */
+    private void applySaleToBrand(SaleEntity sale, SaleProductEntity saleProduct) {
+        try {
+            log.info("Applying sale {} to all SKUs of brand {}", sale.getId(), saleProduct.getBrandId());
+
+            // Lấy tất cả SKU của brand
+            List<ProductClient.SKUResponse> skus = productClient.getSKUsByBrandId(saleProduct.getBrandId())
+                .getData();
+
+            if (skus == null || skus.isEmpty()) {
+                log.warn("No SKUs found for brand {}", saleProduct.getBrandId());
+                return;
+            }
+
+            // Apply sale cho từng SKU
+            for (ProductClient.SKUResponse sku : skus) {
+                try {
+                    applySaleToSingleSKU(sale, saleProduct, sku);
+                } catch (Exception e) {
+                    log.error("Failed to apply sale to SKU {} of brand {}",
+                        sku.getId(), saleProduct.getBrandId(), e);
+                }
+            }
+
+            log.info("Applied sale to {} SKUs of brand {}", skus.size(), saleProduct.getBrandId());
+        } catch (Exception e) {
+            log.error("Failed to apply sale to brand {}", saleProduct.getBrandId(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Apply sale to a single SKU (helper method for product/category/brand)
+     */
+    private void applySaleToSingleSKU(SaleEntity sale, SaleProductEntity saleProduct, ProductClient.SKUResponse sku) {
+        try {
+            // Calculate sale price
+            BigDecimal originalPrice = BigDecimal.valueOf(sku.getPrice());
+            BigDecimal salePrice = calculateSalePrice(originalPrice, sale);
+            BigDecimal discountAmount = originalPrice.subtract(salePrice);
+
+            // Update SaleProduct entity
+            saleProduct.setOriginalPrice(originalPrice);
+            saleProduct.setSalePrice(salePrice);
+            saleProduct.setDiscountAmount(discountAmount);
+            saleProduct.setIsApplied(true);
+            saleProduct.setAppliedAt(LocalDateTime.now());
+            saleProductRepository.save(saleProduct);
+
+            // Call Product Service to update SKU price
+            ProductClient.UpdateSKUSalePriceRequest request =
+                new ProductClient.UpdateSKUSalePriceRequest(
+                    originalPrice.doubleValue(),
+                    salePrice.doubleValue(),
+                    sale.getId()
+                );
+
+            productClient.updateSKUSalePrice(sku.getId(), request);
+
+            log.debug("Applied sale to SKU {}: {} -> {}", sku.getId(), originalPrice, salePrice);
+        } catch (Exception e) {
+            log.error("Failed to apply sale to SKU {}", sku.getId(), e);
+            throw e;
+        }
+    }
 
     /**
      * Apply sale to specific SKU

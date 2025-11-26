@@ -8,7 +8,7 @@ import com.proshop.review_service.dto.request.AnswerCreateRequest;
 import com.proshop.review_service.dto.request.AnswerUpdateRequest;
 import com.proshop.review_service.dto.response.AnswerResponse;
 import com.proshop.review_service.dto.response.ApiResponse;
-import com.proshop.review_service.service.ReviewService;
+import com.proshop.review_service.service.QuestionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class AnswerController {
 
-    private final ReviewService reviewService;
+    private final QuestionService questionService;
     private final JwtUtil jwtUtil;
     private final AuthClient authClient;
 
@@ -64,8 +64,8 @@ public class AnswerController {
         String userName = getUserNameFromToken(httpRequest);
         String userAvatar = getUserAvatarFromToken(httpRequest);
 
-        log.info("Creating answer for review: {} by user: {} ({})", request.getReviewId(), userName, userId);
-        AnswerResponse response = reviewService.createAnswer(request, userId, userName, userAvatar);
+        log.info("Creating answer for question: {} by user: {} ({})", request.getQuestionId(), userName, userId);
+        AnswerResponse response = questionService.createAnswer(request, userId, userName, userAvatar);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Answer created successfully", response));
     }
@@ -78,7 +78,7 @@ public class AnswerController {
 
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Updating answer {} by user: {}", id, userId);
-        AnswerResponse response = reviewService.updateAnswer(id, request, userId);
+        AnswerResponse response = questionService.updateAnswer(id, request, userId);
         return ResponseEntity.ok(ApiResponse.success("Answer updated successfully", response));
     }
 
@@ -89,16 +89,16 @@ public class AnswerController {
 
         Long userId = getUserIdFromToken(httpRequest);
         log.info("Deleting answer {} by user: {}", id, userId);
-        reviewService.deleteAnswer(id, userId);
+        questionService.deleteAnswer(id, userId);
         return ResponseEntity.ok(ApiResponse.success("Answer deleted successfully", null));
     }
 
-    @GetMapping("/review/{reviewId}")
-    public ResponseEntity<ApiResponse<List<AnswerResponse>>> getAnswersByReview(
-            @PathVariable Long reviewId) {
+    @GetMapping("/question/{questionId}")
+    public ResponseEntity<ApiResponse<List<AnswerResponse>>> getAnswersByQuestion(
+            @PathVariable Long questionId) {
 
-        log.info("Getting answers for review: {}", reviewId);
-        List<AnswerResponse> response = reviewService.getAnswersByReview(reviewId);
+        log.info("Getting answers for question: {}", questionId);
+        List<AnswerResponse> response = questionService.getAnswersByQuestion(questionId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

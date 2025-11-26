@@ -20,4 +20,9 @@ public interface SKUService {
     // Sale-related methods
     void updateSalePrice(UUID id, UpdateSKUSalePriceRequest request);
     void revertPrice(UUID id);
+
+    // Get SKUs by product/category/brand
+    List<SKUResponse> getSKUsByProductId(UUID productId);
+    List<SKUResponse> getSKUsByCategoryId(UUID categoryId);
+    List<SKUResponse> getSKUsByBrandId(UUID brandId);
 }

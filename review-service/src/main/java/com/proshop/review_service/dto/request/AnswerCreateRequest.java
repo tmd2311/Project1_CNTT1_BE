@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AnswerCreateRequest {
 
-    @NotNull(message = "Review ID is required")
-    private Long reviewId;
+    @NotNull(message = "Question ID is required")
+    private Long questionId; // Answer thuộc về Question (Q&A)
 
     @NotBlank(message = "Content is required")
     @Size(min = 10, max = 3000, message = "Content must be between 10 and 3000 characters")
