@@ -64,6 +64,8 @@ CREATE TABLE IF NOT EXISTS sku (
     specs JSONB,
     price DOUBLE PRECISION,
     discount_price DOUBLE PRECISION,
+    sale_price DOUBLE PRECISION,
+    sale_id BIGINT,
     stock INTEGER,
     barcode VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
@@ -79,6 +81,13 @@ CREATE INDEX IF NOT EXISTS idx_category_slug ON category(slug);
 CREATE INDEX IF NOT EXISTS idx_brand_slug ON brand(slug);
 CREATE INDEX IF NOT EXISTS idx_product_name ON product(name);
 CREATE INDEX IF NOT EXISTS idx_sku_code ON sku(sku_code);
+CREATE INDEX IF NOT EXISTS idx_sku_sale_id ON sku(sale_id);
+
+-- =========================================================
+-- 9️⃣ Comments
+-- =========================================================
+COMMENT ON COLUMN sku.sale_price IS 'Giá sau khi áp dụng sale (nếu có)';
+COMMENT ON COLUMN sku.sale_id IS 'ID của chương trình sale đang được áp dụng';
 
 -- =========================================================
 -- ✅ Hoàn tất schema cho module sản phẩm
