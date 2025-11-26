@@ -9,6 +9,14 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * CORS Configuration for Spring Cloud Gateway
+ *
+ * File duy nhất cần config CORS cho toàn bộ hệ thống
+ * Không cần thêm @CrossOrigin ở controller
+ *
+ * @author ProShop Team
+ */
 @Configuration
 public class CorsConfig {
 
@@ -16,32 +24,62 @@ public class CorsConfig {
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration config = new CorsConfiguration();
 
-    // Allow credentials
+    // ====================================
+    // ALLOW CREDENTIALS
+    // ====================================
     config.setAllowCredentials(true);
 
-    // Allowed origins - specify your frontend origins
+    // ====================================
+    // ALLOWED ORIGINS
+    // ====================================
     config.setAllowedOriginPatterns(Arrays.asList(
         "http://localhost:*",
+        "http://127.0.0.1:*",
         "http://103.90.225.90:*",
-        "https://*"
+        "https://103.90.225.90:*",
+        "https://*.vercel.app",
+        "https://*.netlify.app",
+        "https://*.railway.app"
     ));
 
-    // Allowed methods
-    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    // ====================================
+    // ALLOWED METHODS
+    // ====================================
+    config.setAllowedMethods(Arrays.asList(
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+        "HEAD"
+    ));
 
-    // Allowed headers
+    // ====================================
+    // ALLOWED HEADERS
+    // ====================================
     config.setAllowedHeaders(List.of("*"));
 
-    // Exposed headers
+    // ====================================
+    // EXPOSED HEADERS - QUAN TRỌNG!
+    // ====================================
     config.setExposedHeaders(Arrays.asList(
         "Authorization",
         "Content-Type",
+        "Content-Length",
+        "Content-Disposition",
         "X-Total-Count",
+        "X-Total-Pages",
         "Access-Control-Allow-Origin",
-        "Access-Control-Allow-Credentials"
+        "Access-Control-Allow-Credentials",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Methods",
+        "Set-Cookie"
     ));
 
-    // Max age for preflight requests
+    // ====================================
+    // MAX AGE
+    // ====================================
     config.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
