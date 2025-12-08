@@ -1,9 +1,8 @@
 package com.proshop.auth_lib.config;
 
-import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.auth_lib.filter.JwtAuthenticationFilter;
 import com.proshop.auth_lib.utils.JwtUtil;
-import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.utils.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,7 @@ public class SecurityConfig {
       "/*/*.html",
       "/*/*.css",
       "/*/*.js",
-      "/api/auth/**"   // auth-service endpoints
+      "/api/auth/**"
   };
 
   @Bean
@@ -52,21 +51,142 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
+            // ============================================
+            // PUBLIC ENDPOINTS (no token required)
+            // ============================================
             .requestMatchers(PUBLIC_URLS).permitAll()
-            .requestMatchers(HttpMethod.GET, "/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PUT, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.PATCH, "/**").hasRole("ADMIN")
-            .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
+
+            .requestMatchers("/actuator/**").permitAll()
+
+            // Product, Brand, Category, SKU - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/product/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/brand/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/sku/**").permitAll()
+
+            // SKU sale-price operations - permitAll for internal service calls (sale-service scheduler)
+            .requestMatchers(HttpMethod.PUT, "/api/sku/*/sale-price").permitAll()
+            .requestMatchers(HttpMethod.PUT, "/api/sku/*/revert-price").permitAll()
+            .requestMatchers(HttpMethod.PUT, "/api/sku/stock/*").permitAll() // for order-service
+
+            // Statistics - public for users to view
+            .requestMatchers(HttpMethod.GET, "/api/products/statistics/**").permitAll()
+
+            // Questions (Q&A) - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/questions").permitAll()
+
+            // Product Reviews - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/product-reviews/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/product-reviews").permitAll()
+
+            // Answers - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/answers/**").permitAll()
+
+            // Categories - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/review-categories/**").permitAll()
+
+            // Tags - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/tags/**").permitAll()
+
+            // Order - best sellers is public
+            .requestMatchers(HttpMethod.GET, "/api/order/best-sellers").permitAll()
+
+            // Sales - GET requests are public
+            .requestMatchers(HttpMethod.GET, "/api/v1/sales/**").permitAll()
+
+            // Vouchers - GET requests for public vouchers
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/active").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/code/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/{id}").permitAll()
+
+            // ============================================
+            // ADMIN ENDPOINTS (admin role required)
+            // ============================================
+            // Product, Brand, Category, SKU - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/product/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/delete").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/brand/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/brand/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/brand/**").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/category/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/category/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/category/**").hasRole("ADMIN")
+
+            .requestMatchers(HttpMethod.POST, "/api/sku/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/sku/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/sku/**").hasRole("ADMIN")
+
+            // Cart Admin endpoints
+            .requestMatchers("/api/cart/admin/**").hasRole("ADMIN")
+
+            // Order Admin endpoints
+            .requestMatchers("/api/order/admin/**").hasRole("ADMIN")
+
+            // Question Admin endpoints - Status management requires ADMIN
+            .requestMatchers(HttpMethod.PUT, "/api/questions/*/status").hasRole("ADMIN")
+
+            // Product Review Admin endpoints - Status management requires ADMIN
+            .requestMatchers(HttpMethod.PUT, "/api/product-reviews/*/status").hasRole("ADMIN")
+
+            // Sales Admin endpoints - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/v1/sales/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/sales/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/sales/**").hasRole("ADMIN")
+
+            // Vouchers Admin endpoints - Create, Update, Delete require ADMIN
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/{id}/users").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/vouchers/{id}/users/**").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers").hasRole("ADMIN")
+
+            // ============================================
+            // AUTHENTICATED ENDPOINTS (token required)
+            // ============================================
+            // Cart - user endpoints require authentication
+            .requestMatchers("/api/cart/**").authenticated()
+
+            // Order - user endpoints require authentication
+            .requestMatchers("/api/order/**").authenticated()
+
+            // Questions - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/questions").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/questions/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/questions/**").authenticated()
+
+            // Product Reviews - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/product-reviews").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/product-reviews/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/product-reviews/**").authenticated()
+
+            // Answers - Create, Update, Delete require authentication
+            .requestMatchers(HttpMethod.POST, "/api/answers").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/answers/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/answers/**").authenticated()
+
+            // Reactions - Add/Remove reactions require authentication
+            .requestMatchers(HttpMethod.POST, "/api/reactions").authenticated()
+
+            // Vouchers - User endpoints require authentication
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/validate").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/apply").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/v1/vouchers/cancel/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/v1/vouchers/user/**").authenticated()
+
             .anyRequest().authenticated()
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .exceptionHandling(ex -> ex
             .authenticationEntryPoint((request, response, authException) -> {
-              throw new ResException(ResErrorCode.UNAUTHORIZED);
+              SecurityExceptionHandler.handleAuthenticationException(request, response, authException);
             })
             .accessDeniedHandler((request, response, accessDeniedException) -> {
-              throw new ResException(ResErrorCode.PERMISSION_DENIED);
+              SecurityExceptionHandler.handleAccessDeniedException(request, response, accessDeniedException);
             })
         );
 

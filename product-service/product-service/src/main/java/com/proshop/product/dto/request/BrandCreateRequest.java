@@ -8,5 +8,4 @@ import lombok.Setter;
 public class BrandCreateRequest {
     private String name;
     private String slug;
-    private String logoUrl;
 }

@@ -11,6 +11,7 @@ import com.proshop.product.repository.CategoryRepository;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.service.category.CategoryService;
 import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.product.utils.FileUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,14 +23,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final FileUtil fileUtil;
 
     @Override
     @Transactional
@@ -73,8 +75,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request) {
-        // Validation
+    public GeneralResponse<CategoryResponse> createCategory(CategoryCreateRequest request, MultipartFile image) {
+        // --- Validation cơ bản ---
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             throw new ResException(ResErrorCode.CATEGORY_NAME_REQUIRED);
         }
@@ -83,29 +85,26 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ResException(ResErrorCode.CATEGORY_NAME_TOO_SHORT);
         }
 
-        // Check slug uniqueness if provided
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
             if (categoryRepository.existsBySlug(request.getSlug().trim())) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_ALREADY_EXISTS);
             }
 
-            // Validate slug format
             if (!request.getSlug().matches("^[a-z0-9-]+$")) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_INVALID_FORMAT);
             }
         }
 
-        // Create new category
+        // --- Tạo category ---
         CategoryEntity category = new CategoryEntity();
         category.setName(request.getName().trim());
         category.setSlug(request.getSlug() != null ? request.getSlug().trim() : generateSlugFromName(request.getName()));
 
-        // Handle parent category
+        // --- Gán parent nếu có ---
         if (request.getParentId() != null) {
             CategoryEntity parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_PARENT_NOT_FOUND));
 
-            // Validate hierarchy depth
             if (getHierarchyDepth(parent) >= 3) {
                 throw new ResException(ResErrorCode.CATEGORY_MAX_DEPTH_EXCEEDED);
             }
@@ -113,7 +112,20 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(parent);
         }
 
+        // --- Thêm ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest ---
+        if (image != null || !image.isEmpty()) {
+            String imagesUrl=  fileUtil.uploadSingleImage(image);
+            if (imagesUrl != null && !imagesUrl.isEmpty()) {
+                category.setImageUrl(imagesUrl);
+            }
+        }
+
+
+
+        // --- Lưu category trước để có ID ---
         CategoryEntity saved = categoryRepository.save(category);
+
+
         CategoryResponse response = convertToDTO(saved);
 
         return new GeneralResponse<>(
@@ -125,39 +137,36 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request) {
-        // Find category
+    public GeneralResponse<CategoryResponse> updateCategory(UUID id, CategoryUpdateRequest request, MultipartFile image) {
+        // 🔹 1. Tìm category cần cập nhật
         CategoryEntity category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
 
-        // Validation
+        // 🔹 2. Validate request
         validateCategoryUpdateRequest(request);
 
-        // Update fields
+        // 🔹 3. Cập nhật các field cơ bản
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
             category.setName(request.getName().trim());
         }
 
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
-            // Validate slug uniqueness (excluding current category)
-            if (categoryRepository.existsBySlugAndIdNot(request.getSlug().trim(), id)) {
+            String slug = request.getSlug().trim();
+            if (categoryRepository.existsBySlugAndIdNot(slug, id)) {
                 throw new ResException(ResErrorCode.CATEGORY_SLUG_ALREADY_EXISTS);
             }
-            category.setSlug(request.getSlug().trim());
+            category.setSlug(slug);
         }
 
-        // Handle parent category changes
+        // 🔹 4. Xử lý parent category
         if (request.getParentId() != null) {
-            // Validate parent exists
             CategoryEntity parent = categoryRepository.findById(request.getParentId())
                     .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_PARENT_NOT_FOUND));
 
-            // Prevent circular reference (category cannot be its own parent or descendant)
             if (parent.getId().equals(id) || isDescendant(parent, id)) {
                 throw new ResException(ResErrorCode.CATEGORY_CIRCULAR_REFERENCE);
             }
 
-            // Validate hierarchy depth (PC store usually doesn't need more than 3 levels)
             if (getHierarchyDepth(parent) >= 3) {
                 throw new ResException(ResErrorCode.CATEGORY_MAX_DEPTH_EXCEEDED);
             }
@@ -167,8 +176,24 @@ public class CategoryServiceImpl implements CategoryService {
             category.setParent(null);
         }
 
+        // 🔹 5. Cập nhật ảnh (chỉ 1 ảnh) sử dụng CategoryImageRequest
+        if (image != null || !image.isEmpty()) {
+            fileUtil.deleteFileByUrl(category.getImageUrl());
+            String imagesUrl=  fileUtil.uploadSingleImage(image);
+            if (imagesUrl != null && !imagesUrl.isEmpty()) {
+                category.setImageUrl(imagesUrl);
+            }
+        }
+
+        // 🔹 6. Lưu và trả kết quả
         CategoryEntity updated = categoryRepository.save(category);
-        CategoryResponse categoryResponse = convertToDTO(updated);
+
+        // Refresh để lấy đầy đủ images
+        categoryRepository.flush();
+        CategoryEntity reloadedCategory = categoryRepository.findById(updated.getId())
+                .orElseThrow(() -> new ResException(ResErrorCode.CATEGORY_NOT_FOUND));
+
+        CategoryResponse categoryResponse = convertToDTO(reloadedCategory);
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -176,6 +201,7 @@ public class CategoryServiceImpl implements CategoryService {
                 null
         );
     }
+
 
     @Override
     public GeneralResponse<Page<CategoryResponse>> searchCategories(String name, int page, int size) {
@@ -208,7 +234,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = rootCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -239,7 +265,7 @@ public class CategoryServiceImpl implements CategoryService {
         List<CategoryResponse> children = category.getChildren().stream()
                 .map(this::convertToDTO)
                 .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -304,7 +330,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -319,7 +345,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = laptopCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -334,7 +360,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = componentCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -349,7 +375,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = peripheralCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -364,7 +390,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = desktopCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -379,7 +405,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = storageCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -394,7 +420,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = coolingCategories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -435,7 +461,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -451,7 +477,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<CategoryResponse> responses = categories.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
 
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
@@ -560,6 +586,10 @@ public class CategoryServiceImpl implements CategoryService {
         String categoryType = determineCategoryType(category);
         builder.categoryType(categoryType);
 
+        if (category.getImageUrl() != null && !category.getImageUrl().isEmpty()) {
+            builder.imageUrl(category.getImageUrl());
+        }
+
         return builder.build();
     }
 
@@ -570,7 +600,7 @@ public class CategoryServiceImpl implements CategoryService {
             List<CategoryResponse> children = category.getChildren().stream()
                     .map(this::convertToDTO)
                     .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             // Assuming CategoryResponse has a children field
             // response.setChildren(children);

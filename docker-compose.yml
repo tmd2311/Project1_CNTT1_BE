@@ -1,0 +1,227 @@
+version: "3.9"
+
+services:
+  # ===========================
+  # Consul Service (Service Discovery)
+  # ===========================
+  consul:
+    image: hashicorp/consul:1.16
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: ["agent", "-dev", "-client=0.0.0.0"]
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Redis Service
+  # ===========================
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - proshop-net
+
+  # ===========================
+  # Auth Service
+  # ===========================
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/authen_user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - FILE_SERVICE_URL=http://file-service:8084
+    depends_on:
+      - consul
+      - redis
+      - file-service
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # Product Service
+  # ===========================
+  product-service:
+    build:
+      context: .
+      dockerfile: ./product-service/product-service/Dockerfile
+    container_name: product-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_product
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - ORDER_SERVICE_URL=http://order-service:8083
+      - FILE_SERVICE_URL=http://file-service:8084
+    depends_on:
+      - consul
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # Order Service
+  # ===========================
+  order-service:
+    build:
+      context: .
+      dockerfile: ./order-service/order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_order
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - USER_SERVICE_URL=http://auth-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    depends_on:
+      - consul
+      - auth-service
+      - product-service
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # File Service
+  # ===========================
+  file-service:
+    build:
+      context: .
+      dockerfile: ./file-service/Dockerfile
+    container_name: file-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - FILE_UPLOAD_DIR=/uploads/images
+      - FILE_BASE_URL=http://103.90.225.90:8084
+    depends_on:
+      - consul
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+      - ./file-storage:/uploads/images
+
+  # ===========================
+  # Review Service
+  # ===========================
+  review-service:
+    build:
+      context: .
+      dockerfile: ./review-service/Dockerfile
+    container_name: review-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_review
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - USER_SERVICE_URL=http://auth-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    depends_on:
+      - consul
+      - auth-service
+      - product-service
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # Sale Service
+  # ===========================
+  sale-service:
+    build:
+      context: .
+      dockerfile: ./sale-service/Dockerfile
+    container_name: sale-service
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/proshop_sale
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    depends_on:
+      - consul
+      - product-service
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+  # ===========================
+  # 🌐 Gateway Service
+  # ===========================
+  gateway-service:
+    build:
+      context: .
+      dockerfile: ./gateway-service/gateway-service/Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - consul
+      - product-service
+      - order-service
+      - auth-service
+      - redis
+      - file-service
+      - review-service
+      - sale-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+    networks:
+      - proshop-net
+    volumes:
+      - maven-repo:/root/.m2
+
+# ===========================
+# 🌍 Shared Network & Volumes
+# ===========================
+networks:
+  proshop-net:
+    external: true
+
+volumes:
+  maven-repo:

@@ -1,0 +1,41 @@
+server:
+  port: 8084   # ⚙️ Port riêng cho file-service
+
+spring:
+  application:
+    name: file-service   # 📦 Tên service đăng ký trên Consul, để gateway và các service khác gọi
+
+  config:
+    import:
+      optional:consul:
+  cloud:
+    consul:
+      host: localhost    # 🌐 Địa chỉ Consul server
+      port: 8500
+      discovery:
+        register: true
+        enabled: true
+        prefer-ip-address: true   # Dùng IP thay vì hostname (hữu ích khi chạy trong Docker)
+
+  servlet:
+    multipart:
+      max-file-size: 10MB       # Giới hạn dung lượng file upload
+      max-request-size: 20MB    # Giới hạn tổng dung lượng request
+
+# =============================
+# 📂 Cấu hình thư mục lưu file
+# =============================
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:F:/uploads/images}
+  base-url: ${FILE_BASE_URL:http://localhost:8084}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: INFO
+
+jwt:
+  public-key-path: classpath:key/public.pem
+  expiration: 3600000
+

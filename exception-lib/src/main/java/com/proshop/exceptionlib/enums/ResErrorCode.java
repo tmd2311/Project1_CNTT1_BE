@@ -68,6 +68,8 @@ public enum ResErrorCode {
         "Email not registered"),
     MAXIMUM_OTP_VERIFICATION_REACHED(HttpStatus.BAD_REQUEST, "OTP17", "Đã đạt giới hạn xác minh OTP",
         "Max OTP verification attempts reached"),
+    OTP_ALREADY_SENT(HttpStatus.BAD_REQUEST, "OTP18", "Mã OTP đã được gửi",
+            "OTP already sent"),
 
     // ===== ACCOUNT =====
     ACCOUNT_BLOCKED(HttpStatus.FORBIDDEN, "ACC01", "Tài khoản đã bị khóa", "Account blocked"),
@@ -111,7 +113,12 @@ public enum ResErrorCode {
     PRODUCT_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "P001", "Tên sản phẩm không được để trống", "Product name is required"),
     PRODUCT_DESCRIPTION_REQUIRED(HttpStatus.BAD_REQUEST, "P002", "Mô tả sản phẩm không được để trống", "Product description is required"),
     PRODUCT_SPECS_REQUIRED(HttpStatus.BAD_REQUEST, "P003", "Thông số kỹ thuật phải có ít nhất 1 mục", "Product specs is required"),
+    PRODUCT_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST, "P004","Chỉ được phép có một ảnh chính cho sản phẩm", "Multiple primary images not allowed for product"),
+    PRODUCT_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "P005","Ảnh sản phẩm không tồn tại", "Image not found"),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "Không tìm thấy sản phẩm", "Product not found"),
+    PRODUCT_INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, "PRODUCT_003", "Không đủ số lượng sản phẩm trong kho", "Insufficient product stock"),
+    PRODUCT_STOCK_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRODUCT_004", "Lỗi khi cập nhật số lượng sản phẩm", "Error updating product stock"),
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "SKU1", "Không tìm thấy SKU", "SKU not found"),
     // --- Brand ---
     BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "Không tìm thấy thương hiệu", "Brand not found"),
     BRAND_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "B001", "Tên thương hiệu không được để trống", "Brand name is required"),
@@ -128,8 +135,65 @@ public enum ResErrorCode {
     CATEGORY_MAX_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "C012", "Vượt quá độ sâu phân cấp tối đa", "Maximum hierarchy depth exceeded"),
     CATEGORY_HAS_PRODUCTS(HttpStatus.BAD_REQUEST, "C013", "Không thể xóa danh mục đang chứa sản phẩm", "Cannot delete category that contains products"),
     CATEGORY_HAS_CHILDREN(HttpStatus.BAD_REQUEST, "C014", "Không thể xóa danh mục đang có danh mục con", "Cannot delete category that has subcategories"),
-    CATEGORY_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "C015", "Tên danh mục không được để trống", "Category name is required");
+    CATEGORY_NAME_REQUIRED(HttpStatus.BAD_REQUEST, "C015", "Tên danh mục không được để trống", "Category name is required"),
+    CATEGORY_IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST,"C016","Không tìm thấy ảnh của danh mục", "Category image not found"),
+    CATEGORY_MULTIPLE_PRIMARY_IMAGES(HttpStatus.BAD_REQUEST,"C017","Chỉ được phép có 1 ảnh chính cho danh mục","Only one primary image is allowed per category"),
+    // ===== ORDER =====
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORD01", "Không tìm thấy đơn hàng", "Order not found"),
+    ORDER_ITEMS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD02", "Đơn hàng phải có ít nhất 1 sản phẩm", "Order must have at least 1 item"),
+    ORDER_INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "ORD03", "Số lượng sản phẩm phải lớn hơn 0", "Product quantity must be greater than 0"),
+    ORDER_INVALID_PRICE(HttpStatus.BAD_REQUEST, "ORD04", "Giá sản phẩm không hợp lệ", "Invalid product price"),
+    ORDER_INVALID_TOTAL(HttpStatus.BAD_REQUEST, "ORD05", "Tổng tiền đơn hàng phải lớn hơn 0", "Order total must be greater than 0"),
+    ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORD06", "Bạn không có quyền truy cập đơn hàng này", "Access denied to this order"),
+    ORDER_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "ORD07", "Chỉ có thể hủy đơn hàng đang chờ xử lý", "Can only cancel pending orders"),
+    ORDER_CALCULATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD08", "Lỗi khi tính tổng tiền", "Error calculating order total"),
+    ORDER_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD09", "Lỗi khi tạo đơn hàng", "Error creating order"),
+    ORDER_INVALID_STATUS_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "ORDER_015", "Trạng thái đơn hàng không hợp lệ để thanh toán", "Invalid order status for payment"),
+    ORDER_SHIPPINGADDRESS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD016", "Địa chỉ giao hàng là bắt buộc", "Shipping address is required"),
+    // ===== CART =====
+    CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found"),
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART02", "Không tìm thấy sản phẩm trong giỏ", "Cart item not found"),
+    CART_INVALID_QUANTITY(HttpStatus.BAD_REQUEST, "CART03", "Số lượng phải lớn hơn 0", "Quantity must be greater than 0"),
+    // ===== PRODUCT CLIENT =====
+    PRODUCT_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PRD01", "Không thể kết nối Product Service", "Product service unavailable"),
+    PRODUCT_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRD02", "Lỗi khi kiểm tra sản phẩm", "Error validating product"),
+    // Payment errors
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_001", "Không tìm thấy thanh toán", "Payment not found"),
+    PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT_002", "Bạn không có quyền truy cập thanh toán này", "Access denied for this payment"),
+    PAYMENT_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_003", "Lỗi khi tạo thanh toán", "Error creating payment"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_004", "Số tiền thanh toán không khớp với tổng đơn hàng", "Payment amount does not match order total"),
+    PAYMENT_METHOD_REQUIRED(HttpStatus.BAD_REQUEST, "PAYMENT_005", "Phương thức thanh toán là bắt buộc", "Payment method is required"),
+    PAYMENT_INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "PAYMENT_006", "Số tiền thanh toán không hợp lệ", "Invalid payment amount"),
+    PAYMENT_STATUS_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PAYMENT_007", "Chuyển đổi trạng thái thanh toán không hợp lệ", "Invalid payment status transition"),
+    PAYMENT_CANNOT_DELETE(HttpStatus.BAD_REQUEST, "PAYMENT_008", "Không thể xóa thanh toán này", "Cannot delete this payment"),
+    PAYMENT_UPDATE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_009", "Lỗi khi cập nhật thanh toán", "Error updating payment"),
+    PAYMENT_ORDER_ID_REQUIRED(HttpStatus.BAD_REQUEST,"PAYMENT_010","OrderId là bắt buộc","Order Id is required"),
 
+    // ===== FILE ERRORS =====
+    FILE_EMPTY(HttpStatus.BAD_REQUEST, "FILE01", "File trống — vui lòng chọn file để upload", "Empty File"),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE02", "Không thể upload file, vui lòng thử lại", "Upload Failed"),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE03", "Không thể xóa file", "Delete Failed"),
+    SALE_NOT_FOUND(HttpStatus.NOT_FOUND, "SAL01", "Sale không tồn tại", "Sale not found"),
+    SALE_CODE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SAL02", "Sale code đã tồn tại", "Sale code already exists"),
+    SALE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "SAL03", "Không thể cập nhật sale đã bị xóa", "Cannot update deleted sale"),
+    SALE_INVALID_DATE(HttpStatus.BAD_REQUEST, "SAL04", "End date phải sau start date", "End date must be after start date"),
+    SALE_INVALID_OR_EXPIRED(HttpStatus.BAD_REQUEST, "SAL05", "Sale không hợp lệ hoặc đã hết hạn", "Sale is invalid or expired"),
+    SALE_DELETED_STATUS_CHANGE(HttpStatus.BAD_REQUEST, "SAL06", "Không thể thay đổi trạng thái sale đã bị xóa", "Cannot change status of deleted sale"),
+
+    // General Error Codes
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SYS01", "Lỗi hệ thống", "Internal Server Error"),
+
+    // ========== VOUCHER ERROR CODES ==========
+    VOUCHER_NOT_FOUND(HttpStatus.NOT_FOUND, "VOU01", "Voucher không tồn tại", "Voucher not found"),
+    VOUCHER_CODE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "VOU02", "Mã voucher đã tồn tại", "Voucher code already exists"),
+    VOUCHER_INVALID_OR_EXPIRED(HttpStatus.BAD_REQUEST, "VOU03", "Voucher không hợp lệ hoặc đã hết hạn", "Voucher invalid or expired"),
+    VOUCHER_OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "VOU04", "Voucher đã hết số lượng", "Voucher out of stock"),
+    VOUCHER_USER_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "VOU05", "User không đủ điều kiện sử dụng voucher", "User not eligible for voucher"),
+    VOUCHER_USAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "VOU06", "Đã sử dụng hết số lần cho phép", "Voucher usage limit exceeded"),
+    VOUCHER_ORDER_VALUE_TOO_LOW(HttpStatus.BAD_REQUEST, "VOU07", "Đơn hàng chưa đủ giá trị tối thiểu", "Order value too low"),
+    VOUCHER_ALREADY_APPLIED(HttpStatus.BAD_REQUEST, "VOU08", "Đơn hàng đã sử dụng voucher", "Voucher already applied to order"),
+    VOUCHER_INVALID_DATE(HttpStatus.BAD_REQUEST, "VOU09", "Thời gian voucher không hợp lệ", "Invalid voucher date range"),
+    VOUCHER_INVALID_OPERATION(HttpStatus.BAD_REQUEST, "VOU10", "Thao tác không hợp lệ với voucher này", "Invalid voucher operation");
 
     private final HttpStatus status;
     private final String code;

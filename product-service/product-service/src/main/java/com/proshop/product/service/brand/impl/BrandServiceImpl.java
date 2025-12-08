@@ -12,6 +12,7 @@ import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.repository.BrandRepository;
 import com.proshop.product.service.brand.BrandService;
 import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.product.utils.FileUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,23 +22,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
+    private final FileUtil fileUtil;
 
     @Override
     public GeneralResponse<BrandDeleteResponse> deleteBrand(UUID id) {
         BrandEntity brand = brandRepository.findById(id).orElse(null);
         if (brand == null) {
-            return new GeneralResponse<>(
-                    new ResponseStatus("404", "Không tìm thấy thương hiệu", "Brand Not Found"),
-                    null,
-                    null
-            );
+            throw new  ResException(ResErrorCode.BRAND_NOT_FOUND);
         }
 
         BrandDeleteResponse data = new BrandDeleteResponse(brand.getId(), brand.getName());
@@ -52,7 +51,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
-    public GeneralResponse<BrandResponse> updateBrand(UUID id, BrandUpdateRequest request) {
+    public GeneralResponse<BrandResponse> updateBrand(UUID id, BrandUpdateRequest request, MultipartFile image) {
         // Find brand
         BrandEntity brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResException(ResErrorCode.BRAND_NOT_FOUND));
@@ -65,8 +64,9 @@ public class BrandServiceImpl implements BrandService {
             brand.setName(request.getName().trim());
         }
 
-        if (request.getLogoUrl() != null) {
-            brand.setLogoUrl(request.getLogoUrl().trim());
+        if (image != null && !image.isEmpty()) {
+            fileUtil.deleteFileByUrl(brand.getLogoUrl());
+            brand.setLogoUrl(fileUtil.uploadSingleImage(image));
         }
 
         if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
@@ -107,15 +107,17 @@ public class BrandServiceImpl implements BrandService {
     }
     @Override
     @Transactional
-    public GeneralResponse<BrandResponse> createBrand(BrandCreateRequest request) {
+    public GeneralResponse<BrandResponse> createBrand(BrandCreateRequest request, MultipartFile image) {
         // Validate dữ liệu
         validateBrandCreateRequest(request);
+
+        String logUrl =  fileUtil.uploadSingleImage(image);
 
         // Tạo entity mới
         BrandEntity brand = BrandEntity.builder()
                 .name(request.getName().trim())
                 .slug(request.getSlug().trim())
-                .logoUrl(request.getLogoUrl() != null ? request.getLogoUrl().trim() : null)
+                .logoUrl(logUrl != null ? logUrl.trim() : null)
                 .build();
 
         // Lưu DB

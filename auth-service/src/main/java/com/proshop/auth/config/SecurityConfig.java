@@ -1,27 +1,22 @@
 package com.proshop.auth.config;
 
 import com.proshop.auth.filter.JwtAuthenticationFilter;
-import com.proshop.auth.repository.UserRepository;
-import java.util.List;
+import com.proshop.exceptionlib.utils.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -41,20 +36,9 @@ public class SecurityConfig {
       "/*/*.css",
       "/*/*.js",
       "/api/auth/**",
-      "/actuator/health"
+      "/actuator/health",
+      "/api/v1"
   };
-
-  private static final String ALL_ORIGINS = "*";
-
-  private static final String ALL_PATTERNS = "/**";
-
-  private static final List<String> ALLOWED_METHODS = List.of(
-      "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
-
-  private static final List<String> ALLOWED_HEADERS = List.of(
-      "authorization", "content-type");
-
-  private final UserRepository userRepository;
 
   private final JwtAuthenticationFilter tokenAuthenticationFilter;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -66,32 +50,41 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
+            // Public URLs (static resources, auth endpoints)
             .requestMatchers(PUBLIC_URLS).permitAll()
-            .requestMatchers("/api/v1/user/**").hasRole("ADMIN")
+
+            // ============================================
+            // ADMIN ENDPOINTS (must be before general rules)
+            // ============================================
+            .requestMatchers(HttpMethod.GET, "/api/v1/user/getAllUser").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/{id}/activate").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/{id}/deactivate").hasRole("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
+
+            // ============================================
+            // AUTHENTICATED USER ENDPOINTS
+            // ============================================
+            // User profile endpoint - authenticated users only
+            .requestMatchers(HttpMethod.PUT, "/api/v1/user/profile").authenticated()
+
+            // Allow authenticated users to view user info (including their own)
+            .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
+
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -> oauth2
             .successHandler(oAuth2SuccessHandler))
-        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) -> {
+              SecurityExceptionHandler.handleAuthenticationException(request, response, authException);
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+              SecurityExceptionHandler.handleAccessDeniedException(request, response, accessDeniedException);
+            })
+        );
 
     logger.debug("Security filter chain configuration completed");
     return http.build();
-  }
-
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    logger.debug("Configuring cors configuration source");
-
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-    configuration.setAllowedMethods(ALLOWED_METHODS);
-    configuration.setAllowedHeaders(ALLOWED_HEADERS);
-    configuration.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration(ALL_PATTERNS, configuration);
-
-    logger.debug("Configuring cors configuration source completed");
-    return source;
   }
 
   @Bean

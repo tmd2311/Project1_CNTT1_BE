@@ -1,14 +1,12 @@
 package com.proshop.order.controller;
 
 import com.proshop.auth_lib.utils.JwtUtil;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.CartRequest;
 import com.proshop.order.dto.response.CartResponse;
-import com.proshop.order.dto.response.ResponseStatus;
-import com.proshop.order.entity.CartEntity;
-import com.proshop.order.mapper.CartMapper;
-import com.proshop.order.repository.CartRepository;
-import com.proshop.order.service.cart.CartService;
 import com.proshop.order.dto.response.GeneralResponse;
+import com.proshop.order.service.cart.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +18,11 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/carts")
+@RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
 
     private final CartService cartService;
-    private final CartRepository cartRepository;
-    private final CartMapper cartMapper;
     private final JwtUtil jwtUtil;
 
     /**
@@ -37,11 +33,10 @@ public class CartController {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or invalid Authorization header");
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new ResException(ResErrorCode.UNAUTHORIZED);
         }
 
         String token = authHeader.substring(7).trim();
-
         log.debug("Token extracted, length: {}", token.length());
 
         try {
@@ -50,7 +45,7 @@ public class CartController {
             return userId;
         } catch (Exception e) {
             log.error("❌ Failed to extract userId from token: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid token: " + e.getMessage());
+            throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
 
@@ -63,12 +58,13 @@ public class CartController {
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Adding to cart for user: {} - Product: {} - Quantity: {}",
-                userId, request.getProductId(), request.getQuantity());
+        log.info("Adding to cart for user: {} - Product: {} - SKU: {} - Quantity: {}",
+                userId, request.getProductId(), request.getSkuId(), request.getQuantity());
 
         GeneralResponse<?> response = cartService.addToCart(
                 userId,
                 request.getProductId(),
+                request.getSkuId(),
                 request.getQuantity()
         );
 
@@ -96,12 +92,13 @@ public class CartController {
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Updating cart for user: {} - Product: {} - Quantity: {}",
-                userId, request.getProductId(), request.getQuantity());
+        log.info("Updating cart for user: {} - Product: {} - SKU: {} - Quantity: {}",
+                userId, request.getProductId(), request.getSkuId(), request.getQuantity());
 
         GeneralResponse<?> response = cartService.updateQuantity(
                 userId,
                 request.getProductId(),
+                request.getSkuId(),
                 request.getQuantity()
         );
 
@@ -111,15 +108,16 @@ public class CartController {
     /**
      * Remove product from cart (userId from token)
      */
-    @DeleteMapping("/remove/{productId}")
+    @DeleteMapping("/remove/{productId}/{skuId}")
     public ResponseEntity<GeneralResponse<?>> removeFromCart(
             @PathVariable UUID productId,
+            @PathVariable UUID skuId,
             HttpServletRequest httpRequest) {
 
         Long userId = getUserIdFromToken(httpRequest);
-        log.info("Removing product {} from cart for user: {}", productId, userId);
+        log.info("Removing product {} (SKU: {}) from cart for user: {}", productId, skuId, userId);
 
-        GeneralResponse<?> response = cartService.removeFromCart(userId, productId);
+        GeneralResponse<?> response = cartService.removeFromCart(userId, productId, skuId);
         return ResponseEntity.ok(response);
     }
 
@@ -128,54 +126,38 @@ public class CartController {
     // ============================================
 
     /**
-     * Get all carts (Admin only)
+     * ✅ Lấy toàn bộ giỏ hàng (Admin)
      */
     @GetMapping("/admin/all")
-    public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts() {
+    public ResponseEntity<GeneralResponse<List<CartResponse>>> getAllCarts(HttpServletRequest httpRequest) {
         log.info("Getting all carts (admin)");
-
-        List<CartEntity> carts = cartRepository.findAll();
-        List<CartResponse> response = cartMapper.toResponseList(carts);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<List<CartResponse>> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        GeneralResponse<List<CartResponse>> response = cartService.getAllCarts(httpRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Get cart by userId (Admin only)
+     * ✅ Lấy giỏ hàng theo userId (Admin)
      */
     @GetMapping("/admin/user/{userId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(@PathVariable long userId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartByUserId(
+        @PathVariable long userId,
+        HttpServletRequest httpRequest) {
+
         log.info("Getting cart for user {} (admin)", userId);
-
-        CartEntity cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
-
-        CartResponse response = cartMapper.toResponse(cart);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<CartResponse> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        GeneralResponse<CartResponse> response = cartService.getCartByUserId(httpRequest, userId);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Get cart by cartId (Admin only)
+     * ✅ Lấy giỏ hàng theo cartId (Admin)
      */
     @GetMapping("/admin/{cartId}")
-    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(@PathVariable UUID cartId) {
+    public ResponseEntity<GeneralResponse<CartResponse>> getCartById(
+        @PathVariable UUID cartId,
+        HttpServletRequest httpRequest) {
+
         log.info("Getting cart by id {} (admin)", cartId);
-
-        CartEntity cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart not found: " + cartId));
-
-        CartResponse response = cartMapper.toResponse(cart);
-
-        ResponseStatus status = new ResponseStatus("200", "Thành công", "Success");
-        GeneralResponse<CartResponse> generalResponse = new GeneralResponse<>(status, response, null);
-
-        return ResponseEntity.ok(generalResponse);
+        GeneralResponse<CartResponse> response = cartService.getCartById(httpRequest, cartId);
+        return ResponseEntity.ok(response);
     }
 }

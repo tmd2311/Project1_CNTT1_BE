@@ -1,0 +1,29 @@
+package com.proshop.sale_service.dto.response;
+
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+public class SaleProductResponse {
+
+    private Long id;
+    private Long saleId;
+
+    private UUID productId;
+    private UUID skuId;
+    private UUID categoryId;
+    private UUID brandId;
+
+    private BigDecimal originalPrice;
+    private BigDecimal salePrice;
+    private BigDecimal discountAmount;
+
+    private Boolean isApplied;
+    private LocalDateTime appliedAt;
+    private LocalDateTime revertedAt;
+
+    private LocalDateTime createdAt;
+}

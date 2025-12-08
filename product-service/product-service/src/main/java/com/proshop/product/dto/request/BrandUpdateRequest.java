@@ -11,6 +11,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BrandUpdateRequest {
     private String name;
-    private String logoUrl;
     private String slug;
 }
