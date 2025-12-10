@@ -4,7 +4,7 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-COPY ../../gateway-service/gateway-service /app/gateway-service
+COPY ./gateway-service/gateway-service /app/gateway-service
 # Build ứng dụng chính
 WORKDIR /app/gateway-service
 RUN mvn clean package -DskipTests

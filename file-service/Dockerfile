@@ -8,15 +8,15 @@ WORKDIR /app
 VOLUME ["/root/.m2"]
 
 # Copy thư viện nội bộ
-COPY ../../exception-lib /app/exception-lib
-COPY ../../auth-lib /app/auth-lib
+COPY ./exception-lib /app/exception-lib
+COPY ./auth-lib /app/auth-lib
 
 # Cài các thư viện nội bộ vào local repo ( chỉ chạy nếu các lib thay đổi)
 RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
 RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
 
 # Copy service chính
-COPY ../../file-service /app/file-service
+COPY ./file-service /app/file-service
 WORKDIR /app/file-service
 RUN mvn clean package spring-boot:repackage -DskipTests
 
