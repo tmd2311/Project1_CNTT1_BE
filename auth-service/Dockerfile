@@ -7,13 +7,13 @@ WORKDIR /app
 # 👉 Mount cache Maven để reuse thư viện
 VOLUME ["/root/.m2"]
 
-# Copy thư viện nội bộ
+# Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
 COPY ./exception-lib /app/exception-lib
-COPY ./auth-lib /app/auth-lib
+RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 
-# Cài các thư viện nội bộ vào local repo ( chỉ chạy nếu các lib thay đổi)
-RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
-RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
+# Copy và build auth-lib sau
+COPY ./auth-lib /app/auth-lib
+RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 
 # Copy mã nguồn auth-service
 COPY ./auth-service /app/auth-service
