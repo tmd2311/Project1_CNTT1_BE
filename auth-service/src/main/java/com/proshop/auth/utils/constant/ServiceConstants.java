@@ -113,6 +113,11 @@ public final class ServiceConstants {
   public static final String REDIS_TOKEN_PREFIX = "token-prshop:";
 
   /**
+   * Redis key prefix for refresh token storage
+   */
+  public static final String REDIS_REFRESH_TOKEN_PREFIX = "refresh-token-prshop:";
+
+  /**
    * Redis key prefix for user data storage
    */
   public static final String REDIS_USER_PREFIX = "user:";
