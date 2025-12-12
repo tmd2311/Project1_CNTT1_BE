@@ -62,7 +62,8 @@ spring:
 jwt:
   private-key-path: classpath:key/private.pem
   public-key-path: classpath:key/public.pem
-  expiration: 3600000
+  expiration: 3600000  # 1 hour (access token)
+  refresh-expiration: 604800000  # 7 days (refresh token)
 
 # Feign Client URLs
 file:
