@@ -17,7 +17,7 @@ echo ""
 if [ -z "$SERVICE" ]; then
   echo -e "${BOLD}${CYAN}🚀 Starting all services...${NC}"
   echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  docker compose up -d
+  docker compose up -d --no-build
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ All services started successfully!${NC}"
   else
@@ -26,7 +26,7 @@ if [ -z "$SERVICE" ]; then
 else
   echo -e "${BOLD}${CYAN}🚀 Starting service: ${GREEN}$SERVICE${NC}"
   echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  docker compose up -d $SERVICE
+  docker compose up -d --no-build $SERVICE
   if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Service $SERVICE started successfully!${NC}"
   else
