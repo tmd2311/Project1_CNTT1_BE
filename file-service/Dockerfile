@@ -9,16 +9,19 @@ COPY ./settings.xml /root/.m2/settings.xml
 
 # Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
 COPY ./exception-lib /app/exception-lib
-RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 
 # Copy và build auth-lib sau
 COPY ./auth-lib /app/auth-lib
-RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 
 # Copy service chính
 COPY ./file-service /app/file-service
 WORKDIR /app/file-service
-RUN mvn clean package spring-boot:repackage -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
 # 🚀 Stage 2: Run Application

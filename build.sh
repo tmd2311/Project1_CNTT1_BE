@@ -12,6 +12,10 @@ MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
+# Enable BuildKit for cache mount support
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 SERVICE=$1
 
 echo ""

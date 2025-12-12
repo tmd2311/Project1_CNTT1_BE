@@ -9,18 +9,21 @@ COPY ./settings.xml /root/.m2/settings.xml
 
 # Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
 COPY ./exception-lib /app/exception-lib
-RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 
 # Copy và build auth-lib sau
 COPY ./auth-lib /app/auth-lib
-RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 
 # Copy mã nguồn auth-service
 COPY ./auth-service /app/auth-service
 
 # Build ứng dụng chính
 WORKDIR /app/auth-service
-RUN mvn clean package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests
 
 # ===========================
 # Stage 2: Run
