@@ -4,6 +4,9 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
+# Copy Maven settings (with mirror for faster download)
+COPY ./settings.xml /root/.m2/settings.xml
+
 # Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
 COPY ./exception-lib /app/exception-lib
 RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
