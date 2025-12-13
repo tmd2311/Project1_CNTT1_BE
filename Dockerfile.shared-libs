@@ -13,28 +13,29 @@ COPY ./settings.xml /root/.m2/settings.xml
 # ===========================
 COPY ./exception-lib/pom.xml /app/exception-lib/pom.xml
 
-# Download dependencies for exception-lib (cached layer)
+# Download dependencies for exception-lib (cached layer để tăng tốc)
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -f /app/exception-lib/pom.xml dependency:go-offline -DskipTests
 
 # Copy source and build exception-lib
+# Không dùng cache mount cho install để repository được lưu vào filesystem
 COPY ./exception-lib/src /app/exception-lib/src
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -f /app/exception-lib/pom.xml clean install -DskipTests
+RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 
 # ===========================
 # Build auth-lib
 # ===========================
 COPY ./auth-lib/pom.xml /app/auth-lib/pom.xml
 
-# Download dependencies for auth-lib (cached layer)
+# Download dependencies for auth-lib (cached layer để tăng tốc)
 RUN --mount=type=cache,target=/root/.m2 \
     mvn -f /app/auth-lib/pom.xml dependency:go-offline -DskipTests
 
 # Copy source and build auth-lib
+# Không dùng cache mount cho install để repository được lưu vào filesystem
+# Maven sẽ tìm thấy exception-lib trong /root/.m2/repository từ bước trước
 COPY ./auth-lib/src /app/auth-lib/src
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -f /app/auth-lib/pom.xml clean install -DskipTests
+RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 
 # ===========================
 # Final stage: Chỉ giữ lại Maven cache với libs đã build
