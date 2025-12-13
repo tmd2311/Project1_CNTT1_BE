@@ -1,10 +1,105 @@
-# Ignore files to speed up build context
+# ===========================
+# Git & Version Control
+# ===========================
 .git
 .gitignore
+.gitattributes
+*.orig
+
+# ===========================
+# Documentation
+# ===========================
 *.md
-.env
-.idea
+README*
+CHANGELOG*
+LICENSE*
+docs/
+AI/
+
+# ===========================
+# IDE & Editor Files
+# ===========================
+.idea/
+.vscode/
+.eclipse/
+.settings/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# ===========================
+# Build Artifacts & Dependencies
+# ===========================
 target/
-node_modules/
+build/
+out/
+bin/
+dist/
+.mvn/wrapper/maven-wrapper.jar
+
+# ===========================
+# Logs & Temporary Files
+# ===========================
 *.log
+logs/
+*.tmp
+*.temp
+*.cache
+
+# ===========================
+# OS Specific
+# ===========================
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# ===========================
+# Environment & Config
+# ===========================
+.env
+.env.local
+.env.*.local
+*.properties.local
+
+# ===========================
+# Node.js (if any)
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===========================
+# Test Coverage & Reports
+# ===========================
+coverage/
+*.coverage
+.nyc_output/
+test-results/
+
+# ===========================
+# Docker
+# ===========================
+.dockerignore
+docker-compose*.yml
+Dockerfile*
+!Dockerfile
+
+# ===========================
+# Other Services (when building specific service)
+# Uncomment in service-specific .dockerignore
+# ===========================
+# auth-service/
+# product-service/
+# order-service/
+# review-service/
+# file-service/
+# sale-service/
+# gateway-service/

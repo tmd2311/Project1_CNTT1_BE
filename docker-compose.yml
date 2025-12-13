@@ -2,6 +2,20 @@ version: "3.9"
 
 services:
   # ===========================
+  # Shared Libraries Base Image
+  # Build exception-lib và auth-lib một lần
+  # ===========================
+  shared-libs:
+    image: proshop-shared-libs:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.shared-libs
+      cache_from:
+        - proshop-shared-libs:latest
+    profiles:
+      - build
+
+  # ===========================
   # Consul Service (Service Discovery)
   # ===========================
   consul:
@@ -31,6 +45,8 @@ services:
     build:
       context: .
       dockerfile: ./auth-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: auth-service
     ports:
       - "8081:8081"
@@ -53,8 +69,6 @@ services:
       - file-service
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
   # ===========================
   # Product Service
@@ -63,6 +77,8 @@ services:
     build:
       context: .
       dockerfile: ./product-service/product-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: product-service
     ports:
       - "8082:8082"
@@ -79,8 +95,6 @@ services:
       - consul
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
   # ===========================
   # Order Service
@@ -89,6 +103,8 @@ services:
     build:
       context: .
       dockerfile: ./order-service/order-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: order-service
     ports:
       - "8083:8083"
@@ -107,8 +123,6 @@ services:
       - product-service
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
   # ===========================
   # File Service
@@ -117,6 +131,8 @@ services:
     build:
       context: .
       dockerfile: ./file-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: file-service
     ports:
       - "8084:8084"
@@ -131,7 +147,6 @@ services:
     networks:
       - proshop-net
     volumes:
-      - maven-repo:/root/.m2
       - ./file-storage:/uploads/images
 
   # ===========================
@@ -141,6 +156,8 @@ services:
     build:
       context: .
       dockerfile: ./review-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: review-service
     ports:
       - "8086:8086"
@@ -153,14 +170,13 @@ services:
       - SPRING_CLOUD_CONSUL_PORT=8500
       - USER_SERVICE_URL=http://auth-service:8081
       - PRODUCT_SERVICE_URL=http://product-service:8082
+      - ORDER_SERVICE_URL=http://order-service:8083
     depends_on:
       - consul
       - auth-service
       - product-service
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
   # ===========================
   # Sale Service
@@ -169,6 +185,8 @@ services:
     build:
       context: .
       dockerfile: ./sale-service/Dockerfile
+      cache_from:
+        - proshop-shared-libs:latest
     container_name: sale-service
     ports:
       - "8087:8087"
@@ -185,8 +203,6 @@ services:
       - product-service
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
   # ===========================
   # 🌐 Gateway Service
@@ -213,15 +229,10 @@ services:
       - SPRING_CLOUD_CONSUL_PORT=8500
     networks:
       - proshop-net
-    volumes:
-      - maven-repo:/root/.m2
 
 # ===========================
-# 🌍 Shared Network & Volumes
+# 🌍 Shared Network
 # ===========================
 networks:
   proshop-net:
     external: true
-
-volumes:
-  maven-repo:
