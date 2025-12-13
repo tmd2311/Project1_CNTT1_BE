@@ -23,7 +23,7 @@ public class FlywayMigrationRunner {
       System.out.println("Running migration for " + service + " (" + dbName + ")");
 
       Flyway flyway = Flyway.configure()
-          .dataSource("jdbc:postgresql://103.90.225.90:5432/" + dbName, USER, PASSWORD)
+          .dataSource("jdbc:postgresql://103.90.225.90:5432/" + dbName + "?TimeZone=UTC", USER, PASSWORD)
           .locations("classpath:db/migration/" + service)
           .baselineOnMigrate(true)
           .load();

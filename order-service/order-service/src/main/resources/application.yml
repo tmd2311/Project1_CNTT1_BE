@@ -17,10 +17,14 @@ spring:
         enabled: true
         prefer-ip-address: true  # dùng IP thay vì hostname (nên dùng khi trong Docker hoặc mạng LAN)
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/proshop_order}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://103.90.225.90:5432/proshop_order?TimeZone=UTC}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: update
