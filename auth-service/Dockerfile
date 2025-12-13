@@ -21,8 +21,8 @@ FROM deps AS builder
 COPY auth-service/src ./src
 
 # Build application
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn clean package -DskipTests
+# Không dùng cache mount để Maven có thể tìm thấy shared libs từ base image
+RUN mvn clean package -DskipTests
 
 # ===========================
 # Stage 3: Runtime
