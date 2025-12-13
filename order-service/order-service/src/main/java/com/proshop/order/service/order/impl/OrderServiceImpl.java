@@ -578,4 +578,23 @@ public class OrderServiceImpl implements OrderService {
             throw new ResException(ResErrorCode.TOKEN_INVALID);
         }
     }
+
+    @Override
+    public boolean hasUserPurchasedProduct(Long userId, UUID productId) {
+        log.info("Checking if user {} has purchased product {}", userId, productId);
+
+        List<OrderStatus> validStatuses = List.of(
+            OrderStatus.DELIVERED,
+            OrderStatus.COMPLETED
+        );
+
+        boolean hasPurchased = orderItemRepository.existsByUserIdAndProductIdAndOrderStatus(
+            userId, productId, validStatuses
+        );
+
+        log.info("User {} has{} purchased product {}",
+            userId, hasPurchased ? "" : " not", productId);
+
+        return hasPurchased;
+    }
 }

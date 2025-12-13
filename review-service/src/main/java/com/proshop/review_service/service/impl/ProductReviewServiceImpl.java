@@ -2,6 +2,7 @@ package com.proshop.review_service.service.impl;
 
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
+import com.proshop.review_service.client.OrderClient;
 import com.proshop.review_service.client.ProductClient;
 import com.proshop.review_service.dto.request.ProductReviewCreateRequest;
 import com.proshop.review_service.dto.request.ProductReviewUpdateRequest;
@@ -46,6 +47,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     private final ProductReviewMapper mapper;
     private final FileUtil fileUtil;
     private final ProductClient productClient;
+    private final OrderClient orderClient;
 
     @Override
     public ProductReviewResponse createProductReview(ProductReviewCreateRequest request, Long userId, String userName, String userAvatar, List<MultipartFile> images) {
@@ -76,6 +78,31 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             log.error("Unexpected error when validating product: {}", e.getMessage(), e);
             throw new ResException(ResErrorCode.PRODUCT_VALIDATION_ERROR,
                     "Lỗi khi xác minh sản phẩm: " + e.getMessage());
+        }
+
+        // Validate user has purchased the product
+        try {
+            log.info("Checking if user {} has purchased product {}", userId, request.getProductId());
+            var purchaseResponse = orderClient.checkUserPurchase(request.getProductId());
+
+            if (purchaseResponse == null || purchaseResponse.getData() == null || !purchaseResponse.getData()) {
+                log.warn("User {} has not purchased product {}", userId, request.getProductId());
+                throw new ResException(ResErrorCode.USER_NOT_PURCHASED_PRODUCT,
+                    "Bạn chỉ có thể đánh giá sản phẩm đã mua");
+            }
+            log.info("User {} has purchased product {} - validation successful", userId, request.getProductId());
+        } catch (ResException e) {
+            // Re-throw ResException as is
+            throw e;
+        } catch (feign.FeignException e) {
+            log.error("Feign error when calling order-service: Status={}, Message={}",
+                    e.status(), e.getMessage(), e);
+            throw new ResException(ResErrorCode.ORDER_SERVICE_UNAVAILABLE,
+                    "Không thể xác minh lịch sử mua hàng. Vui lòng thử lại sau.");
+        } catch (Exception e) {
+            log.error("Unexpected error when checking purchase: {}", e.getMessage(), e);
+            throw new ResException(ResErrorCode.PURCHASE_VALIDATION_ERROR,
+                    "Lỗi khi xác minh lịch sử mua hàng: " + e.getMessage());
         }
 
         // Convert to entity
