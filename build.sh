@@ -138,8 +138,12 @@ main() {
         esac
     done
 
-    # Check and build shared libs if needed
-    if [ "$FORCE_REBUILD_LIBS" = true ]; then
+    # Check if shared libs image exists
+    if ! docker image inspect proshop-shared-libs:latest >/dev/null 2>&1; then
+        print_warning "Shared libs image not found - building it now..."
+        build_shared_libs
+        REBUILD_ALL=true
+    elif [ "$FORCE_REBUILD_LIBS" = true ]; then
         print_warning "Force rebuilding shared libraries..."
         build_shared_libs
         REBUILD_ALL=true
