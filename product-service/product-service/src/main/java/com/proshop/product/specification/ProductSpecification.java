@@ -1,9 +1,14 @@
 package com.proshop.product.specification;
 
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.SKUEntity;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {
@@ -27,6 +32,38 @@ public class ProductSpecification {
         category == null ? criteriaBuilder.conjunction()
             : criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")),
                 "%" + category.toLowerCase() + "%"));
+  }
+
+  public static Specification<ProductEntity> hasBrands(List<String> brandIds) {
+    return (root, query, criteriaBuilder) -> {
+      if (brandIds == null || brandIds.isEmpty()) {
+        return criteriaBuilder.conjunction();
+      }
+      try {
+        List<UUID> uuids = brandIds.stream()
+            .map(UUID::fromString)
+            .toList();
+        return root.get("brand").get("id").in(uuids);
+      } catch (IllegalArgumentException e) {
+        throw new ResException(ResErrorCode.BRAND_NOT_FOUND);
+      }
+    };
+  }
+
+  public static Specification<ProductEntity> hasCategories(List<String> categoryIds) {
+    return (root, query, criteriaBuilder) -> {
+      if (categoryIds == null || categoryIds.isEmpty()) {
+        return criteriaBuilder.conjunction();
+      }
+      try {
+        List<UUID> uuids = categoryIds.stream()
+            .map(UUID::fromString)
+            .toList();
+        return root.get("category").get("id").in(uuids);
+      } catch (IllegalArgumentException e) {
+        throw new ResException(ResErrorCode.CATEGORY_NOT_FOUND);
+      }
+    };
   }
 
   public static Specification<ProductEntity> priceBetween(Double minPrice, Double maxPrice) {
