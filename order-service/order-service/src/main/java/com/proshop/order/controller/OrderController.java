@@ -182,10 +182,10 @@ public class OrderController {
         log.info("Checking if user {} has purchased product {}", userId, productId);
 
         boolean hasPurchased = orderService.hasUserPurchasedProduct(userId, productId);
-        return ResponseEntity.ok(new GeneralResponse<>(
+        return ResponseEntity.ok(new GeneralResponse<Boolean>(
             ResponseStatus.SUCCESS_STATUS,
             hasPurchased,
-            hasPurchased ? "User has purchased this product" : "User has not purchased this product"
+            null
         ));
     }
 }

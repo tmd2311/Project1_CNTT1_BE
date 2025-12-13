@@ -8,6 +8,7 @@ WORKDIR /app/order-service
 COPY order-service/order-service/pom.xml ./pom.xml
 
 # Download dependencies (cached layer)
+# Repository từ base image đã có shared libs, chỉ cần download dependencies khác
 RUN --mount=type=cache,target=/root/.m2 \
     mvn dependency:go-offline -DskipTests || true
 
@@ -20,7 +21,8 @@ FROM deps AS builder
 COPY order-service/order-service/src ./src
 
 # Build application
-# Không dùng cache mount để Maven có thể tìm thấy shared libs từ base image
+# Không dùng cache mount để Maven sử dụng repository từ base image (có shared libs)
+# Repository từ base image vẫn còn trong filesystem vì không bị cache mount ghi đè
 RUN mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
