@@ -96,14 +96,14 @@ build_services() {
 
     if [ -z "$SERVICE" ]; then
         print_header "Building All Services"
-        docker-compose build --parallel || {
+        docker compose build --parallel || {
             print_error "Failed to build services"
             exit 1
         }
         print_success "All services built successfully"
     else
         print_header "Building Service: $SERVICE"
-        docker-compose build "$SERVICE" || {
+        docker compose build "$SERVICE" || {
             print_error "Failed to build $SERVICE"
             exit 1
         }
@@ -162,8 +162,8 @@ main() {
 
     print_success "Build completed successfully! 🎉"
     echo ""
-    print_info "To start services: docker-compose up -d"
-    print_info "To view logs: docker-compose logs -f [service-name]"
+    print_info "To start services: docker compose up -d"
+    print_info "To view logs: docker compose logs -f [service-name]"
 }
 
 # Run main
