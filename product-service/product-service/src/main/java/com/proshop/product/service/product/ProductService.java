@@ -19,7 +19,7 @@ public interface ProductService {
   GeneralResponse<ProductDeleteResponse> deleteProduct(String idStr);
   GeneralResponse<ProductResponse> updateProduct(UUID id, ProductUpdateRequest request, List<MultipartFile> images);
   GeneralResponse<PageResponse<ProductResponse>> searchProducts(
-      String name, String brand, String category,
+      String name, List<String> brands, List<String> categories,
       Double minPrice, Double maxPrice,
       int page, int size);
   GeneralResponse<ProductResponse> createProduct(ProductCreateRequest request, List<MultipartFile> images);

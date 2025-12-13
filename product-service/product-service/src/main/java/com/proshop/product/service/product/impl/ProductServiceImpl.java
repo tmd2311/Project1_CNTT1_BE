@@ -295,13 +295,13 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public GeneralResponse<PageResponse<ProductResponse>> searchProducts(
-      String name, String brand, String category,
+      String name, List<String> brands, List<String> categories,
       Double minPrice, Double maxPrice,
       int page, int size) {
 
     Specification<ProductEntity> spec = ProductSpecification.hasName(name)
-        .and(ProductSpecification.hasBrand(brand))
-        .and(ProductSpecification.hasCategory(category))
+        .and(ProductSpecification.hasBrands(brands))
+        .and(ProductSpecification.hasCategories(categories))
         .and(ProductSpecification.priceBetween(minPrice, maxPrice));
 
     Pageable pageable = PageRequest.of(page, size);
