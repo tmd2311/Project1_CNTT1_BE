@@ -46,7 +46,6 @@ public class SaleEntity {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Lob
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
