@@ -74,3 +74,28 @@ user:
 
 product-service:
   url: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+
+order:
+  service:
+    url: ${ORDER_SERVICE_URL:http://localhost:8083}
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+        url: ""
+      product-service:
+        url: ${product-service.url:http://localhost:8082}
+      order-service:
+        url: ${order.service.url:http://localhost:8083}
+  httpclient:
+    enabled: true
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
