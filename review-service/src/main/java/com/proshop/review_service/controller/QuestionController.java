@@ -75,7 +75,17 @@ public class QuestionController {
     }
 
     private String getUserAvatarFromToken(HttpServletRequest request) {
-        return "https://i.pravatar.cc/150?u=" + getUserIdFromToken(request);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        try {
+            return authClient.getUserById(getUserIdFromToken(request)).getData().getAvatarUrl();
+        } catch (Exception e) {
+            log.warn("Failed to extract avatar from token: {}", e.getMessage());
+            return null;
+        }
     }
 
     // ============================================

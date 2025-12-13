@@ -17,6 +17,7 @@ public interface OrderService {
     GeneralResponse<OrderDetailResponse> getOrderDetailByIdAndUserId(UUID orderId, Long userId); // ← NEW
     GeneralResponse<OrderResponse> cancelOrder(UUID orderId, Long userId);
     List<BestSellerResponse> getTopSellingProducts();
+    boolean hasUserPurchasedProduct(Long userId, UUID productId);
 
     // ADMIN METHODS
     GeneralResponse<List<OrderResponse>> getAllOrders(HttpServletRequest httpRequest);

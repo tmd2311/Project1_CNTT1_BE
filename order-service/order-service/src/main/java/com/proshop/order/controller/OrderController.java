@@ -10,6 +10,7 @@ import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
 import com.proshop.order.dto.response.OrderDetailResponse;
 import com.proshop.order.dto.response.OrderResponse;
+import com.proshop.order.dto.response.ResponseStatus;
 import com.proshop.order.service.order.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -171,5 +172,20 @@ public class OrderController {
     public ResponseEntity<List<BestSellerResponse>> getBestSellers() {
         List<BestSellerResponse> list = orderService.getTopSellingProducts();
         return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/check-purchase")
+    public ResponseEntity<GeneralResponse<Boolean>> checkUserPurchase(
+            @RequestParam UUID productId,
+            HttpServletRequest httpRequest) {
+        Long userId = getUserIdFromToken(httpRequest);
+        log.info("Checking if user {} has purchased product {}", userId, productId);
+
+        boolean hasPurchased = orderService.hasUserPurchasedProduct(userId, productId);
+        return ResponseEntity.ok(new GeneralResponse<Boolean>(
+            ResponseStatus.SUCCESS_STATUS,
+            hasPurchased,
+            null
+        ));
     }
 }

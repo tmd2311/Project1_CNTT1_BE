@@ -51,7 +51,12 @@ public class AnswerController {
     }
 
     private String getUserAvatarFromToken(HttpServletRequest request) {
-        return "https://i.pravatar.cc/150?u=" + getUserIdFromToken(request);
+        try {
+            return authClient.getUserById(getUserIdFromToken(request)).getData().getAvatarUrl();
+        } catch (Exception e) {
+            log.warn("Failed to extract avatar from token: {}", e.getMessage());
+            return null;
+        }
     }
 
     @PostMapping

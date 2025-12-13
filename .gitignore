@@ -1,3 +1,6 @@
 # IntelliJ IDEA
 .idea/
 *.iml
+
+# Auto-rebuild tracking
+.shared-libs-hash

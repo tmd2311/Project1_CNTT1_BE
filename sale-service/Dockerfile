@@ -1,36 +1,44 @@
 # ===========================
-# Stage 1: Build
+# Stage 1: Build with Shared Libs
 # ===========================
-FROM maven:3.9.9-eclipse-temurin-17 AS builder
-WORKDIR /app
-
-# Copy Maven settings (with mirror for faster download)
-COPY ./settings.xml /root/.m2/settings.xml
-
-# Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
-COPY ./exception-lib /app/exception-lib
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -f /app/exception-lib/pom.xml clean install -DskipTests
-
-# Copy và build auth-lib sau
-COPY ./auth-lib /app/auth-lib
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -f /app/auth-lib/pom.xml clean install -DskipTests
-
-# Copy mã nguồn sale-service
-COPY ./sale-service /app/sale-service
-
-# Build ứng dụng chính
+FROM proshop-shared-libs:latest AS deps
 WORKDIR /app/sale-service
+
+# Copy only pom.xml first (for dependency caching)
+COPY sale-service/pom.xml ./pom.xml
+
+# Download dependencies (cached layer)
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn clean package -DskipTests
+    mvn dependency:go-offline -DskipTests || true
 
 # ===========================
-# Stage 2: Run
+# Stage 2: Build Application
 # ===========================
-FROM eclipse-temurin:17-jdk
+FROM deps AS builder
+
+# Copy source code
+COPY sale-service/src ./src
+
+# Build application
+# Không dùng cache mount để Maven có thể tìm thấy shared libs từ base image
+RUN mvn clean package -DskipTests
+
+# ===========================
+# Stage 3: Runtime
+# ===========================
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
 
 COPY --from=builder /app/sale-service/target/*.jar app.jar
+
 EXPOSE 8087
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]

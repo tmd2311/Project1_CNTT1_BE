@@ -1,0 +1,58 @@
+# ===========================
+# Shared Libraries Base Image
+# Build exception-lib và auth-lib một lần duy nhất
+# ===========================
+FROM maven:3.9.9-eclipse-temurin-17 AS builder
+WORKDIR /app
+
+# Copy Maven settings
+COPY ./settings.xml /root/.m2/settings.xml
+
+# ===========================
+# Build exception-lib
+# ===========================
+COPY ./exception-lib/pom.xml /app/exception-lib/pom.xml
+
+# Download dependencies for exception-lib (cached layer để tăng tốc)
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/exception-lib/pom.xml dependency:go-offline -DskipTests
+
+# Copy source and build exception-lib
+# Không dùng cache mount cho install để repository được lưu vào filesystem
+COPY ./exception-lib/src /app/exception-lib/src
+RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
+
+# ===========================
+# Build auth-lib
+# ===========================
+COPY ./auth-lib/pom.xml /app/auth-lib/pom.xml
+
+# Download dependencies for auth-lib (cached layer để tăng tốc)
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/auth-lib/pom.xml dependency:go-offline -DskipTests
+
+# Copy source and build auth-lib
+# Không dùng cache mount cho install để repository được lưu vào filesystem
+# Maven sẽ tìm thấy exception-lib trong /root/.m2/repository từ bước trước
+COPY ./auth-lib/src /app/auth-lib/src
+RUN mvn -f /app/auth-lib/pom.xml clean install -DskipTests
+
+# ===========================
+# Final stage: Chỉ giữ lại Maven cache với libs đã build
+# ===========================
+FROM maven:3.9.9-eclipse-temurin-17
+WORKDIR /app
+
+# Copy Maven settings
+COPY --from=builder /root/.m2/settings.xml /root/.m2/settings.xml
+
+# Copy built artifacts vào local Maven repo
+COPY --from=builder /root/.m2/repository /root/.m2/repository
+
+# Copy source của libs (để các service khác có thể reference)
+COPY --from=builder /app/exception-lib /app/exception-lib
+COPY --from=builder /app/auth-lib /app/auth-lib
+
+# Label để tracking version
+LABEL maintainer="ProShop Backend Team"
+LABEL description="Base image with exception-lib and auth-lib pre-built"
