@@ -16,7 +16,8 @@ public class DatabaseInitializer {
       "authen_user",
       "proshop_product",
       "proshop_order",
-      "proshop_review"
+      "proshop_review",
+      "proshop_sale"
   };
 
   public static void main(String[] args) throws Exception {

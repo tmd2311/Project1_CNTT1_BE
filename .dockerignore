@@ -1,0 +1,10 @@
+# Ignore files to speed up build context
+.git
+.gitignore
+*.md
+.env
+.idea
+target/
+node_modules/
+*.log
+.DS_Store

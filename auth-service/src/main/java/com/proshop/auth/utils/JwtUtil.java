@@ -125,4 +125,108 @@ public class JwtUtil {
       throw new ResException(ResErrorCode.UNAUTHORIZED);
     }
   }
+
+  // ==================== REFRESH TOKEN METHODS ====================
+
+  /**
+   * Generate refresh token with 7-day expiration
+   * @param username Username (account)
+   * @param claims Additional claims
+   * @return Refresh token string
+   */
+  public String generateRefreshToken(String username, Map<String, Object> claims) {
+    Date now = new Date();
+    Date expiry = new Date(now.getTime() + jwtConfig.getRefreshExpirationTime());
+
+    return Jwts.builder()
+        .setSubject(username)
+        .setIssuedAt(now)
+        .setExpiration(expiry)
+        .addClaims(claims)
+        .claim("token_type", "refresh")  // Mark as refresh token
+        .signWith(jwtConfig.getPrivateKey(), SignatureAlgorithm.RS256)
+        .compact();
+  }
+
+  /**
+   * Validate refresh token
+   * @param refreshToken Refresh token string
+   * @return true if valid, throws exception otherwise
+   */
+  public boolean validateRefreshToken(String refreshToken) {
+    try {
+      Claims claims = Jwts.parserBuilder()
+          .setSigningKey(jwtConfig.getPublicKey())
+          .build()
+          .parseClaimsJws(refreshToken)
+          .getBody();
+
+      // Check if it's actually a refresh token
+      String tokenType = claims.get("token_type", String.class);
+      if (!"refresh".equals(tokenType)) {
+        log.error("Token is not a refresh token");
+        throw new ResException(ResErrorCode.TOKEN_INVALID);
+      }
+
+      String userCode = claims.get("user_code", String.class);
+
+      // Check account status
+      UserEntity entity = userRepository.findByCode(userCode)
+          .orElseThrow(() -> new ResException(ResErrorCode.UNAUTHORIZED));
+
+      if (entity.getStatus().equals(INACTIVE.name())) {
+        throw new ResException(ResErrorCode.ACCOUNT_BLOCKED);
+      } else if (Boolean.TRUE.equals(entity.getDeleted())) {
+        throw new ResException(ResErrorCode.ACCOUNT_DELETED);
+      }
+
+      return true;
+    } catch (ExpiredJwtException e) {
+      log.error("Refresh token expired", e);
+      throw new ResException(ResErrorCode.TOKEN_EXPIRED);
+    } catch (ResException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("Invalid refresh token", e);
+      throw new ResException(ResErrorCode.TOKEN_INVALID);
+    }
+  }
+
+  /**
+   * Get claims from refresh token
+   * @param refreshToken Refresh token string
+   * @return Claims
+   */
+  public Claims getClaimsFromRefreshToken(String refreshToken) {
+    try {
+      return Jwts.parserBuilder()
+          .setSigningKey(jwtConfig.getPublicKey())
+          .build()
+          .parseClaimsJws(refreshToken)
+          .getBody();
+    } catch (ExpiredJwtException e) {
+      log.error("Refresh token expired", e);
+      throw new ResException(ResErrorCode.TOKEN_EXPIRED);
+    } catch (Exception e) {
+      log.error("Invalid refresh token", e);
+      throw new ResException(ResErrorCode.TOKEN_INVALID);
+    }
+  }
+
+  /**
+   * Get user code from refresh token
+   * @param refreshToken Refresh token string
+   * @return User code
+   */
+  public String getUserCodeFromRefreshToken(String refreshToken) {
+    try {
+      Claims claims = getClaimsFromRefreshToken(refreshToken);
+      String userCode = claims.get("user_code", String.class);
+      log.debug("Extracted user_code from refresh token: {}", userCode);
+      return userCode;
+    } catch (Exception e) {
+      log.error("Failed to extract user_code from refresh token", e);
+      throw new ResException(ResErrorCode.UNAUTHORIZED);
+    }
+  }
 }

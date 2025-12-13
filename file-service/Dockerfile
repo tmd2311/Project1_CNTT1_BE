@@ -4,21 +4,24 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# 👉 Mount cache Maven để reuse thư viện
-VOLUME ["/root/.m2"]
+# Copy Maven settings (with mirror for faster download)
+COPY ./settings.xml /root/.m2/settings.xml
 
-# Copy thư viện nội bộ
-COPY ../../exception-lib /app/exception-lib
-COPY ../../auth-lib /app/auth-lib
+# Copy và build exception-lib trước (vì auth-lib phụ thuộc vào nó)
+COPY ./exception-lib /app/exception-lib
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 
-# Cài các thư viện nội bộ vào local repo ( chỉ chạy nếu các lib thay đổi)
-RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
-RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
+# Copy và build auth-lib sau
+COPY ./auth-lib /app/auth-lib
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -f /app/auth-lib/pom.xml clean install -DskipTests
 
 # Copy service chính
-COPY ../../file-service /app/file-service
+COPY ./file-service /app/file-service
 WORKDIR /app/file-service
-RUN mvn clean package spring-boot:repackage -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
 # 🚀 Stage 2: Run Application

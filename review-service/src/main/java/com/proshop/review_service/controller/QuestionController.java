@@ -30,7 +30,6 @@ import java.util.List;
 @RequestMapping("/api/questions")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class QuestionController {
 
     private final QuestionService questionService;

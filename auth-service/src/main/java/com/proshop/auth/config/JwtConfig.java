@@ -30,6 +30,10 @@ public class JwtConfig {
   private long expirationTime;
 
   @Getter
+  @Value("${jwt.refresh-expiration}")
+  private long refreshExpirationTime;
+
+  @Getter
   private PrivateKey privateKey;
 
   @Getter

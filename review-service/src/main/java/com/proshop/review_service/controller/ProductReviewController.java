@@ -36,7 +36,6 @@ import java.util.UUID;
 @RequestMapping("/api/product-reviews")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class ProductReviewController {
 
     private final ProductReviewService productReviewService;

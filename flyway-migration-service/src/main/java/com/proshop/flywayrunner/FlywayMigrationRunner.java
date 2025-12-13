@@ -11,8 +11,9 @@ public class FlywayMigrationRunner {
   private static final Map<String, String> SERVICE_DB_MAP = Map.of(
       "auth-service", "authen_user",
       "product-service", "proshop_product",
-      "order-service", "proshop_order"
-//      "review-service", "proshop_review"
+      "order-service", "proshop_order",
+      "review-service", "proshop_review",
+      "sale-service", "proshop_sale"
   );
 
   public static void main(String[] args) {
