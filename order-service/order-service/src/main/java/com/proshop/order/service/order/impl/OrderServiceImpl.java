@@ -291,7 +291,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
 
         order.setTotalAmount(request.getTotalAmount());
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(request.getStatus());
         order.setShippingAddress(request.getShippingAddress() == null ? null : request.getShippingAddress());
         orderRepository.save(order);
 
