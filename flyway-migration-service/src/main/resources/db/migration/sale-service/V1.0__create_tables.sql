@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS voucher_usage (
     id BIGSERIAL PRIMARY KEY,
     voucher_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    order_id BIGINT,
+    order_id UUID,
 
     -- Thông tin giảm giá
     order_value DECIMAL(10, 2),
