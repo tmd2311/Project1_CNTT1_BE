@@ -54,4 +54,14 @@ public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
             "WHERE o.status = :status " +
             "AND DATE(o.created_at) = CURRENT_DATE", nativeQuery = true)
     Long countTodayOrdersByStatus(@Param("status") OrderStatus status);
+
+    // ============================================
+    // REVENUE CALCULATION QUERIES
+    // ============================================
+
+    /**
+     * Find completed orders that haven't been included in revenue calculation yet
+     */
+    @Query("SELECT o FROM OrderEntity o WHERE o.status = 'COMPLETED' AND o.includedInRevenue = false ORDER BY o.createdAt ASC")
+    List<OrderEntity> findCompletedOrdersNotInRevenue();
 }

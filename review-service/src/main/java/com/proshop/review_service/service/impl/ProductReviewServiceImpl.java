@@ -107,7 +107,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
 
         // Convert to entity
         ProductReviewEntity review = mapper.toEntity(request, userId, userName, userAvatar);
-        review.setStatus(ReviewStatus.PENDING);
+        review.setStatus(ReviewStatus.APPROVED);
         review.setLikeCount(0);
         review.setViewCount(0);
 
