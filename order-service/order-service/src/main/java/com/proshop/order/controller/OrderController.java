@@ -5,6 +5,7 @@ import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
+import com.proshop.order.dto.request.UpdateOrderStatusRequest;
 import com.proshop.order.dto.response.BestSellerResponse;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
@@ -138,6 +139,16 @@ public class OrderController {
         HttpServletRequest httpRequest) {
         log.info("Updating order {} (admin)", orderId);
         GeneralResponse<OrderResponse> response = orderService.updateOrder(httpRequest, orderId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/admin/{orderId}/status")
+    public ResponseEntity<GeneralResponse<OrderResponse>> updateOrderStatus(
+        @PathVariable("orderId") UUID orderId,
+        @RequestBody UpdateOrderStatusRequest request,
+        HttpServletRequest httpRequest) {
+        log.info("Updating order {} status to {} (admin)", orderId, request.getStatus());
+        GeneralResponse<OrderResponse> response = orderService.updateOrderStatus(httpRequest, orderId, request);
         return ResponseEntity.ok(response);
     }
 

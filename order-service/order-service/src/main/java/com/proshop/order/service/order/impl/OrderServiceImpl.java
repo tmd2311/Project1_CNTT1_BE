@@ -7,6 +7,7 @@ import com.proshop.order.client.ProductClient;
 import com.proshop.order.client.UserClient;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
+import com.proshop.order.dto.request.UpdateOrderStatusRequest;
 import com.proshop.order.dto.response.*;
 import com.proshop.order.entity.OrderEntity;
 import com.proshop.order.entity.OrderItemEntity;
@@ -327,6 +328,37 @@ public class OrderServiceImpl implements OrderService {
                 new OrderDeleteResponse(order.getOrderId(), order.getUserId()),
                 null
         );
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse<OrderResponse> updateOrderStatus(HttpServletRequest httpRequest, UUID orderId, UpdateOrderStatusRequest request) {
+        checkAdminRole(httpRequest);
+        log.info("Updating order {} status to {} (admin)", orderId, request.getStatus());
+
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
+
+        OrderStatus oldStatus = order.getStatus();
+        order.setStatus(request.getStatus());
+        orderRepository.save(order);
+
+        if (request.getNote() != null && !request.getNote().isEmpty()) {
+            log.info("Order {} status changed from {} to {} - Note: {}", orderId, oldStatus, request.getStatus(), request.getNote());
+        } else {
+            log.info("Order {} status changed from {} to {}", orderId, oldStatus, request.getStatus());
+        }
+
+        OrderResponse data = new OrderResponse(
+                order.getOrderId(),
+                order.getUserId(),
+                order.getTotalAmount(),
+                order.getStatus().name(),
+                order.getCreatedAt(),
+                order.getShippingAddress()
+        );
+
+        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
 
     @Override

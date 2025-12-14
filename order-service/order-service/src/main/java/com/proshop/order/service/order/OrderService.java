@@ -2,6 +2,7 @@ package com.proshop.order.service.order;
 
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
+import com.proshop.order.dto.request.UpdateOrderStatusRequest;
 import com.proshop.order.dto.response.*;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -27,6 +28,7 @@ public interface OrderService {
     GeneralResponse<OrderDetailResponse> getOrderDetailById(HttpServletRequest httpRequest, UUID orderId); // ← NEW
     GeneralResponse<List<OrderResponse>> getOrdersByUserIdAdmin(HttpServletRequest httpRequest, Long userId);
     GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request);
+    GeneralResponse<OrderResponse> updateOrderStatus(HttpServletRequest httpRequest, UUID orderId, UpdateOrderStatusRequest request);
     GeneralResponse<OrderDeleteResponse> deleteOrder(HttpServletRequest httpRequest, UUID orderId);
 
     // ============================================
