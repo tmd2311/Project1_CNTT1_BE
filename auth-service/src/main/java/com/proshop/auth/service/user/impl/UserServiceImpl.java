@@ -5,6 +5,7 @@ import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.PageResponse;
 import com.proshop.auth.dto.response.PageResponseUtil;
 import com.proshop.auth.dto.response.ResponseStatus;
+import com.proshop.auth.dto.response.UserCountResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.mapper.UserMapper;
@@ -153,6 +154,32 @@ public class UserServiceImpl implements UserService {
     userEntity.setStatus(UserStatus.INACTIVE.name());
     userRepository.save(userEntity);
     log.info("Soft deleted user successfully with ID: {}", id);
+  }
+
+  // ============================================
+  // STATISTICS METHODS IMPLEMENTATION
+  // ============================================
+
+  @Override
+  public UserCountResponse getUserCount() {
+    log.info("Getting user count statistics");
+
+    // Count total non-deleted users
+    Long total = userRepository.count();
+
+    // Count active users (status = ACTIVE and not deleted)
+    Long active = userRepository.countActiveUsers();
+
+    // Calculate inactive users
+    Long inactive = total - active;
+
+    log.info("User count: total={}, active={}, inactive={}", total, active, inactive);
+
+    return UserCountResponse.builder()
+        .totalUsers(total)
+        .activeUsers(active)
+        .inactiveUsers(inactive)
+        .build();
   }
 
 }

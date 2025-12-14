@@ -188,4 +188,53 @@ public class OrderController {
             null
         ));
     }
+
+    // ============================================
+    // STATISTICS ENDPOINTS (ADMIN ONLY)
+    // ============================================
+
+    @GetMapping("/statistics/revenue-summary")
+    public ResponseEntity<GeneralResponse<com.proshop.order.dto.response.RevenueSummaryResponse>> getRevenueSummary(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate endDate,
+            HttpServletRequest request) {
+        log.info("Getting revenue summary (admin)");
+
+        com.proshop.order.dto.response.RevenueSummaryResponse response =
+            orderService.getRevenueSummary(startDate, endDate, request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
+            null
+        ));
+    }
+
+    @GetMapping("/statistics/orders-by-status")
+    public ResponseEntity<GeneralResponse<java.util.Map<String, Long>>> getOrdersByStatus(
+            HttpServletRequest request) {
+        log.info("Getting orders by status (admin)");
+
+        java.util.Map<String, Long> response = orderService.getOrdersByStatus(request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
+            null
+        ));
+    }
+
+    @GetMapping("/statistics/today")
+    public ResponseEntity<GeneralResponse<com.proshop.order.dto.response.TodayStatsResponse>> getTodayStats(
+            HttpServletRequest request) {
+        log.info("Getting today's statistics (admin)");
+
+        com.proshop.order.dto.response.TodayStatsResponse response = orderService.getTodayStats(request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
+            null
+        ));
+    }
 }

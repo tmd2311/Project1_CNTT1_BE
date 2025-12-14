@@ -1,6 +1,6 @@
 package com.proshop.auth.config;
 
-import com.proshop.auth.filter.JwtAuthenticationFilter;
+import com.proshop.auth.filter.AServiceJwtAuthenticationFilter;
 import com.proshop.exceptionlib.utils.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class SecurityConfig {
       "/api/v1"
   };
 
-  private final JwtAuthenticationFilter tokenAuthenticationFilter;
+  private final AServiceJwtAuthenticationFilter tokenAuthenticationFilter;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
 

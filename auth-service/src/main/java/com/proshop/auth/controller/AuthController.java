@@ -14,7 +14,7 @@ import com.proshop.auth.dto.response.RefreshTokenResponse;
 import com.proshop.auth.dto.response.ResponseFactory;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.service.auth.AuthService;
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
 
   @PostMapping("/auth/login")
   public ResponseEntity<GeneralResponse<LoginResponse>> login(

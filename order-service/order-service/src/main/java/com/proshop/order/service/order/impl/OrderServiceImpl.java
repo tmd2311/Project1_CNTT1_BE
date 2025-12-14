@@ -16,6 +16,7 @@ import com.proshop.order.repository.OrderRepository;
 import com.proshop.order.service.order.OrderService;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -285,11 +286,6 @@ public class OrderServiceImpl implements OrderService {
     public GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request) {
         checkAdminRole(httpRequest);
         log.info("Updating order {} (admin)", orderId);
-
-        // Validate request
-        if (request.getTotalAmount() == null || request.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResException(ResErrorCode.ORDER_INVALID_TOTAL);
-        }
 
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
@@ -596,5 +592,142 @@ public class OrderServiceImpl implements OrderService {
             userId, hasPurchased ? "" : " not", productId);
 
         return hasPurchased;
+    }
+
+    // ============================================
+    // STATISTICS METHODS IMPLEMENTATION
+    // ============================================
+
+    @Override
+    public RevenueSummaryResponse getRevenueSummary(LocalDate startDate, LocalDate endDate, HttpServletRequest request) {
+        log.info("Getting revenue summary from {} to {}", startDate, endDate);
+
+        // Check admin role
+        checkAdminRole(request);
+
+        // Default to current month if not specified
+        if (startDate == null) {
+            startDate = LocalDate.now().withDayOfMonth(1);
+            endDate = LocalDate.now();
+        }
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(23, 59, 59);
+
+        // Get current period revenue (only COMPLETED orders)
+        BigDecimal currentRevenue = orderRepository.sumRevenueByStatusAndDateRange(
+            OrderStatus.COMPLETED, start, end);
+
+        if (currentRevenue == null) {
+            currentRevenue = BigDecimal.ZERO;
+        }
+
+        // Get previous period revenue (same duration)
+        long days = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
+        LocalDate prevStartDate = startDate.minusDays(days + 1);
+        LocalDate prevEndDate = endDate.minusDays(days + 1);
+
+        BigDecimal previousRevenue = orderRepository.sumRevenueByStatusAndDateRange(
+            OrderStatus.COMPLETED,
+            prevStartDate.atStartOfDay(),
+            prevEndDate.atTime(23, 59, 59));
+
+        if (previousRevenue == null) {
+            previousRevenue = BigDecimal.ZERO;
+        }
+
+        // Calculate percent change
+        Double percentChange = 0.0;
+        if (previousRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            percentChange = currentRevenue.subtract(previousRevenue)
+                .divide(previousRevenue, 4, java.math.RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"))
+                .doubleValue();
+        } else if (currentRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            percentChange = 100.0; // 100% increase if previous was 0
+        }
+
+        // Count orders in current period
+        List<OrderEntity> currentOrders = orderRepository.findOrdersBetween(start, end);
+        long orderCount = currentOrders.stream()
+            .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
+            .count();
+
+        log.info("Revenue summary: current={}, previous={}, change={}%",
+            currentRevenue, previousRevenue, percentChange);
+
+        return RevenueSummaryResponse.builder()
+            .currentRevenue(currentRevenue)
+            .previousRevenue(previousRevenue)
+            .percentChange(percentChange)
+            .orderCount(orderCount)
+            .comparedTo("previous_period")
+            .build();
+    }
+
+    @Override
+    public java.util.Map<String, Long> getOrdersByStatus(HttpServletRequest request) {
+        log.info("Getting orders count by status");
+
+        // Check admin role
+        checkAdminRole(request);
+
+        List<Object[]> results = orderRepository.countOrdersByStatus();
+
+        java.util.Map<String, Long> statusMap = new java.util.HashMap<>();
+
+        for (Object[] row : results) {
+            OrderStatus status = (OrderStatus) row[0];
+            Long count = (Long) row[1];
+            statusMap.put(status.name(), count);
+        }
+
+        // Ensure all statuses are present (even if count is 0)
+        for (OrderStatus status : OrderStatus.values()) {
+            statusMap.putIfAbsent(status.name(), 0L);
+        }
+
+        log.info("Orders by status: {}", statusMap);
+        return statusMap;
+    }
+
+    @Override
+    public TodayStatsResponse getTodayStats(HttpServletRequest request) {
+        log.info("Getting today's statistics");
+
+        // Check admin role
+        checkAdminRole(request);
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+
+        // Get all orders from today
+        List<OrderEntity> todayOrders = orderRepository.findOrdersBetween(startOfDay, endOfDay);
+
+        // Calculate revenue (only COMPLETED orders)
+        BigDecimal todayRevenue = todayOrders.stream()
+            .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
+            .map(OrderEntity::getTotalAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Count orders by status
+        java.util.Map<String, Long> statusCounts = todayOrders.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                order -> order.getStatus().name(),
+                java.util.stream.Collectors.counting()
+            ));
+
+        // Ensure all statuses are present
+        for (OrderStatus status : OrderStatus.values()) {
+            statusCounts.putIfAbsent(status.name(), 0L);
+        }
+
+        log.info("Today's stats: {} orders, revenue={}", todayOrders.size(), todayRevenue);
+
+        return TodayStatsResponse.builder()
+            .orderCount(todayOrders.size())
+            .revenue(todayRevenue)
+            .ordersByStatus(statusCounts)
+            .build();
     }
 }
