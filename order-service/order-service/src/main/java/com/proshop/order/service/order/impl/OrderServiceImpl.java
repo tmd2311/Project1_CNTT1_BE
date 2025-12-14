@@ -285,14 +285,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request) {
-        checkAdminRole(httpRequest);
-        log.info("Updating order {} (admin)", orderId);
+
+        log.info("Updating order {} (user)", orderId);
 
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
 
 
-        order.setStatus(request.getStatus());
+        order.setShippingAddress(request.getShippingAddress());
 
         orderRepository.save(order);
 

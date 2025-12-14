@@ -137,7 +137,7 @@ public class OrderController {
         @PathVariable("orderId") UUID orderId,
         @RequestBody OrderRequest request,
         HttpServletRequest httpRequest) {
-        log.info("Updating order {} (admin)", orderId);
+        log.info("Updating order {} (user)", orderId);
         GeneralResponse<OrderResponse> response = orderService.updateOrder(httpRequest, orderId, request);
         return ResponseEntity.ok(response);
     }
