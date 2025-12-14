@@ -41,6 +41,6 @@ EXPOSE 8081
 # Use exec form for proper signal handling
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:MaxRAMPercentage=30.0", \
     "-Djava.security.egd=file:/dev/./urandom", \
     "-jar", "app.jar"]

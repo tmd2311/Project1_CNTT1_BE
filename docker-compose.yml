@@ -67,6 +67,10 @@ services:
       - consul
       - redis
       - file-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
@@ -93,6 +97,10 @@ services:
       - FILE_SERVICE_URL=http://file-service:8084
     depends_on:
       - consul
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
@@ -121,6 +129,10 @@ services:
       - consul
       - auth-service
       - product-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
@@ -144,6 +156,10 @@ services:
       - FILE_BASE_URL=http://103.90.225.90:8084
     depends_on:
       - consul
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
     volumes:
@@ -175,6 +191,10 @@ services:
       - consul
       - auth-service
       - product-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
@@ -201,6 +221,10 @@ services:
     depends_on:
       - consul
       - product-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
@@ -227,6 +251,10 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_PORT=8500
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - proshop-net
 
