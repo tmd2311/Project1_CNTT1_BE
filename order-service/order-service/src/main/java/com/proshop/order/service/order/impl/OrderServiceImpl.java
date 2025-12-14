@@ -290,12 +290,12 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
 
-        order.setTotalAmount(request.getTotalAmount());
+
         order.setStatus(request.getStatus());
-        order.setShippingAddress(request.getShippingAddress() == null ? null : request.getShippingAddress());
+
         orderRepository.save(order);
 
-        log.info("Updated order {} with new total amount {} (admin)", orderId, request.getTotalAmount());
+        log.info("Updated order {} (admin)", orderId);
 
         OrderResponse data = new OrderResponse(
                 order.getOrderId(),
