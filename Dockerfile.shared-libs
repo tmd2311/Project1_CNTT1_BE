@@ -27,9 +27,9 @@ RUN mvn -f /app/exception-lib/pom.xml clean install -DskipTests
 # ===========================
 COPY ./auth-lib/pom.xml /app/auth-lib/pom.xml
 
-# Download dependencies for auth-lib (cached layer để tăng tốc)
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -f /app/auth-lib/pom.xml dependency:go-offline -DskipTests
+# Download dependencies for auth-lib
+# Không dùng cache mount để Maven có thể tìm thấy exception-lib đã build
+RUN mvn -f /app/auth-lib/pom.xml dependency:go-offline -DskipTests
 
 # Copy source and build auth-lib
 # Không dùng cache mount cho install để repository được lưu vào filesystem

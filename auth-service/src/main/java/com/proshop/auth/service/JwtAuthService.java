@@ -6,10 +6,9 @@ import com.proshop.auth.redis.RefreshTokenEntity;
 import com.proshop.auth.redis.TokenEntity;
 import com.proshop.auth.repository.TokenRedisRepository;
 import com.proshop.auth.utils.JsonUtils;
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class JwtAuthService {
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
 
   private final TokenRedisRepository redisRepository;
 

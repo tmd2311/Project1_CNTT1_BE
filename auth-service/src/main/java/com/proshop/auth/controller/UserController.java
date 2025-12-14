@@ -6,9 +6,15 @@ import com.proshop.auth.dto.request.UpdateUserRequest;
 import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.PageResponse;
 import com.proshop.auth.dto.response.ResponseStatus;
+import com.proshop.auth.dto.response.UserCountResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.entity.UserEntity;
 import com.proshop.auth.service.user.UserService;
+import com.proshop.exceptionlib.enums.ResErrorCode;
+import com.proshop.exceptionlib.exceptions.ResException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -107,5 +113,45 @@ public class UserController {
     response.setStatus(status);
     response.setData(null);
     return response;
+  }
+
+  // ============================================
+  // STATISTICS ENDPOINTS (ADMIN ONLY)
+  // ============================================
+
+  @GetMapping("/user/statistics/count")
+  public ResponseEntity<GeneralResponse<UserCountResponse>> getUserCount() {
+    log.info("Getting user count statistics (admin)");
+    checkAdminRole();
+    UserCountResponse response = userService.getUserCount();
+    return ResponseEntity.ok(new GeneralResponse<>(
+        ResponseStatus.SUCCESS_STATUS,
+        response,
+        null
+    ));
+  }
+
+  /**
+   * Check if user has Admin role using Spring Security Authentication
+   */
+  private void checkAdminRole() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+      log.error("User not authenticated");
+      throw new ResException(ResErrorCode.UNAUTHORIZED);
+    }
+
+    boolean isAdmin = authentication.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .anyMatch(role -> role.equalsIgnoreCase("ROLE_ADMIN") || role.equalsIgnoreCase("Admin"));
+
+    if (!isAdmin) {
+      log.error("User does not have admin role. Authorities: {}", authentication.getAuthorities());
+      throw new ResException(ResErrorCode.PERMISSION_DENIED,
+          "Bạn không có quyền truy cập tài nguyên này (Admin only)");
+    }
+
+    log.info("Admin role verified for user: {}", authentication.getName());
   }
 }

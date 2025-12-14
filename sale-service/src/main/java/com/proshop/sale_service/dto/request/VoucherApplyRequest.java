@@ -1,6 +1,7 @@
 package com.proshop.sale_service.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public class VoucherApplyRequest {
     private Long userId;
 
     @NotNull(message = "Order ID is required")
-    private Long orderId;
+    private UUID orderId;
 
     @NotNull(message = "Order value is required")
     private BigDecimal orderValue;

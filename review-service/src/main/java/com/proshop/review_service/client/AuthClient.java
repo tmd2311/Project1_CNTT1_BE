@@ -1,7 +1,7 @@
 package com.proshop.review_service.client;
 
 import com.proshop.review_service.config.FeignClientConfig;
-import com.proshop.review_service.dto.response.AuthResponse;
+import com.proshop.review_service.dto.response.UserInfoResponse;
 import com.proshop.review_service.dto.response.GeneralResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +15,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface AuthClient {
 
     @GetMapping("/api/v1/{id}")
-    GeneralResponse<AuthResponse> getUserById(@PathVariable("id") Long id);
+    GeneralResponse<UserInfoResponse> getUserById(@PathVariable("id") Long id);
 }
 

@@ -26,5 +26,37 @@ public interface SKURepository extends JpaRepository<SKUEntity, UUID> {
      */
     @Query("SELECT s FROM SKUEntity s WHERE s.product.brand.id = :brandId")
     List<SKUEntity> findByProductBrandId(@Param("brandId") UUID brandId);
+
+    // ============================================
+    // STATISTICS QUERIES
+    // ============================================
+
+    /**
+     * Count low stock SKUs (stock <= threshold and active)
+     */
+    @Query("SELECT COUNT(s) FROM SKUEntity s " +
+           "WHERE s.stock <= :threshold AND s.isActive = true")
+    Long countLowStockSKUs(@Param("threshold") Integer threshold);
+
+    /**
+     * Count out of stock SKUs (stock = 0 and active)
+     */
+    @Query("SELECT COUNT(s) FROM SKUEntity s " +
+           "WHERE s.stock = 0 AND s.isActive = true")
+    Long countOutOfStockSKUs();
+
+    /**
+     * Find low stock SKUs ordered by stock amount
+     */
+    @Query("SELECT s FROM SKUEntity s " +
+           "WHERE s.stock <= :threshold AND s.isActive = true " +
+           "ORDER BY s.stock ASC")
+    List<SKUEntity> findLowStockSKUs(@Param("threshold") Integer threshold);
+
+    /**
+     * Count active SKUs
+     */
+    @Query("SELECT COUNT(s) FROM SKUEntity s WHERE s.isActive = true")
+    Long countActiveSKUs();
 }
 

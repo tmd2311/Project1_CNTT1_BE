@@ -46,4 +46,14 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     """)
   Optional<UserEntity> findByAccountWithRoles(@Param("account") String account);
 
+  // ============================================
+  // STATISTICS QUERIES
+  // ============================================
+
+  /**
+   * Count active users (status = 'ACTIVE' and not deleted)
+   */
+  @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.status = 'ACTIVE' AND u.deleted = false")
+  Long countActiveUsers();
+
 }

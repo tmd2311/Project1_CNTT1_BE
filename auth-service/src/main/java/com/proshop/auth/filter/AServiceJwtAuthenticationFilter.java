@@ -1,6 +1,6 @@
 package com.proshop.auth.filter;
 
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +18,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class AServiceJwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
   private final UserDetailsService userDetailsService;
 
   @Override

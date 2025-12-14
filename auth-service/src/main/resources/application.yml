@@ -62,11 +62,11 @@ spring:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
       password:
-      expired-time: 60  # minutes
+      expired-time: 4320  # 3 days (for testing)
 jwt:
   private-key-path: classpath:key/private.pem
   public-key-path: classpath:key/public.pem
-  expiration: 3600000  # 1 hour (access token)
+  expiration: 259200000  # 3 days (for testing)
   refresh-expiration: 604800000  # 7 days (refresh token)
 
 # Feign Client URLs

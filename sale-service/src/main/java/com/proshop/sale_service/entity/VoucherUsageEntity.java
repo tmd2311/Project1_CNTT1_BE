@@ -3,6 +3,7 @@ package com.proshop.sale_service.entity;
 import com.proshop.sale_service.util.enums.VoucherUsageStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,7 +42,7 @@ public class VoucherUsageEntity {
      * ID của đơn hàng sử dụng voucher
      */
     @Column(name = "order_id")
-    private Long orderId;
+    private UUID orderId;
 
     // ============ THÔNG TIN GIẢM GIÁ ============
 

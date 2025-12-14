@@ -5,6 +5,7 @@ import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
+import com.proshop.order.dto.request.UpdateOrderStatusRequest;
 import com.proshop.order.dto.response.BestSellerResponse;
 import com.proshop.order.dto.response.GeneralResponse;
 import com.proshop.order.dto.response.OrderDeleteResponse;
@@ -141,6 +142,16 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/admin/{orderId}/status")
+    public ResponseEntity<GeneralResponse<OrderResponse>> updateOrderStatus(
+        @PathVariable("orderId") UUID orderId,
+        @RequestBody UpdateOrderStatusRequest request,
+        HttpServletRequest httpRequest) {
+        log.info("Updating order {} status to {} (admin)", orderId, request.getStatus());
+        GeneralResponse<OrderResponse> response = orderService.updateOrderStatus(httpRequest, orderId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/admin/{orderId}")
     public ResponseEntity<GeneralResponse<OrderDeleteResponse>> deleteOrder(
         @PathVariable("orderId") UUID orderId,
@@ -185,6 +196,55 @@ public class OrderController {
         return ResponseEntity.ok(new GeneralResponse<Boolean>(
             ResponseStatus.SUCCESS_STATUS,
             hasPurchased,
+            null
+        ));
+    }
+
+    // ============================================
+    // STATISTICS ENDPOINTS (ADMIN ONLY)
+    // ============================================
+
+    @GetMapping("/statistics/revenue-summary")
+    public ResponseEntity<GeneralResponse<com.proshop.order.dto.response.RevenueSummaryResponse>> getRevenueSummary(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate endDate,
+            HttpServletRequest request) {
+        log.info("Getting revenue summary (admin)");
+
+        com.proshop.order.dto.response.RevenueSummaryResponse response =
+            orderService.getRevenueSummary(startDate, endDate, request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
+            null
+        ));
+    }
+
+    @GetMapping("/statistics/orders-by-status")
+    public ResponseEntity<GeneralResponse<java.util.Map<String, Long>>> getOrdersByStatus(
+            HttpServletRequest request) {
+        log.info("Getting orders by status (admin)");
+
+        java.util.Map<String, Long> response = orderService.getOrdersByStatus(request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
+            null
+        ));
+    }
+
+    @GetMapping("/statistics/today")
+    public ResponseEntity<GeneralResponse<com.proshop.order.dto.response.TodayStatsResponse>> getTodayStats(
+            HttpServletRequest request) {
+        log.info("Getting today's statistics (admin)");
+
+        com.proshop.order.dto.response.TodayStatsResponse response = orderService.getTodayStats(request);
+
+        return ResponseEntity.ok(new GeneralResponse<>(
+            ResponseStatus.SUCCESS_STATUS,
+            response,
             null
         ));
     }

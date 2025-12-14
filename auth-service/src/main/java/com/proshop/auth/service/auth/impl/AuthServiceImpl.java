@@ -22,7 +22,7 @@ import com.proshop.auth.repository.TokenRedisRepository;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
 import com.proshop.auth.service.auth.AuthService;
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.mail.internet.InternetAddress;
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final TokenRedisRepository tokenRedisRepository;
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
   private final JwtConfig jwtConfig;
   private final JavaMailSender mailSender;
   private final BlockingQueue<SimpleMailMessage> queue = new LinkedBlockingQueue<>();

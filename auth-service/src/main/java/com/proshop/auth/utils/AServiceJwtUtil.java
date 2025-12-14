@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Log4j2
-public class JwtUtil {
+public class AServiceJwtUtil {
 
   private final JwtConfig jwtConfig;
   private final UserRepository userRepository;

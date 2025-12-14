@@ -44,7 +44,7 @@ logging:
 
 jwt:
   public-key-path: classpath:key/public.pem
-  expiration: 3600000
+  expiration: 259200000  # 3 days (for testing)
 
 # Feign Client URLs
 order:
