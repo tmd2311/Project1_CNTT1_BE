@@ -1,36 +1,46 @@
 # ===========================
-# Stage 1: Build
+# Stage 1: Build with Shared Libs
 # ===========================
-FROM maven:3.9.9-eclipse-temurin-17 AS builder
-WORKDIR /app
-
-# 👉 Mount cache Maven để reuse thư viện
-VOLUME ["/root/.m2"]
-
-# Copy thư viện nội bộ
-COPY ../../exception-lib /app/exception-lib
-COPY ../../auth-lib /app/auth-lib
-
-# Cài các thư viện nội bộ vào local repo ( chỉ chạy nếu các lib thay đổi)
-RUN mvn -f /app/exception-lib/pom.xml install -DskipTests
-RUN mvn -f /app/auth-lib/pom.xml install -DskipTests
-
-# Copy mã nguồn order-service
-COPY ../../order-service/order-service /app/order-service
-
-# Build ứng dụng chính (repackage để có file runnable jar)
+FROM proshop-shared-libs:latest AS deps
 WORKDIR /app/order-service
+
+# Copy only pom.xml first (for dependency caching)
+COPY order-service/order-service/pom.xml ./pom.xml
+
+# Download dependencies (cached layer)
+# Repository từ base image đã có shared libs, chỉ cần download dependencies khác
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn dependency:go-offline -DskipTests || true
+
+# ===========================
+# Stage 2: Build Application
+# ===========================
+FROM deps AS builder
+
+# Copy source code
+COPY order-service/order-service/src ./src
+
+# Build application
+# Không dùng cache mount để Maven sử dụng repository từ base image (có shared libs)
+# Repository từ base image vẫn còn trong filesystem vì không bị cache mount ghi đè
 RUN mvn clean package spring-boot:repackage -DskipTests
 
 # ===========================
-# Stage 2: Run
+# Stage 3: Runtime
 # ===========================
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
 
 COPY --from=builder /app/order-service/target/*.jar app.jar
 
-# Service này chạy ở cổng 8083
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+    "-XX:+UseContainerSupport", \
+    "-XX:MaxRAMPercentage=30.0", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]

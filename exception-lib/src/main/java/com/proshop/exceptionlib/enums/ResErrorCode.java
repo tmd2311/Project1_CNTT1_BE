@@ -150,6 +150,7 @@ public enum ResErrorCode {
     ORDER_CREATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "ORD09", "Lỗi khi tạo đơn hàng", "Error creating order"),
     ORDER_INVALID_STATUS_FOR_PAYMENT(HttpStatus.BAD_REQUEST, "ORDER_015", "Trạng thái đơn hàng không hợp lệ để thanh toán", "Invalid order status for payment"),
     ORDER_SHIPPINGADDRESS_REQUIRED(HttpStatus.BAD_REQUEST, "ORD016", "Địa chỉ giao hàng là bắt buộc", "Shipping address is required"),
+    ORDER_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "ORD017", "Không thể kết nối đến Order Service", "Order service unavailable"),
     // ===== CART =====
     CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CART01", "Không tìm thấy người giỏ hàng", "Cart not found"),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART02", "Không tìm thấy sản phẩm trong giỏ", "Cart item not found"),
@@ -157,6 +158,9 @@ public enum ResErrorCode {
     // ===== PRODUCT CLIENT =====
     PRODUCT_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PRD01", "Không thể kết nối Product Service", "Product service unavailable"),
     PRODUCT_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "PRD02", "Lỗi khi kiểm tra sản phẩm", "Error validating product"),
+    // ===== REVIEW =====
+    USER_NOT_PURCHASED_PRODUCT(HttpStatus.FORBIDDEN, "REV01", "Bạn chỉ có thể đánh giá sản phẩm đã mua", "You can only review purchased products"),
+    PURCHASE_VALIDATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "REV02", "Lỗi khi kiểm tra lịch sử mua hàng", "Error validating purchase history"),
     // Payment errors
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_001", "Không tìm thấy thanh toán", "Payment not found"),
     PAYMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PAYMENT_002", "Bạn không có quyền truy cập thanh toán này", "Access denied for this payment"),

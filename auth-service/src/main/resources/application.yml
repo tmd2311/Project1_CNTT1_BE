@@ -41,10 +41,14 @@ spring:
         prefer-ip-address: true
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://103.90.225.90:5432/authen_user}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://103.90.225.90:5432/authen_user?TimeZone=UTC}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: update
@@ -58,11 +62,12 @@ spring:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
       password:
-      expired-time: 60  # minutes
+      expired-time: 4320  # 3 days (for testing)
 jwt:
   private-key-path: classpath:key/private.pem
   public-key-path: classpath:key/public.pem
-  expiration: 3600000
+  expiration: 259200000  # 3 days (for testing)
+  refresh-expiration: 604800000  # 7 days (refresh token)
 
 # Feign Client URLs
 file:

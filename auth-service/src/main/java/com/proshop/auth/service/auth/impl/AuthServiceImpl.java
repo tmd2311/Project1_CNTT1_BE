@@ -2,13 +2,16 @@ package com.proshop.auth.service.auth.impl;
 
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
+import com.proshop.auth.dto.request.RefreshTokenRequest;
 import com.proshop.auth.dto.request.RegisterRequest;
 import com.proshop.auth.dto.request.ResetPasswordRequest;
 import com.proshop.auth.dto.request.SendOtpRequest;
 import com.proshop.auth.dto.request.VerifyOtpRequest;
 import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.dto.response.OtpResponse;
+import com.proshop.auth.dto.response.RefreshTokenResponse;
 import com.proshop.auth.dto.response.UserInfoResponse;
+import com.proshop.auth.config.JwtConfig;
 import com.proshop.auth.entity.RoleEntity;
 import com.proshop.auth.entity.SocialProviderEntity;
 import com.proshop.auth.entity.UserEntity;
@@ -19,7 +22,7 @@ import com.proshop.auth.repository.TokenRedisRepository;
 import com.proshop.auth.repository.UserRepository;
 import com.proshop.auth.service.JwtAuthService;
 import com.proshop.auth.service.auth.AuthService;
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import jakarta.mail.internet.InternetAddress;
@@ -65,7 +68,8 @@ public class AuthServiceImpl implements AuthService {
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
   private final TokenRedisRepository tokenRedisRepository;
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
+  private final JwtConfig jwtConfig;
   private final JavaMailSender mailSender;
   private final BlockingQueue<SimpleMailMessage> queue = new LinkedBlockingQueue<>();
   private final RedisTemplate<String,String> redisTemplate;
@@ -129,10 +133,15 @@ public class AuthServiceImpl implements AuthService {
     }
     info.put("roles", roleNames);
     info.put("userId", entity.getId());
-    String token = jwtAuthService.generateAndStoreToken(entity, info);
+
+    // Generate both access token and refresh token
+    JwtAuthService.TokenPair tokenPair = jwtAuthService.generateAndStoreTokenPair(entity, info);
+
     LoginResponse loginResponse = loginMapper.toDTO(entity);
-    loginResponse.setToken(token);
-    loginResponse.setRoleNames( roles.stream().map(RoleEntity::getName).toList());
+    loginResponse.setToken(tokenPair.getAccessToken());
+    loginResponse.setRefreshToken(tokenPair.getRefreshToken());
+    loginResponse.setExpiresIn(jwtConfig.getExpirationTime() / 1000);  // Convert to seconds
+    loginResponse.setRoleNames(roles.stream().map(RoleEntity::getName).toList());
 
     if (entity.getLastLogin() == null) {
       loginResponse.setFirstLogin(true);
@@ -164,11 +173,19 @@ public class AuthServiceImpl implements AuthService {
     userEntity.setModifiedDate(LocalDateTime.now());
     userEntity.setModifiedBy(userCode);
     userRepository.save(userEntity);
-    boolean deleted = tokenRedisRepository.deleteAllTokens(userEntity.getCode());
-    if (!deleted) {
-      log.error("Unable to revoke Redis token for userCode = {}", userEntity.getCode());
+
+    // Delete all access tokens
+    boolean accessTokensDeleted = tokenRedisRepository.deleteAllTokens(userEntity.getCode());
+    // Delete all refresh tokens
+    boolean refreshTokensDeleted = tokenRedisRepository.deleteAllRefreshTokens(userEntity.getCode());
+
+    if (!accessTokensDeleted) {
+      log.error("Unable to revoke Redis access tokens for userCode = {}", userEntity.getCode());
       throw new ResException(ResErrorCode.TOKEN_DELETE_FAILED);
     }
+
+    log.info("Password changed for userCode: {} - Access tokens deleted: {}, Refresh tokens deleted: {}",
+        userEntity.getCode(), accessTokensDeleted, refreshTokensDeleted);
 
     return userMapper.toDTO(userEntity);
   }
@@ -210,7 +227,13 @@ public class AuthServiceImpl implements AuthService {
     }
     try {
       String userCode = jwtUtil.getUserCodeFromToken(token);
-      return tokenRedisRepository.deleteToken(userCode, token);
+      // Delete access token
+      boolean accessTokenDeleted = tokenRedisRepository.deleteToken(userCode, token);
+      // Delete all refresh tokens for this user
+      boolean refreshTokensDeleted = tokenRedisRepository.deleteAllRefreshTokens(userCode);
+      log.info("Logout successful for userCode: {} - Access token deleted: {}, Refresh tokens deleted: {}",
+          userCode, accessTokenDeleted, refreshTokensDeleted);
+      return accessTokenDeleted;
     } catch (Exception e) {
       log.error("Logout failed - Invalid token", e);
       throw new ResException(ResErrorCode.TOKEN_INVALID);
@@ -355,5 +378,62 @@ public class AuthServiceImpl implements AuthService {
     user.setPasswordHash(passwordEncoder.encode(newPassword));
     userRepository.save(user);
     return new OtpResponse(email, LocalDateTime.now(), "Mật khẩu đã được đặt lại thành công");
+  }
+
+  @Override
+  public RefreshTokenResponse refreshToken(RefreshTokenRequest request) {
+    String refreshToken = request.getRefreshToken();
+
+    try {
+      // Validate refresh token
+      jwtUtil.validateRefreshToken(refreshToken);
+
+      // Get user code from refresh token
+      String userCode = jwtUtil.getUserCodeFromRefreshToken(refreshToken);
+
+      // Check if refresh token exists in Redis
+      if (!tokenRedisRepository.existsRefreshToken(userCode, refreshToken)) {
+        log.error("Refresh token not found in Redis for userCode: {}", userCode);
+        throw new ResException(ResErrorCode.TOKEN_INVALID);
+      }
+
+      // Get user entity
+      UserEntity userEntity = userRepository.findByCode(userCode)
+          .orElseThrow(() -> new ResException(ResErrorCode.USER_NOT_FOUND));
+
+      // Generate new token pair
+      Map<String, Object> info = new HashMap<>();
+      info.put("user_code", userEntity.getCode());
+      info.put("phone", userEntity.getPhone());
+      info.put("email", userEntity.getEmail());
+      info.put("userId", userEntity.getId());
+
+      List<RoleEntity> roles = userRepository.getRoleByUserId(userEntity.getId());
+      List<String> roleNames = new ArrayList<>();
+      for (RoleEntity role : roles) {
+        roleNames.add(role.getCode());
+      }
+      info.put("roles", roleNames);
+
+      // Generate new access token and refresh token
+      JwtAuthService.TokenPair tokenPair = jwtAuthService.generateAndStoreTokenPair(userEntity, info);
+
+      // Delete old refresh token from Redis
+      tokenRedisRepository.deleteRefreshToken(userCode, refreshToken);
+
+      // Return new tokens
+      return new RefreshTokenResponse(
+          tokenPair.getAccessToken(),
+          tokenPair.getRefreshToken(),
+          jwtConfig.getExpirationTime() / 1000,  // Convert to seconds
+          "Bearer"
+      );
+
+    } catch (ResException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("Refresh token failed", e);
+      throw new ResException(ResErrorCode.TOKEN_INVALID);
+    }
   }
 }

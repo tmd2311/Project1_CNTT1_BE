@@ -2,6 +2,7 @@ package com.proshop.auth.controller;
 
 import com.proshop.auth.dto.request.ChangePasswordRequest;
 import com.proshop.auth.dto.request.LoginRequest;
+import com.proshop.auth.dto.request.RefreshTokenRequest;
 import com.proshop.auth.dto.request.RegisterRequest;
 import com.proshop.auth.dto.request.ResetPasswordRequest;
 import com.proshop.auth.dto.request.SendOtpRequest;
@@ -9,10 +10,11 @@ import com.proshop.auth.dto.request.VerifyOtpRequest;
 import com.proshop.auth.dto.response.GeneralResponse;
 import com.proshop.auth.dto.response.LoginResponse;
 import com.proshop.auth.dto.response.OtpResponse;
+import com.proshop.auth.dto.response.RefreshTokenResponse;
 import com.proshop.auth.dto.response.ResponseFactory;
 import com.proshop.auth.dto.response.UserInfoResponse;
 import com.proshop.auth.service.auth.AuthService;
-import com.proshop.auth.utils.JwtUtil;
+import com.proshop.auth.utils.AServiceJwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -26,11 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@Log4j2
 public class AuthController {
 
   private final AuthService authService;
-  private final JwtUtil jwtUtil;
+  private final AServiceJwtUtil jwtUtil;
 
   @PostMapping("/auth/login")
   public ResponseEntity<GeneralResponse<LoginResponse>> login(
@@ -81,5 +82,12 @@ public class AuthController {
   public ResponseEntity<GeneralResponse<OtpResponse>> resetPassword(
       @Valid @RequestBody ResetPasswordRequest request) {
     return ResponseFactory.success(authService.resetPassword(request));
+  }
+
+  @PostMapping("/auth/refresh")
+  public ResponseEntity<GeneralResponse<RefreshTokenResponse>> refreshToken(
+      @Valid @RequestBody RefreshTokenRequest request) {
+    RefreshTokenResponse response = authService.refreshToken(request);
+    return ResponseFactory.success(response);
   }
 }

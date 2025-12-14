@@ -2,6 +2,7 @@ package com.proshop.sale_service.repository;
 
 import com.proshop.sale_service.entity.VoucherUsageEntity;
 import com.proshop.sale_service.util.enums.VoucherUsageStatus;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,7 +29,7 @@ public interface VoucherUsageRepository extends JpaRepository<VoucherUsageEntity
     List<VoucherUsageEntity> findByOrderId(Long orderId);
 
     // Check xem order đã dùng voucher chưa
-    boolean existsByOrderId(Long orderId);
+    boolean existsByOrderId(UUID orderId);
 
     // Đếm tổng số lần voucher đã được sử dụng
     @Query("SELECT COUNT(vu) FROM VoucherUsageEntity vu WHERE vu.voucherId = :voucherId AND vu.status = 'USED'")

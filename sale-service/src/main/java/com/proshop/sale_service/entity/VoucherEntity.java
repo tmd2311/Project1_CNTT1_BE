@@ -40,7 +40,6 @@ public class VoucherEntity {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Lob
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -117,7 +116,7 @@ public class VoucherEntity {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
-    private PromotionStatus status = PromotionStatus.SCHEDULED;
+    private PromotionStatus status = PromotionStatus.ACTIVE;
 
     @Column(name = "is_active")
     private Boolean isActive = true;

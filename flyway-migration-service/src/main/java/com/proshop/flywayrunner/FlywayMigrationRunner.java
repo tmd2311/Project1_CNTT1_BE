@@ -11,8 +11,9 @@ public class FlywayMigrationRunner {
   private static final Map<String, String> SERVICE_DB_MAP = Map.of(
       "auth-service", "authen_user",
       "product-service", "proshop_product",
-      "order-service", "proshop_order"
-//      "review-service", "proshop_review"
+      "order-service", "proshop_order",
+      "review-service", "proshop_review",
+      "sale-service", "proshop_sale"
   );
 
   public static void main(String[] args) {
@@ -22,7 +23,7 @@ public class FlywayMigrationRunner {
       System.out.println("Running migration for " + service + " (" + dbName + ")");
 
       Flyway flyway = Flyway.configure()
-          .dataSource("jdbc:postgresql://103.90.225.90:5432/" + dbName, USER, PASSWORD)
+          .dataSource("jdbc:postgresql://103.90.225.90:5432/" + dbName + "?TimeZone=UTC", USER, PASSWORD)
           .locations("classpath:db/migration/" + service)
           .baselineOnMigrate(true)
           .load();

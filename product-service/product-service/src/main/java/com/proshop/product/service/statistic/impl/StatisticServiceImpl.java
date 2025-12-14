@@ -3,12 +3,16 @@ package com.proshop.product.service.statistic.impl;
 
 import com.proshop.product.client.OrderClient;
 import com.proshop.product.dto.response.BestSellerResponse;
+import com.proshop.product.dto.response.InventorySummaryResponse;
 import com.proshop.product.dto.response.ProductBestSellerResponse;
+import com.proshop.product.dto.response.ProductCountResponse;
 import com.proshop.product.dto.response.ProductResponse;
+import com.proshop.product.dto.response.SKUResponse;
 import com.proshop.product.entity.ProductEntity;
 import com.proshop.product.entity.ProductImageEntity;
 import com.proshop.product.entity.SKUEntity;
 import com.proshop.product.repository.ProductRepository;
+import com.proshop.product.repository.SKURepository;
 import com.proshop.product.service.statistic.StatisticService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +33,7 @@ public class StatisticServiceImpl implements StatisticService {
 
   private final ProductRepository productRepository;
   private final OrderClient orderClient;
+  private final SKURepository skuRepository;
 
   @Override
   public List<ProductBestSellerResponse> getBestSellingProducts(int limit) {
@@ -137,5 +142,65 @@ public class StatisticServiceImpl implements StatisticService {
     }
 
     return dto;
+  }
+
+  // ============================================
+  // NEW STATISTICS METHODS IMPLEMENTATION
+  // ============================================
+
+  @Override
+  public ProductCountResponse getProductCount() {
+    Long total = productRepository.count();
+    Long active = skuRepository.countActiveSKUs();
+
+    return ProductCountResponse.builder()
+        .total(total)
+        .active(active)
+        .build();
+  }
+
+  @Override
+  public InventorySummaryResponse getInventorySummary() {
+    int threshold = 5;
+    Long totalProducts = productRepository.count();
+    Long lowStock = skuRepository.countLowStockSKUs(threshold);
+    Long outOfStock = skuRepository.countOutOfStockSKUs();
+
+    return InventorySummaryResponse.builder()
+        .totalProducts(totalProducts)
+        .lowStock(lowStock)
+        .outOfStock(outOfStock)
+        .lowStockThreshold(threshold)
+        .build();
+  }
+
+  @Override
+  public List<SKUResponse> getLowStockSKUs(Integer threshold) {
+    if (threshold == null) {
+      threshold = 5;
+    }
+
+    List<SKUEntity> lowStockSKUs = skuRepository.findLowStockSKUs(threshold);
+
+    return lowStockSKUs.stream()
+        .map(this::convertToSKUResponse)
+        .toList();
+  }
+
+  // Helper method to convert SKUEntity to SKUResponse
+  private SKUResponse convertToSKUResponse(SKUEntity entity) {
+    return SKUResponse.builder()
+        .id(entity.getId())
+        .productId(entity.getProduct() != null ? entity.getProduct().getId() : null)
+        .skuCode(entity.getSkuCode())
+        .specs(entity.getSpecs())
+        .price(entity.getPrice())
+        .discountPrice(entity.getDiscountPrice())
+        .salePrice(entity.getSalePrice())
+        .saleId(entity.getSaleId())
+        .stock(entity.getStock())
+        .barcode(entity.getBarcode())
+        .isActive(entity.getIsActive())
+        .build();
   }
 }

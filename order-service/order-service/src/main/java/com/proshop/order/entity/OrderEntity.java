@@ -41,6 +41,10 @@ public class OrderEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "included_in_revenue", nullable = false)
+    @Builder.Default
+    private Boolean includedInRevenue = false;
+
     // ← Thêm relationship với OrderItems
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default

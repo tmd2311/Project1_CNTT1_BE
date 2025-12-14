@@ -1,5 +1,6 @@
 package com.proshop.sale_service.dto.response;
 
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,7 @@ public class VoucherApplyResponse {
     private Long voucherUsageId;
     private Long voucherId;
     private Long userId;
-    private Long orderId;
+    private UUID orderId;
 
     private BigDecimal orderValue;
     private BigDecimal discountAmount;
