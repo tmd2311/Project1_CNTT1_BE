@@ -45,7 +45,6 @@ public class OrderServiceImpl implements OrderService {
     // USER METHODS
     // ============================================
 
-
     @Override
     @Transactional
     public GeneralResponse<OrderResponse> createOrder(OrderCreateRequest request) {
@@ -67,9 +66,8 @@ public class OrderServiceImpl implements OrderService {
             throw new ResException(ResErrorCode.ORDER_INVALID_TOTAL);
         }
 
-
-        if(request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
-            UserInfoResponse user=userClient.getUserById(request.getUserId()).getData();
+        if (request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
+            UserInfoResponse user = userClient.getUserById(request.getUserId()).getData();
             if (user.getCurrentAddress() == null || user.getCurrentAddress().isEmpty()) {
                 throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
             }
@@ -84,14 +82,14 @@ public class OrderServiceImpl implements OrderService {
                     .createdAt(LocalDateTime.now())
                     .build();
             String address;
-            if(request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
-                UserInfoResponse user=userClient.getUserById(request.getUserId()).getData();
+            if (request.getShippingAddress() == null || request.getShippingAddress().isEmpty()) {
+                UserInfoResponse user = userClient.getUserById(request.getUserId()).getData();
                 if (user.getCurrentAddress() == null || user.getCurrentAddress().isEmpty()) {
                     throw new ResException(ResErrorCode.ORDER_SHIPPINGADDRESS_REQUIRED);
                 }
-                address=user.getCurrentAddress();
-            }else{
-                address=request.getShippingAddress();
+                address = user.getCurrentAddress();
+            } else {
+                address = request.getShippingAddress();
             }
             order.setShippingAddress(address);
             // Save order first to get orderId
@@ -102,17 +100,17 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.saveAll(orderItems);
 
             log.info("Created order {} for user {} with {} items and total amount {}, address: {}",
-                    order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount, request.getShippingAddress());
+                    order.getOrderId(), request.getUserId(), orderItems.size(), totalAmount,
+                    request.getShippingAddress());
 
             OrderResponse data = new OrderResponse(
                     order.getOrderId(),
                     order.getUserId(),
                     order.getTotalAmount(),
-                    order.getDiscountAmount(),
+                    discountOrNull(order.getDiscountAmount()),
                     order.getStatus().name(),
                     order.getCreatedAt(),
-                    order.getShippingAddress()
-            );
+                    order.getShippingAddress());
 
             return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
         } catch (ResException e) {
@@ -134,11 +132,10 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
-                        o.getDiscountAmount(),
+                        discountOrNull(o.getDiscountAmount()),
                         o.getStatus().name(),
                         o.getCreatedAt(),
-                        o.getShippingAddress()
-                ))
+                        o.getShippingAddress()))
                 .toList();
 
         log.info("Found {} orders for user {}", data.size(), userId);
@@ -164,11 +161,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
-                order.getDiscountAmount(),
+                discountOrNull(order.getDiscountAmount()),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                order.getShippingAddress()
-        );
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -204,11 +200,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
-                order.getDiscountAmount(),
+                discountOrNull(order.getDiscountAmount()),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                order.getShippingAddress()
-        );
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -233,11 +228,10 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
-                        o.getDiscountAmount(),
+                        discountOrNull(o.getDiscountAmount()),
                         o.getStatus().name(),
                         o.getCreatedAt(),
-                        o.getShippingAddress()
-                ))
+                        o.getShippingAddress()))
                 .toList();
 
         log.info("Found {} orders (admin)", data.size());
@@ -257,11 +251,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
-                order.getDiscountAmount(),
+                discountOrNull(order.getDiscountAmount()),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                order.getShippingAddress()
-        );
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -278,11 +271,10 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
-                        o.getDiscountAmount(),
+                        discountOrNull(o.getDiscountAmount()),
                         o.getStatus().name(),
                         o.getCreatedAt(),
-                        o.getShippingAddress()
-                ))
+                        o.getShippingAddress()))
                 .toList();
 
         log.info("Found {} orders for user {} (admin)", data.size(), userId);
@@ -292,13 +284,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId, OrderRequest request) {
+    public GeneralResponse<OrderResponse> updateOrder(HttpServletRequest httpRequest, UUID orderId,
+            OrderRequest request) {
 
         log.info("Updating order {} (user)", orderId);
 
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
-
 
         order.setShippingAddress(request.getShippingAddress());
 
@@ -310,11 +302,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
-                order.getDiscountAmount(),
+                discountOrNull(order.getDiscountAmount()),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                order.getShippingAddress()
-        );
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -335,13 +326,13 @@ public class OrderServiceImpl implements OrderService {
         return new GeneralResponse<>(
                 ResponseStatus.SUCCESS_STATUS,
                 new OrderDeleteResponse(order.getOrderId(), order.getUserId()),
-                null
-        );
+                null);
     }
 
     @Override
     @Transactional
-    public GeneralResponse<OrderResponse> updateOrderStatus(HttpServletRequest httpRequest, UUID orderId, UpdateOrderStatusRequest request) {
+    public GeneralResponse<OrderResponse> updateOrderStatus(HttpServletRequest httpRequest, UUID orderId,
+            UpdateOrderStatusRequest request) {
         checkAdminRole(httpRequest);
         log.info("Updating order {} status to {} (admin)", orderId, request.getStatus());
 
@@ -353,7 +344,8 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         if (request.getNote() != null && !request.getNote().isEmpty()) {
-            log.info("Order {} status changed from {} to {} - Note: {}", orderId, oldStatus, request.getStatus(), request.getNote());
+            log.info("Order {} status changed from {} to {} - Note: {}", orderId, oldStatus, request.getStatus(),
+                    request.getNote());
         } else {
             log.info("Order {} status changed from {} to {}", orderId, oldStatus, request.getStatus());
         }
@@ -362,11 +354,10 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
-                order.getDiscountAmount(),
+                discountOrNull(order.getDiscountAmount()),
                 order.getStatus().name(),
                 order.getCreatedAt(),
-                order.getShippingAddress()
-        );
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
@@ -504,7 +495,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private List<OrderItemEntity> createOrderItems(OrderEntity order, OrderCreateRequest request,
-                                                   List<ProductResponse> products) {
+            List<ProductResponse> products) {
         List<OrderItemEntity> orderItems = new ArrayList<>();
 
         for (int i = 0; i < request.getItems().size(); i++) {
@@ -573,12 +564,18 @@ public class OrderServiceImpl implements OrderService {
                 .orderId(order.getOrderId())
                 .userId(order.getUserId())
                 .totalAmount(order.getTotalAmount())
-                .discountAmount(order.getDiscountAmount())
+                .discountAmount(discountOrNull(order.getDiscountAmount()))
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .shippingAddress(order.getShippingAddress())
                 .items(itemDetails)
                 .build();
+    }
+
+    private BigDecimal discountOrNull(BigDecimal value) {
+        if (value == null)
+            return null;
+        return value.compareTo(BigDecimal.ZERO) == 0 ? null : value;
     }
 
     /**
@@ -623,16 +620,14 @@ public class OrderServiceImpl implements OrderService {
         log.info("Checking if user {} has purchased product {}", userId, productId);
 
         List<OrderStatus> validStatuses = List.of(
-            OrderStatus.DELIVERED,
-            OrderStatus.COMPLETED
-        );
+                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED);
 
         boolean hasPurchased = orderItemRepository.existsByUserIdAndProductIdAndOrderStatus(
-            userId, productId, validStatuses
-        );
+                userId, productId, validStatuses);
 
         log.info("User {} has{} purchased product {}",
-            userId, hasPurchased ? "" : " not", productId);
+                userId, hasPurchased ? "" : " not", productId);
 
         return hasPurchased;
     }
@@ -642,7 +637,8 @@ public class OrderServiceImpl implements OrderService {
     // ============================================
 
     @Override
-    public RevenueSummaryResponse getRevenueSummary(LocalDate startDate, LocalDate endDate, HttpServletRequest request) {
+    public RevenueSummaryResponse getRevenueSummary(LocalDate startDate, LocalDate endDate,
+            HttpServletRequest request) {
         log.info("Getting revenue summary from {} to {}", startDate, endDate);
 
         // Check admin role
@@ -659,7 +655,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Get current period revenue (only COMPLETED orders)
         BigDecimal currentRevenue = orderRepository.sumRevenueByStatusAndDateRange(
-            OrderStatus.COMPLETED, start, end);
+                OrderStatus.COMPLETED, start, end);
 
         if (currentRevenue == null) {
             currentRevenue = BigDecimal.ZERO;
@@ -671,9 +667,9 @@ public class OrderServiceImpl implements OrderService {
         LocalDate prevEndDate = endDate.minusDays(days + 1);
 
         BigDecimal previousRevenue = orderRepository.sumRevenueByStatusAndDateRange(
-            OrderStatus.COMPLETED,
-            prevStartDate.atStartOfDay(),
-            prevEndDate.atTime(23, 59, 59));
+                OrderStatus.COMPLETED,
+                prevStartDate.atStartOfDay(),
+                prevEndDate.atTime(23, 59, 59));
 
         if (previousRevenue == null) {
             previousRevenue = BigDecimal.ZERO;
@@ -683,9 +679,9 @@ public class OrderServiceImpl implements OrderService {
         Double percentChange = 0.0;
         if (previousRevenue.compareTo(BigDecimal.ZERO) > 0) {
             percentChange = currentRevenue.subtract(previousRevenue)
-                .divide(previousRevenue, 4, java.math.RoundingMode.HALF_UP)
-                .multiply(new BigDecimal("100"))
-                .doubleValue();
+                    .divide(previousRevenue, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(new BigDecimal("100"))
+                    .doubleValue();
         } else if (currentRevenue.compareTo(BigDecimal.ZERO) > 0) {
             percentChange = 100.0; // 100% increase if previous was 0
         }
@@ -693,19 +689,19 @@ public class OrderServiceImpl implements OrderService {
         // Count orders in current period
         List<OrderEntity> currentOrders = orderRepository.findOrdersBetween(start, end);
         long orderCount = currentOrders.stream()
-            .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
-            .count();
+                .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
+                .count();
 
         log.info("Revenue summary: current={}, previous={}, change={}%",
-            currentRevenue, previousRevenue, percentChange);
+                currentRevenue, previousRevenue, percentChange);
 
         return RevenueSummaryResponse.builder()
-            .currentRevenue(currentRevenue)
-            .previousRevenue(previousRevenue)
-            .percentChange(percentChange)
-            .orderCount(orderCount)
-            .comparedTo("previous_period")
-            .build();
+                .currentRevenue(currentRevenue)
+                .previousRevenue(previousRevenue)
+                .percentChange(percentChange)
+                .orderCount(orderCount)
+                .comparedTo("previous_period")
+                .build();
     }
 
     @Override
@@ -749,16 +745,15 @@ public class OrderServiceImpl implements OrderService {
 
         // Calculate revenue (only COMPLETED orders)
         BigDecimal todayRevenue = todayOrders.stream()
-            .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
-            .map(OrderEntity::getTotalAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .filter(order -> order.getStatus() == OrderStatus.COMPLETED)
+                .map(OrderEntity::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Count orders by status
         java.util.Map<String, Long> statusCounts = todayOrders.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                order -> order.getStatus().name(),
-                java.util.stream.Collectors.counting()
-            ));
+                .collect(java.util.stream.Collectors.groupingBy(
+                        order -> order.getStatus().name(),
+                        java.util.stream.Collectors.counting()));
 
         // Ensure all statuses are present
         for (OrderStatus status : OrderStatus.values()) {
@@ -768,20 +763,20 @@ public class OrderServiceImpl implements OrderService {
         log.info("Today's stats: {} orders, revenue={}", todayOrders.size(), todayRevenue);
 
         return TodayStatsResponse.builder()
-            .orderCount(todayOrders.size())
-            .revenue(todayRevenue)
-            .ordersByStatus(statusCounts)
-            .build();
+                .orderCount(todayOrders.size())
+                .revenue(todayRevenue)
+                .ordersByStatus(statusCounts)
+                .build();
     }
 
     @Override
     @Transactional
     public GeneralResponse<OrderResponse> applyVoucherToOrder(UUID orderId, ApplyVoucherRequest request) {
-        log.info("Applying voucher {} to order {} - discount: {}, final amount: {}", 
-            request.getVoucherCode(), orderId, request.getDiscountAmount(), request.getFinalAmount());
+        log.info("Applying voucher {} to order {} - discount: {}, final amount: {}",
+                request.getVoucherCode(), orderId, request.getDiscountAmount(), request.getFinalAmount());
 
         OrderEntity order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
 
         // Cập nhật totalAmount và discount với giá sau khi giảm
         order.setDiscountAmount(request.getDiscountAmount() != null ? request.getDiscountAmount() : BigDecimal.ZERO);
@@ -791,14 +786,13 @@ public class OrderServiceImpl implements OrderService {
         log.info("Order {} updated with voucher discount. New total: {}", orderId, request.getFinalAmount());
 
         OrderResponse data = new OrderResponse(
-            order.getOrderId(),
-            order.getUserId(),
-            order.getTotalAmount(),
-            order.getDiscountAmount(),
-            order.getStatus().name(),
-            order.getCreatedAt(),
-            order.getShippingAddress()
-        );
+                order.getOrderId(),
+                order.getUserId(),
+                order.getTotalAmount(),
+                order.getDiscountAmount(),
+                order.getStatus().name(),
+                order.getCreatedAt(),
+                order.getShippingAddress());
 
         return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }

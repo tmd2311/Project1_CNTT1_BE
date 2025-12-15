@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,6 +20,7 @@ public class OrderDetailResponse {
     private UUID orderId;
     private Long userId;
     private BigDecimal totalAmount;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private BigDecimal discountAmount;
     private String status;
     private LocalDateTime createdAt;
