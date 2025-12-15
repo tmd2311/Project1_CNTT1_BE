@@ -38,6 +38,7 @@ public class VoucherServiceImpl implements VoucherService {
     private final VoucherRepository voucherRepository;
     private final VoucherUsageRepository voucherUsageRepository;
     private final VoucherUserRepository voucherUserRepository;
+    private final com.proshop.sale_service.client.OrderClient orderClient;
 
     @Override
     @Transactional
@@ -64,29 +65,29 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public VoucherResponse getVoucherById(Long id) {
         VoucherEntity voucher = voucherRepository.findById(id)
-            .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
         return mapToResponse(voucher);
     }
 
     @Override
     public VoucherResponse getVoucherByCode(String code) {
         VoucherEntity voucher = voucherRepository.findByCodeAndIsDeleteFalse(code)
-            .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
         return mapToResponse(voucher);
     }
 
     @Override
     public List<VoucherResponse> getAllVouchers() {
         return voucherRepository.findAllByIsDeleteFalse().stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<VoucherResponse> getActiveVouchers() {
         return voucherRepository.findActiveVouchers(LocalDateTime.now()).stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -96,7 +97,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         // 1. Tìm voucher
         VoucherEntity voucher = voucherRepository.findByCodeAndIsDeleteFalse(request.getCode())
-            .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
 
         // 2. Check voucher active
         if (!voucher.getIsActive() || voucher.getStatus() != PromotionStatus.ACTIVE) {
@@ -124,21 +125,18 @@ public class VoucherServiceImpl implements VoucherService {
 
         // 6. Check user usage limit
         int userUsageCount = voucherUsageRepository.countByVoucherIdAndUserIdAndStatus(
-            voucher.getId(),
-            request.getUserId(),
-            VoucherUsageStatus.USED
-        );
+                voucher.getId(),
+                request.getUserId(),
+                VoucherUsageStatus.USED);
         if (userUsageCount >= voucher.getUsageLimitPerUser()) {
             return VoucherValidationResponse.invalid(
-                "Bạn đã sử dụng hết số lần cho phép (" + voucher.getUsageLimitPerUser() + ")"
-            );
+                    "Bạn đã sử dụng hết số lần cho phép (" + voucher.getUsageLimitPerUser() + ")");
         }
 
         // 7. Check min order value
         if (request.getOrderValue().compareTo(voucher.getMinOrderValue()) < 0) {
             return VoucherValidationResponse.invalid(
-                "Đơn hàng chưa đủ giá trị tối thiểu: " + voucher.getMinOrderValue()
-            );
+                    "Đơn hàng chưa đủ giá trị tối thiểu: " + voucher.getMinOrderValue());
         }
 
         // 8. Calculate discount
@@ -148,10 +146,9 @@ public class VoucherServiceImpl implements VoucherService {
         log.info("Voucher {} is valid. Discount: {}", request.getCode(), discountAmount);
 
         return VoucherValidationResponse.valid(
-            mapToResponse(voucher),
-            discountAmount,
-            finalOrderValue
-        );
+                mapToResponse(voucher),
+                discountAmount,
+                finalOrderValue);
     }
 
     @Override
@@ -178,7 +175,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         // 3. Lấy voucher
         VoucherEntity voucher = voucherRepository.findByCodeAndIsDeleteFalse(request.getCode())
-            .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
 
         // 4. Calculate discount
         BigDecimal discountAmount = validation.getDiscountAmount();
@@ -207,18 +204,33 @@ public class VoucherServiceImpl implements VoucherService {
 
         voucherRepository.save(voucher);
 
+        // 8. Cập nhật order với giá sau khi giảm
+        try {
+            com.proshop.sale_service.client.OrderClient.ApplyVoucherRequest orderRequest = new com.proshop.sale_service.client.OrderClient.ApplyVoucherRequest(
+                    discountAmount,
+                    finalOrderValue,
+                    voucher.getCode());
+
+            orderClient.applyVoucherToOrder(request.getOrderId(), orderRequest);
+            log.info("Order {} updated with voucher discount successfully", request.getOrderId());
+        } catch (Exception e) {
+            log.error("Failed to update order {} with voucher discount: {}", request.getOrderId(), e.getMessage(), e);
+            // Không throw exception để không rollback voucher usage đã lưu
+            // Có thể gửi notification hoặc retry sau
+        }
+
         log.info("Voucher applied successfully: {}", savedUsage.getId());
 
         return VoucherApplyResponse.builder()
-            .voucherUsageId(savedUsage.getId())
-            .voucherId(voucher.getId())
-            .userId(request.getUserId())
-            .orderId(request.getOrderId())
-            .orderValue(request.getOrderValue())
-            .discountAmount(discountAmount)
-            .finalOrderValue(finalOrderValue)
-            .appliedAt(savedUsage.getUsedAt())
-            .build();
+                .voucherUsageId(savedUsage.getId())
+                .voucherId(voucher.getId())
+                .userId(request.getUserId())
+                .orderId(request.getOrderId())
+                .orderValue(request.getOrderValue())
+                .discountAmount(discountAmount)
+                .finalOrderValue(finalOrderValue)
+                .appliedAt(savedUsage.getUsedAt())
+                .build();
     }
 
     @Override
@@ -236,7 +248,7 @@ public class VoucherServiceImpl implements VoucherService {
 
                 // Giảm used_count của voucher
                 VoucherEntity voucher = voucherRepository.findById(usage.getVoucherId())
-                    .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                        .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
 
                 voucher.setUsedCount(Math.max(0, voucher.getUsedCount() - 1));
                 voucherRepository.save(voucher);
@@ -262,7 +274,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public void assignVoucherToUsers(Long voucherId, List<Long> userIds) {
         VoucherEntity voucher = voucherRepository.findById(voucherId)
-            .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResException(ResErrorCode.VOUCHER_NOT_FOUND));
 
         if (voucher.getUserScope() != VoucherUserScope.SPECIFIC_USERS) {
             throw new ResException(ResErrorCode.VOUCHER_INVALID_OPERATION);
@@ -318,12 +330,12 @@ public class VoucherServiceImpl implements VoucherService {
         if (voucher.getDiscountType() == DiscountType.PERCENTAGE) {
             // Giảm theo %
             discount = orderValue
-                .multiply(voucher.getDiscountValue())
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    .multiply(voucher.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             // Apply max discount limit
             if (voucher.getMaxDiscountAmount() != null &&
-                discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                    discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
                 discount = voucher.getMaxDiscountAmount();
             }
         } else {

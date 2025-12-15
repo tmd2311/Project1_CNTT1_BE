@@ -1,5 +1,6 @@
 package com.proshop.order.service.order;
 
+import com.proshop.order.dto.request.ApplyVoucherRequest;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.request.UpdateOrderStatusRequest;
@@ -57,5 +58,13 @@ public interface OrderService {
      * @return Today's stats
      */
     TodayStatsResponse getTodayStats(HttpServletRequest request);
+
+    /**
+     * Apply voucher discount to order (called by sale-service)
+     * @param orderId Order ID
+     * @param request Voucher discount information
+     * @return Updated order response
+     */
+    GeneralResponse<OrderResponse> applyVoucherToOrder(UUID orderId, ApplyVoucherRequest request);
 
 }

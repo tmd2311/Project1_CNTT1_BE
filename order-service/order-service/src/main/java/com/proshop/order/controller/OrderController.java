@@ -3,6 +3,7 @@ package com.proshop.order.controller;
 import com.proshop.auth_lib.utils.JwtUtil;
 import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
+import com.proshop.order.dto.request.ApplyVoucherRequest;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.request.UpdateOrderStatusRequest;
@@ -247,5 +248,18 @@ public class OrderController {
             response,
             null
         ));
+    }
+
+    // ============================================
+    // INTERNAL SERVICE ENDPOINTS (for sale-service)
+    // ============================================
+
+    @PutMapping("/{orderId}/apply-voucher")
+    public ResponseEntity<GeneralResponse<OrderResponse>> applyVoucherToOrder(
+        @PathVariable("orderId") UUID orderId,
+        @RequestBody ApplyVoucherRequest request) {
+        log.info("Applying voucher {} to order {} (internal service call)", request.getVoucherCode(), orderId);
+        GeneralResponse<OrderResponse> response = orderService.applyVoucherToOrder(orderId, request);
+        return ResponseEntity.ok(response);
     }
 }

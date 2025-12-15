@@ -5,6 +5,7 @@ import com.proshop.exceptionlib.enums.ResErrorCode;
 import com.proshop.exceptionlib.exceptions.ResException;
 import com.proshop.order.client.ProductClient;
 import com.proshop.order.client.UserClient;
+import com.proshop.order.dto.request.ApplyVoucherRequest;
 import com.proshop.order.dto.request.OrderCreateRequest;
 import com.proshop.order.dto.request.OrderRequest;
 import com.proshop.order.dto.request.UpdateOrderStatusRequest;
@@ -761,5 +762,32 @@ public class OrderServiceImpl implements OrderService {
             .revenue(todayRevenue)
             .ordersByStatus(statusCounts)
             .build();
+    }
+
+    @Override
+    @Transactional
+    public GeneralResponse<OrderResponse> applyVoucherToOrder(UUID orderId, ApplyVoucherRequest request) {
+        log.info("Applying voucher {} to order {} - discount: {}, final amount: {}", 
+            request.getVoucherCode(), orderId, request.getDiscountAmount(), request.getFinalAmount());
+
+        OrderEntity order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
+
+        // Cập nhật totalAmount với giá sau khi giảm
+        order.setTotalAmount(request.getFinalAmount());
+        orderRepository.save(order);
+
+        log.info("Order {} updated with voucher discount. New total: {}", orderId, request.getFinalAmount());
+
+        OrderResponse data = new OrderResponse(
+            order.getOrderId(),
+            order.getUserId(),
+            order.getTotalAmount(),
+            order.getStatus().name(),
+            order.getCreatedAt(),
+            order.getShippingAddress()
+        );
+
+        return new GeneralResponse<>(ResponseStatus.SUCCESS_STATUS, data, null);
     }
 }
