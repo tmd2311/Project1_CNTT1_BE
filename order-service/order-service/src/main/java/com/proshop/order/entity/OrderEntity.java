@@ -31,6 +31,10 @@ public class OrderEntity {
     @Column(name = "total_amount", nullable = false, precision = 100, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(name = "discount_amount", nullable = false, precision = 100, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(name = "shipping_address", columnDefinition = "TEXT")
     private String shippingAddress;
 

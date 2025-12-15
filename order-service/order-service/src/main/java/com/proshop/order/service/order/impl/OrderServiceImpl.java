@@ -108,6 +108,7 @@ public class OrderServiceImpl implements OrderService {
                     order.getOrderId(),
                     order.getUserId(),
                     order.getTotalAmount(),
+                    order.getDiscountAmount(),
                     order.getStatus().name(),
                     order.getCreatedAt(),
                     order.getShippingAddress()
@@ -133,6 +134,7 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
+                        o.getDiscountAmount(),
                         o.getStatus().name(),
                         o.getCreatedAt(),
                         o.getShippingAddress()
@@ -162,6 +164,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
+                order.getDiscountAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
                 order.getShippingAddress()
@@ -201,6 +204,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
+                order.getDiscountAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
                 order.getShippingAddress()
@@ -229,6 +233,7 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
+                        o.getDiscountAmount(),
                         o.getStatus().name(),
                         o.getCreatedAt(),
                         o.getShippingAddress()
@@ -252,6 +257,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
+                order.getDiscountAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
                 order.getShippingAddress()
@@ -272,6 +278,7 @@ public class OrderServiceImpl implements OrderService {
                         o.getOrderId(),
                         o.getUserId(),
                         o.getTotalAmount(),
+                        o.getDiscountAmount(),
                         o.getStatus().name(),
                         o.getCreatedAt(),
                         o.getShippingAddress()
@@ -303,6 +310,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
+                order.getDiscountAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
                 order.getShippingAddress()
@@ -354,6 +362,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderId(),
                 order.getUserId(),
                 order.getTotalAmount(),
+                order.getDiscountAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
                 order.getShippingAddress()
@@ -564,6 +573,7 @@ public class OrderServiceImpl implements OrderService {
                 .orderId(order.getOrderId())
                 .userId(order.getUserId())
                 .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
                 .status(order.getStatus().name())
                 .createdAt(order.getCreatedAt())
                 .shippingAddress(order.getShippingAddress())
@@ -773,7 +783,8 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = orderRepository.findById(orderId)
             .orElseThrow(() -> new ResException(ResErrorCode.ORDER_NOT_FOUND));
 
-        // Cập nhật totalAmount với giá sau khi giảm
+        // Cập nhật totalAmount và discount với giá sau khi giảm
+        order.setDiscountAmount(request.getDiscountAmount() != null ? request.getDiscountAmount() : BigDecimal.ZERO);
         order.setTotalAmount(request.getFinalAmount());
         orderRepository.save(order);
 
@@ -783,6 +794,7 @@ public class OrderServiceImpl implements OrderService {
             order.getOrderId(),
             order.getUserId(),
             order.getTotalAmount(),
+            order.getDiscountAmount(),
             order.getStatus().name(),
             order.getCreatedAt(),
             order.getShippingAddress()

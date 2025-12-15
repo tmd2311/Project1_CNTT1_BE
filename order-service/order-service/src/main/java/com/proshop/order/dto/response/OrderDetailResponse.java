@@ -18,6 +18,7 @@ public class OrderDetailResponse {
     private UUID orderId;
     private Long userId;
     private BigDecimal totalAmount;
+    private BigDecimal discountAmount;
     private String status;
     private LocalDateTime createdAt;
     private List<OrderItemDetail> items;
