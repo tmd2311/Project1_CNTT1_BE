@@ -65,6 +65,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
       user = new UserEntity();
       user.setEmail(email);
       user.setAccount(email);
+      user.setUsername(email); // Set username = account (email in OAuth case)
       user.setFullName(name);
       user.setAvatarUrl(picture);
 

@@ -202,12 +202,14 @@ public class AuthServiceImpl implements AuthService {
     validateNewPassword(request.getPassword());
 
     UserEntity user = new UserEntity();
-    user.setAccount(request.getAccount().trim());
+    String account = request.getAccount().trim();
+    user.setAccount(account);
+    user.setUsername(account); // Set username = account
     user.setEmail(request.getEmail().trim());
     user.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
     user.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
     user.setCreatedDate(LocalDateTime.now());
-    user.setCreatedBy(request.getAccount());
+    user.setCreatedBy(account);
 
     String userCode = generateUserCode();
     user.setCode(userCode);
