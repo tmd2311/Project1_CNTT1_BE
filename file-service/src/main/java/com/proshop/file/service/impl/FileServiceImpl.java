@@ -33,7 +33,19 @@ public class FileServiceImpl implements FileService {
 
     try {
       Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-      Files.createDirectories(uploadPath);
+
+      // Create directories if they don't exist
+      if (!Files.exists(uploadPath)) {
+        Files.createDirectories(uploadPath);
+        log.info("Đã tạo thư mục upload: {}", uploadPath);
+      }
+
+      // Verify write permissions
+      if (!Files.isWritable(uploadPath)) {
+        log.error("Thư mục không có quyền ghi: {}", uploadPath);
+        throw new ResException(ResErrorCode.FILE_UPLOAD_FAILED);
+      }
+
       String originalName = file.getOriginalFilename();
       String ext = (originalName != null && originalName.contains("."))
           ? originalName.substring(originalName.lastIndexOf("."))
@@ -44,6 +56,10 @@ public class FileServiceImpl implements FileService {
       String fileUrl = baseUrl + "/files/" + uniqueName;
       log.info("Upload file thành công: {}", uniqueName);
       return new FileUploadResponse(uniqueName, fileUrl);
+    } catch (java.nio.file.AccessDeniedException e) {
+      log.error("Lỗi quyền truy cập khi upload file vào: {}. Kiểm tra quyền thư mục và user đang chạy ứng dụng.",
+          uploadDir, e);
+      throw new ResException(ResErrorCode.FILE_UPLOAD_FAILED);
     } catch (IOException e) {
       log.error("Lỗi khi upload file: {}", e.getMessage(), e);
       throw new ResException(ResErrorCode.FILE_UPLOAD_FAILED);
