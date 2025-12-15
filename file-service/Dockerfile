@@ -32,20 +32,21 @@ WORKDIR /app
 # Create non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# Create uploads directory with proper permissions before switching user
-RUN mkdir -p /uploads/images && \
-    chown -R spring:spring /uploads && \
-    chmod -R 755 /uploads
+# Install su-exec for switching users
+RUN apk add --no-cache su-exec
 
-# Switch to non-root user
-USER spring:spring
+# Create uploads directory
+RUN mkdir -p /uploads/images && \
+    chmod -R 777 /uploads
+
+# Copy entrypoint script (as root to set permissions)
+COPY file-service/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 COPY --from=builder /app/file-service/target/*.jar app.jar
 
 EXPOSE 8084
 
-ENTRYPOINT ["java", \
-    "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=30.0", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-jar", "app.jar"]
+# Run entrypoint as root to fix permissions, then switch to spring user
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=30.0", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
